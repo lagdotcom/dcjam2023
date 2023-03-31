@@ -1,0 +1,9 @@
+function SlamShutEnter(oldX: number, oldY: number): bool
+  if tileHasTag(oldX, oldY, 'SlamShutBefore') then
+    debug('Slam Shut message!') ; TODO replace this with an actual callback
+    return true
+  end
+  return false
+end
+
+onTagEnter('SlamShut', SlamShutEnter)
