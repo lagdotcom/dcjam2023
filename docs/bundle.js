@@ -872,8 +872,16 @@
   // res/map.dscript
   var map_default = "./map-IDDG5SUA.dscript";
 
+  // res/atlas/minma1.png
+  var minma1_default = "./minma1-VI5UXWCY.png";
+
+  // res/atlas/minma1.json
+  var minma1_default2 = "./minma1-6Z2CTON5.json";
+
   // src/resources.ts
   var Resources = {
+    "minma1.png": minma1_default,
+    "minma1.json": minma1_default2,
     "map.dscript": map_default
   };
   function getResourceURL(id2) {
