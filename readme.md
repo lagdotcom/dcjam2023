@@ -14,7 +14,7 @@ First you need `node`, a javascript engine. The easiest way to manage this is us
 
 ### Yarn
 
-Now you need `yarn`, a package management tool. Just run `corepack enable` and it should download it; check it worked with `yarn --version`.
+Now you need `yarn`, a package management tool. Just run `corepack enable` and it should download it; check it worked with `yarn --version`. Now navigate to your dcjam2023 directory and type `yarn`. This will install the dependencies for this project.
 
 ### Development
 
