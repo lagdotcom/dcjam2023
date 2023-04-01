@@ -309,6 +309,8 @@
           this.drawImage(cell.ceiling, "ceiling", pos.dx, pos.dz);
         if (cell.floor)
           this.drawImage(cell.floor, "floor", pos.dx, pos.dz);
+        if (cell.object)
+          this.drawImage(cell.object, "object", pos.dx, pos.dz);
       }
       this.g.ctx.fillStyle = "black";
       this.g.ctx.fillRect(0, 0, this.offset.x, 160);
@@ -1004,10 +1006,10 @@
   };
 
   // res/atlas/eotb.png
-  var eotb_default = "./eotb-7ESBBIK6.png";
+  var eotb_default = "./eotb-AVMGZ6CA.png";
 
   // res/atlas/eotb.json
-  var eotb_default2 = "./eotb-GWJWNFKR.json";
+  var eotb_default2 = "./eotb-FYOYF7PR.json";
 
   // res/map.dscript
   var map_default = "./map-4A4FTRKP.dscript";
@@ -1058,6 +1060,9 @@
       this.start = xy(0, 0);
       this.textures = /* @__PURE__ */ new Map();
     }
+    tile(x, y) {
+      return this.grid.getOrDefault({ x, y });
+    }
     convert(j, region = 0, floor = 0) {
       var _a, _b;
       if (!(region in j.regions))
@@ -1079,29 +1084,15 @@
         let x = f.tiles.bounds.x0 + row.start;
         const y = r.setup.origin === "tl" ? row.y : f.tiles.bounds.height - (row.y - f.tiles.bounds.y0) - 1;
         for (const tile of row.tdata) {
-          const mt = this.grid.getOrDefault({ x, y });
+          const mt = this.tile(x, y);
           if (tile.t)
             mt.floor = this.getTexture(tile.tc);
           if (tile.c)
             mt.ceiling = this.getTexture(0);
           if (tile.b)
-            this.setEdge(
-              tile.b,
-              tile.bc,
-              mt,
-              Dir_default.S,
-              this.grid.getOrDefault({ x, y: y + 1 }),
-              Dir_default.N
-            );
+            this.setEdge(tile.b, tile.bc, mt, Dir_default.S, this.tile(x, y + 1), Dir_default.N);
           if (tile.r)
-            this.setEdge(
-              tile.r,
-              tile.rc,
-              mt,
-              Dir_default.E,
-              this.grid.getOrDefault({ x: x + 1, y }),
-              Dir_default.W
-            );
+            this.setEdge(tile.r, tile.rc, mt, Dir_default.E, this.tile(x + 1, y), Dir_default.W);
           x++;
         }
       }
@@ -1163,6 +1154,9 @@
         case "#SCRIPT":
           for (const id2 of arg.split(","))
             this.scripts.push(getResourceURL(id2));
+          break;
+        case "#OBJECT":
+          this.tile(x, y).object = this.eval(arg);
           break;
         default:
           throw new Error(`Unknown command: ${cmd} ${arg} at (${x},${y})`);
@@ -1664,7 +1658,7 @@
   };
 
   // res/map.json
-  var map_default2 = "./map-EZMJXB5W.json";
+  var map_default2 = "./map-WBLYAWEV.json";
 
   // src/index.ts
   function loadEngine(parent) {

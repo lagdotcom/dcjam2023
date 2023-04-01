@@ -172,7 +172,7 @@ export default class DungeonRenderer {
       if (cell.ceiling) this.drawImage(cell.ceiling, "ceiling", pos.dx, pos.dz);
       if (cell.floor) this.drawImage(cell.floor, "floor", pos.dx, pos.dz);
 
-      // TODO object?
+      if (cell.object) this.drawImage(cell.object, "object", pos.dx, pos.dz);
     }
 
     // for now just draw black boxes at the side lol

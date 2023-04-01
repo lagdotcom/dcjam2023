@@ -54,6 +54,10 @@ class GCMapConverter {
     this.textures = new Map();
   }
 
+  tile(x: number, y: number) {
+    return this.grid.getOrDefault({ x: x, y: y });
+  }
+
   convert(j: GCMap, region = 0, floor = 0) {
     if (!(region in j.regions)) throw new Error(`No such region: ${region}`);
     const r = j.regions[region];
@@ -80,31 +84,17 @@ class GCMapConverter {
           : f.tiles.bounds.height - (row.y - f.tiles.bounds.y0) - 1;
 
       for (const tile of row.tdata) {
-        const mt = this.grid.getOrDefault({ x, y });
+        const mt = this.tile(x, y);
         if (tile.t) mt.floor = this.getTexture(tile.tc);
 
         // TODO different ceiling textures?
         if (tile.c) mt.ceiling = this.getTexture(0);
 
         if (tile.b)
-          this.setEdge(
-            tile.b,
-            tile.bc,
-            mt,
-            Dir.S,
-            this.grid.getOrDefault({ x, y: y + 1 }),
-            Dir.N
-          );
+          this.setEdge(tile.b, tile.bc, mt, Dir.S, this.tile(x, y + 1), Dir.N);
 
         if (tile.r)
-          this.setEdge(
-            tile.r,
-            tile.rc,
-            mt,
-            Dir.E,
-            this.grid.getOrDefault({ x: x + 1, y: y }),
-            Dir.W
-          );
+          this.setEdge(tile.r, tile.rc, mt, Dir.E, this.tile(x + 1, y), Dir.W);
 
         x++;
       }
@@ -169,13 +159,17 @@ class GCMapConverter {
         return;
 
       case "#TAG": {
-        const t = this.grid.getOrDefault({ x, y });
+        const t = this.tile(x, y);
         for (const tag of arg.split(",")) t.tags.push(tag);
         break;
       }
 
       case "#SCRIPT":
         for (const id of arg.split(",")) this.scripts.push(getResourceURL(id));
+        break;
+
+      case "#OBJECT":
+        this.tile(x, y).object = this.eval(arg);
         break;
 
       default:
