@@ -1,3 +1,5 @@
+import Item, { ItemSlot } from "./Item";
+
 export type AttackableStat =
   | "hp"
   | "sp"
@@ -15,6 +17,8 @@ export default interface Combatant {
   camaraderie: number;
   spirits: number;
 
+  dr: number;
+  equipment: Map<ItemSlot, Item>;
   attacksInARow: number;
   lastAction?: string;
 }

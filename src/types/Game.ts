@@ -1,19 +1,11 @@
 import Combatant from "./Combatant";
+import { GameEventListener } from "./events";
 
 export type DamageType = "hp" | "camaraderie" | "determination";
 
-export interface GameEffect {
+export interface GameEffect extends Partial<GameEventListener> {
   name: string;
   duration: number;
-
-  onCalculateDamage?: (e: {
-    attacker: Combatant;
-    target: Combatant;
-    amount: number;
-    type: DamageType;
-  }) => void;
-
-  onCalculateDR?: (e: { who: Combatant; dr: number }) => void;
 }
 
 export default interface Game {

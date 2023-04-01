@@ -853,6 +853,14 @@
       this.hp = this.maxHp;
       this.sp = Math.min(maxSp, spirits);
       this.attacksInARow = 0;
+      this.equipment = /* @__PURE__ */ new Map();
+    }
+    get dr() {
+      let value = 0;
+      for (const item of this.equipment.values())
+        if (item == null ? void 0 : item.dr)
+          value += item.dr;
+      return value;
     }
   };
 
@@ -1613,6 +1621,7 @@
       this.scripting = new EngineScripting(this);
       this.log = [];
       this.showLog = false;
+      this.effects = [];
       this.visited = /* @__PURE__ */ new Map();
       this.walls = /* @__PURE__ */ new Map();
       this.worldVisited = /* @__PURE__ */ new Set();
@@ -1814,6 +1823,40 @@
       this.log.push(message);
       this.showLog = true;
       this.draw();
+    }
+    getHandlers(name) {
+      const handlers = [];
+      for (const effect of this.effects) {
+        const handler = effect[name];
+        if (handler)
+          handlers.push(handler);
+      }
+      return handlers;
+    }
+    fire(name, e) {
+      const handlers = this.getHandlers(name);
+      for (const handler of handlers)
+        handler(e);
+      return e;
+    }
+    addEffect(effect) {
+      this.effects.push(effect);
+    }
+    applyDamage(attacker, targets, amount, type) {
+      for (const target of targets) {
+        const damage = this.fire("onCalculateDamage", {
+          attacker,
+          target,
+          amount,
+          type
+        });
+        const resist = type === "hp" ? this.fire("onCalculateDR", { who: target, dr: target.dr }).dr : 0;
+        const deal = Math.floor(damage.amount) - Math.floor(resist);
+        if (deal > 0) {
+          target[type] -= deal;
+          this.draw();
+        }
+      }
     }
   };
 

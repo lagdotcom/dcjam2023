@@ -1,7 +1,10 @@
+import Game, { DamageType, GameEffect } from "./types/Game";
+import { GameEventListener, GameEventName, GameEvents } from "./types/events";
 import { WallTag, wallToTag } from "./tools/wallTags";
 import { XYTag, xyToTag } from "./tools/xyTags";
 import { move, rotate, xy } from "./tools/geometry";
 
+import Combatant from "./types/Combatant";
 import Dir from "./types/Dir";
 import DungeonRenderer from "./DungeonRenderer";
 import EngineScripting from "./EngineScripting";
@@ -28,9 +31,10 @@ interface RenderSetup {
   stats: StatsRenderer;
 }
 
-export default class Engine {
+export default class Engine implements Game {
   ctx: CanvasRenderingContext2D;
   drawSoon: Soon;
+  effects: GameEffect[];
   facing: Dir;
   log: string[];
   party: Player[];
@@ -57,6 +61,7 @@ export default class Engine {
     this.scripting = new EngineScripting(this);
     this.log = [];
     this.showLog = false;
+    this.effects = [];
     this.visited = new Map();
     this.walls = new Map();
     this.worldVisited = new Set();
@@ -304,5 +309,55 @@ export default class Engine {
     this.log.push(message);
     this.showLog = true;
     this.draw();
+  }
+
+  getHandlers<T extends GameEventName>(name: T) {
+    const handlers: GameEventListener[T][] = [];
+
+    for (const effect of this.effects) {
+      const handler = effect[name];
+      if (handler) handlers.push(handler);
+    }
+
+    return handlers;
+  }
+
+  fire<T extends GameEventName>(name: T, e: GameEvents[T]) {
+    const handlers = this.getHandlers(name);
+    for (const handler of handlers) handler(e);
+    return e;
+  }
+
+  addEffect(effect: GameEffect): void {
+    this.effects.push(effect);
+  }
+
+  applyDamage(
+    attacker: Combatant,
+    targets: Combatant[],
+    amount: number,
+    type: DamageType
+  ): void {
+    for (const target of targets) {
+      const damage = this.fire("onCalculateDamage", {
+        attacker,
+        target,
+        amount,
+        type,
+      });
+
+      const resist =
+        type === "hp"
+          ? this.fire("onCalculateDR", { who: target, dr: target.dr }).dr
+          : 0;
+
+      const deal = Math.floor(damage.amount) - Math.floor(resist);
+      if (deal > 0) {
+        target[type] -= deal;
+        this.draw();
+
+        // TODO dying etc.
+      }
+    }
   }
 }
