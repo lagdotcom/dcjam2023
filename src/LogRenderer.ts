@@ -6,24 +6,27 @@ export default class LogRenderer {
   constructor(
     public g: Engine,
     public position = xy(304, 0),
-    public size = xy(144, 160)
+    public size = xy(144, 160),
+    public padding = xy(2, 2)
   ) {}
 
   render() {
+    const { padding, position, size } = this;
     const { ctx, log } = this.g;
 
     ctx.fillStyle = "rgba(0,0,0,0.4)";
-    ctx.fillRect(this.position.x, this.position.y, this.size.x, this.size.y);
+    ctx.fillRect(position.x, position.y, size.x, size.y);
 
-    const textX = this.position.x + 3;
-    let textY = this.position.y + this.size.y - 3;
+    const width = size.x - padding.x * 2;
+    const textX = position.x + padding.x;
+    let textY = position.y + size.y - padding.y;
 
     ctx.textAlign = "left";
     ctx.textBaseline = "bottom";
     ctx.fillStyle = "white";
 
     for (let i = log.length - 1; i >= 0; i--) {
-      const { lines, measurement } = textWrap(ctx, log[i], this.size.x - 6);
+      const { lines, measurement } = textWrap(ctx, log[i], width);
 
       for (const line of lines.reverse()) {
         ctx.fillText(line, textX, textY);
@@ -33,7 +36,7 @@ export default class LogRenderer {
             measurement.actualBoundingBoxDescent
         );
 
-        if (textY < this.position.y) return;
+        if (textY < position.y) return;
       }
     }
   }
