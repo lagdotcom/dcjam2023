@@ -1,9 +1,7 @@
-function SlamShutEnter(oldX: number, oldY: number): bool
+function SlamShutEnter(oldX: number, oldY: number)
   if tileHasTag(oldX, oldY, 'SlamShutBefore') then
     message('The door slams shut behind you!')
-    return true
   end
-  return false
 end
 
 onTagEnter('SlamShut', SlamShutEnter)

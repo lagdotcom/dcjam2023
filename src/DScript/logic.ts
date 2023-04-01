@@ -157,7 +157,7 @@ function convertToFunction(stmt: FunctionDefinition): DScriptFunction {
     _: "function",
     name: stmt.name.value,
     args: stmt.args,
-    type: stmt.type,
+    type: stmt.type === null ? undefined : stmt.type,
     value: stmt.program,
   };
 }

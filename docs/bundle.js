@@ -415,7 +415,7 @@
       _: "function",
       name: stmt.name.value,
       args: stmt.args,
-      type: stmt.type,
+      type: stmt.type === null ? void 0 : stmt.type,
       value: stmt.program
     };
   }
@@ -745,12 +745,14 @@
         tileSize * (size.y * 2 + 1)
       );
       for (let y = -size.y; y <= size.y; y++) {
+        const ty = y + position.y;
         dx = startX - tileSize;
         for (let x = -size.x; x <= size.x; x++) {
+          const tx = x + position.x;
           dx += tileSize;
-          if (!this.g.isVisited(x + position.x, y + position.y))
+          if (!this.g.isVisited(tx, ty))
             continue;
-          const cell = this.g.getCell(x + position.x, y + position.y);
+          const cell = this.g.getCell(tx, ty);
           const north = cell == null ? void 0 : cell.sides[Dir_default.N];
           const east = cell == null ? void 0 : cell.sides[Dir_default.E];
           const south = cell == null ? void 0 : cell.sides[Dir_default.S];
@@ -1008,7 +1010,7 @@
   var eotb_default2 = "./eotb-GWJWNFKR.json";
 
   // res/map.dscript
-  var map_default = "./map-HIZ5XALF.dscript";
+  var map_default = "./map-4A4FTRKP.dscript";
 
   // res/atlas/minma1.png
   var minma1_default = "./minma1-VI5UXWCY.png";

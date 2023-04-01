@@ -20,7 +20,7 @@ export interface FunctionDefinition {
   _: "function";
   name: Name;
   args: FunctionArg[];
-  type?: FunctionArg["type"];
+  type: FunctionArg["type"] | null;
   program: Program;
 }
 
@@ -35,12 +35,12 @@ export interface IfStatement {
   _: "if";
   expr: Expression;
   positive: Program;
-  negative?: Program;
+  negative: Program | null;
 }
 
 export interface ReturnStatement {
   _: "return";
-  expr?: Expression;
+  expr: Expression | null;
 }
 
 export type AssignmentOp = "=" | "+=" | "-=" | "*=" | "/=" | "^=";
