@@ -1736,7 +1736,8 @@
       this.render = () => {
         const { ctx, renderSetup } = this;
         const { width, height } = this.canvas;
-        ctx.clearRect(0, 0, width, height);
+        ctx.fillStyle = "black";
+        ctx.fillRect(0, 0, width, height);
         if (!renderSetup) {
           const { draw } = withTextStyle(ctx, "center", "middle", "white");
           draw(
