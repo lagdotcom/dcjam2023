@@ -1,3 +1,4 @@
+import Colours from "./Colours";
 import Engine from "./Engine";
 import withTextStyle from "./withTextStyle";
 import { xy } from "./tools/geometry";
@@ -50,7 +51,7 @@ export default class MinimapRenderer {
     let dx = 0;
     let dy = startY;
 
-    ctx.fillStyle = "rgb(64,64,64)";
+    ctx.fillStyle = Colours.background;
     ctx.fillRect(
       startX,
       startY,

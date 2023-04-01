@@ -1,3 +1,4 @@
+import Colours from "./Colours";
 import Engine from "./Engine";
 import textWrap from "./tools/textWrap";
 import withTextStyle from "./withTextStyle";
@@ -15,7 +16,7 @@ export default class LogRenderer {
     const { padding, position, size } = this;
     const { ctx, log } = this.g;
 
-    ctx.fillStyle = "rgba(0,0,0,0.4)";
+    ctx.fillStyle = Colours.logShadow;
     ctx.fillRect(position.x, position.y, size.x, size.y);
 
     const width = size.x - padding.x * 2;

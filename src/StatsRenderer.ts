@@ -1,11 +1,9 @@
+import Colours from "./Colours";
 import Engine from "./Engine";
 import Player from "./Player";
 import XY from "./types/XY";
 import withTextStyle from "./withTextStyle";
 import { xy } from "./tools/geometry";
-
-const hpColour = "rgb(223,113,38)";
-const spColour = "rgb(99,155,255)";
 
 const boxWidth = 62;
 const boxHeight = 30;
@@ -15,8 +13,6 @@ const coordinates: XY[] = [
   xy(145, 225),
   xy(225, 225),
 ];
-
-const background = "rgb(64,64,64)";
 
 export default class StatsRenderer {
   constructor(public g: Engine) {}
@@ -32,14 +28,14 @@ export default class StatsRenderer {
   renderPC({ x, y }: XY, pc: Player) {
     const { ctx } = this.g;
 
-    ctx.fillStyle = background;
+    ctx.fillStyle = Colours.background;
     ctx.fillRect(x, y, boxWidth, boxHeight);
 
     const { draw } = withTextStyle(ctx, "left", "middle", "white");
     draw(pc.name, x + 3, y + 10, boxWidth - 6);
 
-    this.renderBar(x + 3, y + 18, pc.hp, pc.maxHp, hpColour);
-    this.renderBar(x + 3, y + 24, pc.sp, pc.maxSp, spColour);
+    this.renderBar(x + 3, y + 18, pc.hp, pc.maxHp, Colours.hp);
+    this.renderBar(x + 3, y + 24, pc.sp, pc.maxSp, Colours.sp);
   }
 
   renderBar(
@@ -55,7 +51,7 @@ export default class StatsRenderer {
     this.g.ctx.fillStyle = colour;
     this.g.ctx.fillRect(x, y, width, 3);
 
-    this.g.ctx.fillStyle = background;
+    this.g.ctx.fillStyle = Colours.background;
     this.g.ctx.fillRect(x, y, 1, 1);
     this.g.ctx.fillRect(x, y + 2, 1, 1);
     this.g.ctx.fillRect(x + width - 1, y, 1, 1);

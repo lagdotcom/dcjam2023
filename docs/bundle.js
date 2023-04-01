@@ -692,6 +692,15 @@
     }
   };
 
+  // src/Colours.ts
+  var Colours = {
+    background: "rgb(64,64,64)",
+    logShadow: "rgba(0,0,0,0.4)",
+    hp: "rgb(223,113,38)",
+    sp: "rgb(99,155,255)"
+  };
+  var Colours_default = Colours;
+
   // src/tools/textWrap.ts
   function textWrap(source, width, measure) {
     const measurement = measure(source);
@@ -740,7 +749,7 @@
     render() {
       const { padding, position, size } = this;
       const { ctx, log } = this.g;
-      ctx.fillStyle = "rgba(0,0,0,0.4)";
+      ctx.fillStyle = Colours_default.logShadow;
       ctx.fillRect(position.x, position.y, size.x, size.y);
       const width = size.x - padding.x * 2;
       const textX = position.x + padding.x;
@@ -792,7 +801,7 @@
       const startY = height - offset.y;
       let dx = 0;
       let dy = startY;
-      ctx.fillStyle = "rgb(64,64,64)";
+      ctx.fillStyle = Colours_default.background;
       ctx.fillRect(
         startX,
         startY,
@@ -944,8 +953,6 @@
   };
 
   // src/StatsRenderer.ts
-  var hpColour = "rgb(223,113,38)";
-  var spColour = "rgb(99,155,255)";
   var boxWidth = 62;
   var boxHeight = 30;
   var coordinates = [
@@ -954,7 +961,6 @@
     xy(145, 225),
     xy(225, 225)
   ];
-  var background = "rgb(64,64,64)";
   var StatsRenderer = class {
     constructor(g) {
       this.g = g;
@@ -968,19 +974,19 @@
     }
     renderPC({ x, y }, pc) {
       const { ctx } = this.g;
-      ctx.fillStyle = background;
+      ctx.fillStyle = Colours_default.background;
       ctx.fillRect(x, y, boxWidth, boxHeight);
       const { draw } = withTextStyle(ctx, "left", "middle", "white");
       draw(pc.name, x + 3, y + 10, boxWidth - 6);
-      this.renderBar(x + 3, y + 18, pc.hp, pc.maxHp, hpColour);
-      this.renderBar(x + 3, y + 24, pc.sp, pc.maxSp, spColour);
+      this.renderBar(x + 3, y + 18, pc.hp, pc.maxHp, Colours_default.hp);
+      this.renderBar(x + 3, y + 24, pc.sp, pc.maxSp, Colours_default.sp);
     }
     renderBar(x, y, current, max, colour) {
       const maxWidth = boxWidth - 6;
       const width = maxWidth * Math.max(0, Math.min(1, current / max));
       this.g.ctx.fillStyle = colour;
       this.g.ctx.fillRect(x, y, width, 3);
-      this.g.ctx.fillStyle = background;
+      this.g.ctx.fillStyle = Colours_default.background;
       this.g.ctx.fillRect(x, y, 1, 1);
       this.g.ctx.fillRect(x, y + 2, 1, 1);
       this.g.ctx.fillRect(x + width - 1, y, 1, 1);
