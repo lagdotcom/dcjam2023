@@ -281,12 +281,7 @@
       if (result)
         this.drawFront(result, x);
     }
-    cls() {
-      this.g.ctx.fillStyle = "black";
-      this.g.ctx.fillRect(0, 0, this.g.canvas.width, this.g.canvas.height);
-    }
     render() {
-      this.cls();
       const rightSide = rotate(this.g.facing, 1);
       const leftSide = rotate(this.g.facing, 3);
       const tiles = getFieldOfView(
@@ -844,10 +839,18 @@
       this.images = {};
       this.maps = {};
       this.scripts = {};
+      this.loaded = 0;
+      this.loading = 0;
     }
     start(src, promise) {
+      this.loading++;
       this.promises.set(src, promise);
-      this.loaders.push(promise);
+      this.loaders.push(
+        promise.then((arg) => {
+          this.loaded++;
+          return arg;
+        })
+      );
       return promise;
     }
     loadImage(src) {
@@ -1563,6 +1566,14 @@
         const { width, height } = this.canvas;
         ctx.clearRect(0, 0, width, height);
         if (!renderSetup) {
+          ctx.fillStyle = "white";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillText(
+            `Loading: ${this.res.loaded}/${this.res.loading}`,
+            width / 2,
+            height / 2
+          );
           this.draw();
           return;
         }

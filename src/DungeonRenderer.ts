@@ -133,14 +133,7 @@ export default class DungeonRenderer {
     if (result) this.drawFront(result, x);
   }
 
-  cls() {
-    this.g.ctx.fillStyle = "black";
-    this.g.ctx.fillRect(0, 0, this.g.canvas.width, this.g.canvas.height);
-  }
-
   render() {
-    this.cls();
-
     const rightSide = rotate(this.g.facing, 1);
     const leftSide = rotate(this.g.facing, 3);
 

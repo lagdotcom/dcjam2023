@@ -8,6 +8,8 @@ export default class ResourceManager {
   maps: Record<string, GCMap>;
   images: Record<string, HTMLImageElement>;
   scripts: Record<string, string>;
+  loaded: number;
+  loading: number;
 
   constructor() {
     this.promises = new Map();
@@ -16,11 +18,20 @@ export default class ResourceManager {
     this.images = {};
     this.maps = {};
     this.scripts = {};
+    this.loaded = 0;
+    this.loading = 0;
   }
 
   private start<T>(src: string, promise: Promise<T>) {
+    this.loading++;
+
     this.promises.set(src, promise);
-    this.loaders.push(promise);
+    this.loaders.push(
+      promise.then((arg) => {
+        this.loaded++;
+        return arg;
+      })
+    );
     return promise;
   }
 
