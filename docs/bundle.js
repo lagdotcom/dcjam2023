@@ -332,6 +332,10 @@
   };
 
   // src/DScript/logic.ts
+  function readOnly(value) {
+    value.readOnly = true;
+    return value;
+  }
   function bool(value) {
     return { _: "bool", value };
   }
@@ -425,6 +429,7 @@
       _: "function",
       name: stmt.name.value,
       args: stmt.args,
+      readOnly: true,
       type: stmt.type === null ? void 0 : stmt.type,
       value: stmt.program
     };
@@ -581,6 +586,8 @@
     }
     if (left._ !== right._)
       throw new Error(`Cannot assign ${right._} to ${left._}`);
+    if (left.readOnly)
+      throw new Error(`Cannot assign to ${stmt.name.value}, it is read only`);
     if (stmt.op === "=")
       left.value = right.value;
     else
@@ -594,7 +601,14 @@
       this.name = "<Host>";
     }
     addNative(name, args, type, value) {
-      this.env.set(name, { _: "native", name, args, type, value });
+      this.env.set(name, {
+        _: "native",
+        name,
+        args,
+        readOnly: true,
+        type,
+        value
+      });
     }
   };
 
@@ -603,6 +617,10 @@
     constructor(g) {
       super();
       this.g = g;
+      this.env.set("NORTH", readOnly(num(Dir_default.N)));
+      this.env.set("EAST", readOnly(num(Dir_default.E)));
+      this.env.set("SOUTH", readOnly(num(Dir_default.S)));
+      this.env.set("WEST", readOnly(num(Dir_default.W)));
       this.onTagEnter = /* @__PURE__ */ new Map();
       this.addNative(
         "debug",
@@ -643,8 +661,9 @@
       );
     }
     run(program) {
-      this.env.set("partyX", num(this.g.position.x));
-      this.env.set("partyY", num(this.g.position.y));
+      this.env.set("partyX", readOnly(num(this.g.position.x)));
+      this.env.set("partyY", readOnly(num(this.g.position.y)));
+      this.env.set("partyDir", readOnly(num(this.g.facing)));
       return run(this, program);
     }
     runCallback(fn, ...args) {
@@ -1231,7 +1250,7 @@
     "xor"
   ];
   var isKeyword = (w) => keywords.includes(w);
-  var punctuation = /* @__PURE__ */ new Set(["(", ")", ":", ","]);
+  var punctuation = new Set("():,!<>=+-*/^");
   var isPunctuation = (w) => punctuation.has(w);
   var commentChar = ";";
   var Lexer = class {
@@ -1487,7 +1506,6 @@
       this.p = p;
       this.token = token;
       this.src = src;
-      console.log("ParseError", { p, token, src });
       const col = p.table[p.current];
       const expected = col.states.map((s) => {
         const ns = s.rule.symbols[s.dot];

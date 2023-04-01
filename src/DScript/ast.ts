@@ -83,14 +83,17 @@ export type Literal = LiteralNumber | LiteralBoolean | LiteralString;
 export interface LiteralNumber {
   _: "number";
   value: number;
+  readOnly?: boolean;
 }
 export interface LiteralBoolean {
   _: "bool";
   value: boolean;
+  readOnly?: boolean;
 }
 export interface LiteralString {
   _: "string";
   value: string;
+  readOnly?: boolean;
 }
 
 export interface Name {

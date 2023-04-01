@@ -20,7 +20,6 @@ function makeEOFToken(p: NParser, src: string): Token {
 class ParseError extends Error {
   constructor(public p: NParser, public token: Token, public src: string) {
     super("Syntax error");
-    console.log("ParseError", { p, token, src });
 
     const col = p.table[p.current];
     // TODO improve this?

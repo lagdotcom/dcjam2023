@@ -19,6 +19,7 @@ export interface NativeFunction {
   _: "native";
   name: string;
   args: FunctionArgType[];
+  readOnly: boolean;
   type?: FunctionArgType;
   value: (...args: unknown[]) => unknown;
 }
@@ -27,6 +28,7 @@ export interface DScriptFunction {
   _: "function";
   name: string;
   args: FunctionArg[];
+  readOnly: boolean;
   type?: FunctionArgType;
   value: Program;
 }
@@ -44,6 +46,11 @@ export interface Scope {
   returned?: RuntimeValue;
   name: string;
   env: Env;
+}
+
+export function readOnly(value: Literal): Literal {
+  value.readOnly = true;
+  return value;
 }
 
 export function bool(value: boolean): LiteralBoolean {
@@ -157,6 +164,7 @@ function convertToFunction(stmt: FunctionDefinition): DScriptFunction {
     _: "function",
     name: stmt.name.value,
     args: stmt.args,
+    readOnly: true,
     type: stmt.type === null ? undefined : stmt.type,
     value: stmt.program,
   };
@@ -358,6 +366,9 @@ function assignment(scope: Scope, stmt: Assignment) {
 
   if (left._ !== right._)
     throw new Error(`Cannot assign ${right._} to ${left._}`);
+
+  if (left.readOnly)
+    throw new Error(`Cannot assign to ${stmt.name.value}, it is read only`);
 
   if (stmt.op === "=") left.value = right.value;
   else left.value = binary(opMapping[stmt.op], left, right).value;

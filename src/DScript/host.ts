@@ -17,6 +17,13 @@ export default class DScriptHost {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     value: (...args: any[]) => unknown
   ) {
-    this.env.set(name, { _: "native", name, args, type, value });
+    this.env.set(name, {
+      _: "native",
+      name,
+      args,
+      readOnly: true,
+      type,
+      value,
+    });
   }
 }
