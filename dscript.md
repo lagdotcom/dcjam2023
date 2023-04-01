@@ -29,10 +29,17 @@ All the boring normal stuff:
 
 - `NORTH`/`EAST`/`SOUTH`/`WEST` symbolic constants for directions
 - `partyX`/`partyY`/`partyDir` constants for party position/facing
+- `pcIndex` the PC who did something recently, some calls set it
+- `damagePC(number, stat, amount)`
 - `debug(any)` prints to console
+- `getPCName(number): string`
+- `isSolid(x: number, y: number, dir): bool` checks if the wall is solid
 - `makePartyFace(dir: number)`
 - `message(string)` adds in-game message
 - `movePartyToTag(tag: string)` teleports party
 - `onTagEnter(tag: string, function)` sets up an enter trigger callback
+- `onTagInteract(tag: string, function)` sets up an interact callback
 - `random(max: number): number` generates a random integer below `max`
+- `skillCheck(stat, difficulty): bool` makes a PC roll a d10 skill check, also sets `pcIndex`
 - `tileHasTag(x: number, y: number, tag: string): bool`
+- `unlock(x: number, y: number, dir)` makes a wall not solid

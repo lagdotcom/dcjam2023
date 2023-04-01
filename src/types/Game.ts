@@ -1,7 +1,6 @@
-import Combatant from "./Combatant";
-import { GameEventListener } from "./events";
+import Combatant, { AttackableStat } from "./Combatant";
 
-export type DamageType = "hp" | "camaraderie" | "determination";
+import { GameEventListener } from "./events";
 
 export interface GameEffect extends Partial<GameEventListener> {
   name: string;
@@ -16,6 +15,6 @@ export default interface Game {
     attacker: Combatant,
     targets: Combatant[],
     amount: number,
-    type: DamageType
+    type: AttackableStat
   ): void;
 }

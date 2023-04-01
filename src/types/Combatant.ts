@@ -1,11 +1,13 @@
 import Item, { ItemSlot } from "./Item";
 
-export type AttackableStat =
-  | "hp"
-  | "sp"
-  | "determination"
-  | "camaraderie"
-  | "spirits";
+export const AttackableStats = [
+  "hp",
+  "sp",
+  "determination",
+  "camaraderie",
+  "spirits",
+] as const;
+export type AttackableStat = (typeof AttackableStats)[number];
 
 export default interface Combatant {
   name: string;
@@ -17,6 +19,7 @@ export default interface Combatant {
   camaraderie: number;
   spirits: number;
 
+  alive: boolean;
   dr: number;
   equipment: Map<ItemSlot, Item>;
   attacksInARow: number;

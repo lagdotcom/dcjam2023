@@ -54,7 +54,29 @@ const keywords = [
 ];
 const isKeyword = (w: string) => keywords.includes(w);
 
-const punctuation = new Set("():,!<>=+-*/^");
+const punctuation = new Set([
+  "=",
+  "+=",
+  "-=",
+  "*=",
+  "/=",
+  "^=",
+  "(",
+  ")",
+  ":",
+  ",",
+  ">",
+  ">=",
+  "<",
+  "<=",
+  "==",
+  "!=",
+  "+",
+  "-",
+  "*",
+  "/",
+  "^",
+]);
 const isPunctuation = (w: string) => punctuation.has(w);
 
 const commentChar = ";";

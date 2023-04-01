@@ -1,12 +1,11 @@
-import Combatant from "./Combatant";
-import { DamageType } from "./Game";
+import Combatant, { AttackableStat } from "./Combatant";
 
 export type GameEvents = {
   onCalculateDamage: {
     attacker: Combatant;
     target: Combatant;
     amount: number;
-    type: DamageType;
+    type: AttackableStat;
   };
 
   onCalculateDR: { who: Combatant; dr: number };

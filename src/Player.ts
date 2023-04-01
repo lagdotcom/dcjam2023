@@ -34,6 +34,10 @@ export default class Player implements Combatant {
     this.equipment = new Map();
   }
 
+  get alive() {
+    return this.hp > 0;
+  }
+
   get dr() {
     let value = 0;
     for (const item of this.equipment.values()) if (item?.dr) value += item.dr;

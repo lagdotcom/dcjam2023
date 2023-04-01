@@ -19,6 +19,7 @@ interface EdgeEntry {
 
 const wall: EdgeSide = { wall: true, solid: true };
 const door: EdgeSide = { decal: "Door", wall: true };
+const locked: EdgeSide = { decal: "Door", wall: true, solid: true };
 const invisible: EdgeSide = { solid: true };
 const fake: EdgeSide = { wall: true };
 
@@ -27,6 +28,7 @@ const defaultEdge: EdgeEntry = { main: wall, opposite: wall };
 const EdgeDetails: Partial<Record<Edge, EdgeEntry>> = {
   [Edge.Door]: { main: door, opposite: door },
   [Edge.Door_Box]: { main: door, opposite: door },
+  [Edge.Door_Locked]: { main: locked, opposite: locked },
   [Edge.Door_OneWayRD]: { main: door, opposite: wall },
   [Edge.Door_OneWayLU]: { main: wall, opposite: door },
   [Edge.Wall_Secret]: { main: invisible, opposite: invisible },

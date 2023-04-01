@@ -603,10 +603,30 @@
     }
   };
 
+  // src/types/Combatant.ts
+  var AttackableStats = [
+    "hp",
+    "sp",
+    "determination",
+    "camaraderie",
+    "spirits"
+  ];
+
+  // src/tools/combatants.ts
+  function isStat(s) {
+    return AttackableStats.includes(s);
+  }
+
   // src/tools/random.ts
   function random(max, min = 0) {
     const diff = max - min;
     return min + Math.floor(Math.random() * diff);
+  }
+
+  // src/tools/oneOf.ts
+  function oneOf(items) {
+    const index = random(items.length);
+    return items[index];
   }
 
   // src/EngineScripting.ts
@@ -619,15 +639,63 @@
       this.env.set("SOUTH", num(Dir_default.S, true));
       this.env.set("WEST", num(Dir_default.W, true));
       this.onTagEnter = /* @__PURE__ */ new Map();
+      this.onTagInteract = /* @__PURE__ */ new Map();
+      const getCell = (x, y) => {
+        const cell = this.g.getCell(x, y);
+        if (!cell)
+          throw new Error(`Invalid cell: ${x},${y}`);
+        return cell;
+      };
+      const getDir = (dir) => {
+        if (dir < 0 || dir > 3)
+          throw new Error(`Invalid dir: ${dir}`);
+        return dir;
+      };
+      const getPC = (index) => {
+        if (index < 0 || index > 4)
+          throw new Error(`Tried to get PC ${index}`);
+        return this.g.party[index];
+      };
+      const getStat = (stat) => {
+        if (!isStat(stat))
+          throw new Error(`Invalid stat: ${stat}`);
+        return stat;
+      };
+      this.addNative(
+        "damagePC",
+        ["number", "string", "number"],
+        void 0,
+        (index, type, amount) => {
+          const pc = getPC(index);
+          const stat = getStat(type);
+          this.g.applyDamage(pc, [pc], amount, stat);
+        }
+      );
       this.addNative(
         "debug",
         ["any"],
         void 0,
         (thing) => console.log("[debug]", thing)
       );
-      this.addNative("makePartyFace", ["number"], void 0, (dir) => {
-        if (dir < Dir_default.N || dir > Dir_default.W)
-          throw new Error(`Tried to face direction: ${dir}`);
+      this.addNative(
+        "getPCName",
+        ["number"],
+        "string",
+        (index) => getPC(index).name
+      );
+      this.addNative(
+        "isSolid",
+        ["number", "number", "number"],
+        "bool",
+        (x, y, d) => {
+          var _a, _b;
+          const dir = getDir(d);
+          const cell = getCell(x, y);
+          return (_b = (_a = cell.sides[dir]) == null ? void 0 : _a.solid) != null ? _b : false;
+        }
+      );
+      this.addNative("makePartyFace", ["number"], void 0, (d) => {
+        const dir = getDir(d);
         this.g.facing = dir;
         this.g.draw();
       });
@@ -646,6 +714,27 @@
         }
       });
       this.addNative(
+        "skillCheck",
+        ["string", "number"],
+        "bool",
+        (type, dc) => {
+          const stat = getStat(type);
+          const pc = oneOf(this.g.party.filter((pc2) => pc2.alive));
+          const index = this.g.party.indexOf(pc);
+          this.env.set("pcIndex", num(index, true));
+          const roll = random(10, 1) + pc[stat];
+          return roll >= dc;
+        }
+      );
+      this.addNative(
+        "onTagInteract",
+        ["string", "function"],
+        void 0,
+        (tag, cb) => {
+          this.onTagInteract.set(tag, cb);
+        }
+      );
+      this.addNative(
         "onTagEnter",
         ["string", "function"],
         void 0,
@@ -658,19 +747,34 @@
         "tileHasTag",
         ["number", "number", "string"],
         "bool",
-        (x, y, tag) => {
-          const cell = this.g.getCell(x, y);
-          return cell == null ? void 0 : cell.tags.includes(tag);
+        (x, y, tag) => getCell(x, y).tags.includes(tag)
+      );
+      this.addNative(
+        "unlock",
+        ["number", "number", "number"],
+        void 0,
+        (x, y, d) => {
+          const dir = getDir(d);
+          const cell = getCell(x, y);
+          const side = cell.sides[dir];
+          if (side) {
+            side.solid = false;
+            const otherSide = move({ x, y }, dir);
+            const other = getCell(otherSide.x, otherSide.y);
+            const opposite = other.sides[rotate(dir, 2)];
+            if (opposite)
+              opposite.solid = false;
+          }
         }
       );
     }
     run(program) {
-      this.env.set("partyX", num(this.g.position.x, true));
-      this.env.set("partyY", num(this.g.position.y, true));
-      this.env.set("partyDir", num(this.g.facing, true));
       return run(this, program);
     }
     runCallback(fn, ...args) {
+      this.env.set("partyX", num(this.g.position.x, true));
+      this.env.set("partyY", num(this.g.position.y, true));
+      this.env.set("partyDir", num(this.g.facing, true));
       if (fn._ === "function")
         return callFunction(this, fn, args.slice(0, fn.args.length));
       else
@@ -684,6 +788,16 @@
         const cb = this.onTagEnter.get(tag);
         if (cb)
           this.runCallback(cb, num(oldPos.x), num(oldPos.y));
+      }
+    }
+    onInteract() {
+      const tile = this.g.getCell(this.g.position.x, this.g.position.y);
+      if (!tile)
+        return;
+      for (const tag of tile.tags) {
+        const cb = this.onTagInteract.get(tag);
+        if (cb)
+          this.runCallback(cb);
       }
     }
   };
@@ -854,6 +968,9 @@
       this.sp = Math.min(maxSp, spirits);
       this.attacksInARow = 0;
       this.equipment = /* @__PURE__ */ new Map();
+    }
+    get alive() {
+      return this.hp > 0;
     }
     get dr() {
       let value = 0;
@@ -1088,7 +1205,7 @@
   var eotb_default2 = "./eotb-5KLMJLK4.json";
 
   // res/map.dscript
-  var map_default = "./map-7SR66W54.dscript";
+  var map_default = "./map-HKPF3IHV.dscript";
 
   // res/atlas/minma1.png
   var minma1_default = "./minma1-VI5UXWCY.png";
@@ -1114,12 +1231,14 @@
   // src/convertGridCartographerMap.ts
   var wall = { wall: true, solid: true };
   var door = { decal: "Door", wall: true };
+  var locked = { decal: "Door", wall: true, solid: true };
   var invisible = { solid: true };
   var fake = { wall: true };
   var defaultEdge = { main: wall, opposite: wall };
   var EdgeDetails = {
     [2 /* Door */]: { main: door, opposite: door },
     [33 /* Door_Box */]: { main: door, opposite: door },
+    [3 /* Door_Locked */]: { main: locked, opposite: locked },
     [8 /* Door_OneWayRD */]: { main: door, opposite: wall },
     [5 /* Door_OneWayLU */]: { main: wall, opposite: door },
     [13 /* Wall_Secret */]: { main: invisible, opposite: invisible },
@@ -1296,7 +1415,29 @@
     "xor"
   ];
   var isKeyword = (w) => keywords.includes(w);
-  var punctuation = new Set("():,!<>=+-*/^");
+  var punctuation = /* @__PURE__ */ new Set([
+    "=",
+    "+=",
+    "-=",
+    "*=",
+    "/=",
+    "^=",
+    "(",
+    ")",
+    ":",
+    ",",
+    ">",
+    ">=",
+    "<",
+    "<=",
+    "==",
+    "!=",
+    "+",
+    "-",
+    "*",
+    "/",
+    "^"
+  ]);
   var isPunctuation = (w) => punctuation.has(w);
   var commentChar = ";";
   var Lexer = class {
@@ -1649,6 +1790,9 @@
           e.preventDefault();
           this.showLog = !this.showLog;
           this.draw();
+        } else if (e.code === "Enter" || e.code === "Return") {
+          e.preventDefault();
+          this.scripting.onInteract();
         }
       });
     }
@@ -1849,6 +1993,18 @@
         me.attacksInARow = 0;
       this.draw();
     }
+    endTurn() {
+      for (const c of this.party) {
+        const newSp = c.sp < c.spirits ? c.spirits : c.sp + 1;
+        c.sp = Math.min(newSp, c.maxSp);
+      }
+      for (let i = this.effects.length - 1; i >= 0; i--) {
+        const e = this.effects[i];
+        if (--e.duration < 1)
+          this.effects.splice(i, 1);
+      }
+      this.draw();
+    }
     addEffect(effect) {
       this.effects.push(effect);
     }
@@ -1871,7 +2027,7 @@
   };
 
   // res/map.json
-  var map_default2 = "./map-LXS5BRSX.json";
+  var map_default2 = "./map-K2FGT3OL.json";
 
   // src/index.ts
   function loadEngine(parent) {

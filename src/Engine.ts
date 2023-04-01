@@ -1,10 +1,10 @@
-import Game, { DamageType, GameEffect } from "./types/Game";
+import Combatant, { AttackableStat } from "./types/Combatant";
+import Game, { GameEffect } from "./types/Game";
 import { GameEventListener, GameEventName, GameEvents } from "./types/events";
 import { WallTag, wallToTag } from "./tools/wallTags";
 import { XYTag, xyToTag } from "./tools/xyTags";
 import { move, rotate, xy } from "./tools/geometry";
 
-import Combatant from "./types/Combatant";
 import Dir from "./types/Dir";
 import DungeonRenderer from "./DungeonRenderer";
 import EngineScripting from "./EngineScripting";
@@ -85,6 +85,9 @@ export default class Engine implements Game {
         e.preventDefault();
         this.showLog = !this.showLog;
         this.draw();
+      } else if (e.code === "Enter" || e.code === "Return") {
+        e.preventDefault();
+        this.scripting.onInteract();
       }
     });
   }
@@ -363,7 +366,7 @@ export default class Engine implements Game {
     attacker: Combatant,
     targets: Combatant[],
     amount: number,
-    type: DamageType
+    type: AttackableStat
   ): void {
     for (const target of targets) {
       const damage = this.fire("onCalculateDamage", {
