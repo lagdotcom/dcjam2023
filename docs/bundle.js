@@ -601,6 +601,12 @@
         (thing) => console.log("[debug]", thing)
       );
       this.addNative(
+        "message",
+        ["string"],
+        void 0,
+        (msg) => this.g.addToLog(msg)
+      );
+      this.addNative(
         "onTagEnter",
         ["string", "function"],
         void 0,
@@ -635,6 +641,31 @@
         const cb = this.onTagEnter.get(tag);
         if (cb)
           this.runCallback(cb, num(oldPos.x), num(oldPos.y));
+      }
+    }
+  };
+
+  // src/LogRenderer.ts
+  var LogRenderer = class {
+    constructor(g, position = xy(304, 0), size = xy(144, 160)) {
+      this.g = g;
+      this.position = position;
+      this.size = size;
+    }
+    render() {
+      const { ctx, log } = this.g;
+      const messages = log.slice(-5);
+      ctx.fillStyle = "rgba(0,0,0,0.4)";
+      ctx.fillRect(this.position.x, this.position.y, this.size.x, this.size.y);
+      const textX = this.position.x + 3;
+      let textY = this.position.y + this.size.y - 3;
+      ctx.textAlign = "left";
+      ctx.textBaseline = "bottom";
+      ctx.fillStyle = "white";
+      for (const m of messages) {
+        const draw = ctx.measureText(m);
+        ctx.fillText(m, textX, textY, this.size.x - 6);
+        textY -= draw.actualBoundingBoxAscent + draw.actualBoundingBoxDescent;
       }
     }
   };
@@ -935,7 +966,7 @@
   var eotb_default2 = "./eotb-GWJWNFKR.json";
 
   // res/map.dscript
-  var map_default = "./map-IDDG5SUA.dscript";
+  var map_default = "./map-HIZ5XALF.dscript";
 
   // res/atlas/minma1.png
   var minma1_default = "./minma1-VI5UXWCY.png";
@@ -1456,6 +1487,8 @@
         renderSetup.dungeon.render();
         renderSetup.stats.render();
         renderSetup.minimap.render();
+        if (this.showLog)
+          renderSetup.log.render();
       };
       this.ctx = getCanvasContext(canvas, "2d");
       this.facing = Dir_default.N;
@@ -1464,6 +1497,8 @@
       this.res = new ResourceManager();
       this.drawSoon = new Soon(this.render);
       this.scripting = new EngineScripting(this);
+      this.log = [];
+      this.showLog = false;
       this.party = [
         new Player("A"),
         new Player("B"),
@@ -1471,14 +1506,19 @@
         new Player("D")
       ];
       canvas.addEventListener("keyup", (e) => {
-        if (e.key === "ArrowLeft")
+        if (e.code === "ArrowLeft")
           this.turn(-1);
-        else if (e.key === "ArrowRight")
+        else if (e.code === "ArrowRight")
           this.turn(1);
-        else if (e.key === "ArrowUp")
+        else if (e.code === "ArrowUp")
           this.move(this.facing);
-        else if (e.key === "ArrowDown")
+        else if (e.code === "ArrowDown")
           this.move(rotate(this.facing, 2));
+        else if (e.code === "Space") {
+          e.preventDefault();
+          this.showLog = !this.showLog;
+          this.draw();
+        }
       });
     }
     loadWorld(w) {
@@ -1495,8 +1535,9 @@
         const dungeon = new DungeonRenderer(this, atlas, image);
         const minimap = new MinimapRenderer(this);
         const stats = new StatsRenderer(this);
+        const log = new LogRenderer(this);
         yield dungeon.generateImages();
-        this.renderSetup = { dungeon, minimap, stats };
+        this.renderSetup = { dungeon, log, minimap, stats };
         return this.draw();
       });
     }
@@ -1553,6 +1594,11 @@
     }
     turn(clockwise) {
       this.facing = rotate(this.facing, clockwise);
+      this.draw();
+    }
+    addToLog(message) {
+      this.log.push(message);
+      this.showLog = true;
       this.draw();
     }
   };

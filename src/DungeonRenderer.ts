@@ -5,7 +5,6 @@ import { rotate, xy } from "./tools/geometry";
 
 import Dir from "./types/Dir";
 import Engine from "./Engine";
-import XY from "./types/XY";
 import getCanvasContext from "./tools/getCanvasContext";
 import getFieldOfView from "./fov";
 
@@ -22,7 +21,7 @@ export default class DungeonRenderer {
     public g: Engine,
     public dungeon: Atlas,
     public atlasImage: HTMLImageElement,
-    public offset: XY = xy(32, 0)
+    public offset = xy(32, 0)
   ) {
     this.imageData = new Map();
   }

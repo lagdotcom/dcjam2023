@@ -23,6 +23,10 @@ export default class EngineScripting extends DScriptHost {
       console.log("[debug]", thing)
     );
 
+    this.addNative("message", ["string"], undefined, (msg: string) =>
+      this.g.addToLog(msg)
+    );
+
     this.addNative(
       "onTagEnter",
       ["string", "function"],

@@ -3,6 +3,7 @@ import { move, rotate, xy } from "./tools/geometry";
 import Dir from "./types/Dir";
 import DungeonRenderer from "./DungeonRenderer";
 import EngineScripting from "./EngineScripting";
+import LogRenderer from "./LogRenderer";
 import MinimapRenderer from "./MinimapRenderer";
 import Player from "./Player";
 import ResourceManager from "./ResourceManager";
@@ -17,6 +18,7 @@ import parse from "./DScript/parser";
 
 interface RenderSetup {
   dungeon: DungeonRenderer;
+  log: LogRenderer;
   minimap: MinimapRenderer;
   stats: StatsRenderer;
 }
@@ -25,10 +27,12 @@ export default class Engine {
   ctx: CanvasRenderingContext2D;
   drawSoon: Soon;
   facing: Dir;
+  log: string[];
   party: Player[];
   position: XY;
   renderSetup?: RenderSetup;
   res: ResourceManager;
+  showLog: boolean;
   scripting: EngineScripting;
   world?: World;
   worldSize: XY;
@@ -42,6 +46,8 @@ export default class Engine {
     this.res = new ResourceManager();
     this.drawSoon = new Soon(this.render);
     this.scripting = new EngineScripting(this);
+    this.log = [];
+    this.showLog = false;
     this.party = [
       new Player("A"),
       new Player("B"),
@@ -50,10 +56,15 @@ export default class Engine {
     ];
 
     canvas.addEventListener("keyup", (e) => {
-      if (e.key === "ArrowLeft") this.turn(-1);
-      else if (e.key === "ArrowRight") this.turn(1);
-      else if (e.key === "ArrowUp") this.move(this.facing);
-      else if (e.key === "ArrowDown") this.move(rotate(this.facing, 2));
+      if (e.code === "ArrowLeft") this.turn(-1);
+      else if (e.code === "ArrowRight") this.turn(1);
+      else if (e.code === "ArrowUp") this.move(this.facing);
+      else if (e.code === "ArrowDown") this.move(rotate(this.facing, 2));
+      else if (e.code === "Space") {
+        e.preventDefault();
+        this.showLog = !this.showLog;
+        this.draw();
+      }
     });
   }
 
@@ -72,10 +83,11 @@ export default class Engine {
     const dungeon = new DungeonRenderer(this, atlas, image);
     const minimap = new MinimapRenderer(this);
     const stats = new StatsRenderer(this);
+    const log = new LogRenderer(this);
 
     await dungeon.generateImages();
 
-    this.renderSetup = { dungeon, minimap, stats };
+    this.renderSetup = { dungeon, log, minimap, stats };
     return this.draw();
   }
 
@@ -127,6 +139,7 @@ export default class Engine {
     renderSetup.dungeon.render();
     renderSetup.stats.render();
     renderSetup.minimap.render();
+    if (this.showLog) renderSetup.log.render();
   };
 
   canMove(dir: Dir) {
@@ -159,6 +172,12 @@ export default class Engine {
 
   turn(clockwise: number) {
     this.facing = rotate(this.facing, clockwise);
+    this.draw();
+  }
+
+  addToLog(message: string) {
+    this.log.push(message);
+    this.showLog = true;
     this.draw();
   }
 }
