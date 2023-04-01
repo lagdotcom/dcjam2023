@@ -12,6 +12,7 @@ import Dir from "./types/Dir";
 import Engine from "./Engine";
 import { Program } from "./DScript/ast";
 import XY from "./types/XY";
+import random from "./tools/random";
 
 export default class EngineScripting extends DScriptHost {
   onTagEnter: Map<string, RuntimeFunction>;
@@ -59,9 +60,7 @@ export default class EngineScripting extends DScriptHost {
       }
     );
 
-    this.addNative("random", ["number"], "number", (max: number) =>
-      Math.floor(Math.random() * max)
-    );
+    this.addNative("random", ["number"], "number", random);
 
     this.addNative(
       "tileHasTag",

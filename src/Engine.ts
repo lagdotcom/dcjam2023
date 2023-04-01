@@ -62,10 +62,10 @@ export default class Engine {
     this.worldVisited = new Set();
     this.worldWalls = new Map();
     this.party = [
-      new Player("A"),
-      new Player("B"),
-      new Player("C"),
-      new Player("D"),
+      new Player("A", "Brawler"),
+      new Player("B", "Bard"),
+      new Player("C", "Knight"),
+      new Player("D", "Thief"),
     ];
 
     canvas.addEventListener("keyup", (e) => {

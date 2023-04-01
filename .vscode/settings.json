@@ -4,5 +4,5 @@
     "**/node_modules": true
   },
 
-  "cSpell.words": ["lexer", "minma", "nanoclone", "nearley"]
+  "cSpell.words": ["Haringlee", "lexer", "minma", "nanoclone", "nearley"]
 }

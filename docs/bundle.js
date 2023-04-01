@@ -607,6 +607,12 @@
     }
   };
 
+  // src/tools/random.ts
+  function random(max, min = 0) {
+    const diff = max - min;
+    return min + Math.floor(Math.random() * diff);
+  }
+
   // src/EngineScripting.ts
   var EngineScripting = class extends DScriptHost {
     constructor(g) {
@@ -651,12 +657,7 @@
           this.onTagEnter.set(tag, cb);
         }
       );
-      this.addNative(
-        "random",
-        ["number"],
-        "number",
-        (max) => Math.floor(Math.random() * max)
-      );
+      this.addNative("random", ["number"], "number", random);
       this.addNative(
         "tileHasTag",
         ["number", "number", "string"],
@@ -827,13 +828,26 @@
   };
 
   // src/Player.ts
+  var defaultStats = {
+    Bard: { hp: 10, sp: 10, determination: 5, camaraderie: 5, spirits: 5 },
+    Brawler: { hp: 10, sp: 10, determination: 5, camaraderie: 5, spirits: 5 },
+    Knight: { hp: 10, sp: 10, determination: 5, camaraderie: 5, spirits: 5 },
+    Mage: { hp: 10, sp: 10, determination: 5, camaraderie: 5, spirits: 5 },
+    Paladin: { hp: 10, sp: 10, determination: 5, camaraderie: 5, spirits: 5 },
+    Thief: { hp: 10, sp: 10, determination: 5, camaraderie: 5, spirits: 5 }
+  };
   var Player = class {
-    constructor(name) {
+    constructor(name, className, maxHp = defaultStats[className].hp, maxSp = defaultStats[className].sp, determination = defaultStats[className].determination, camaraderie = defaultStats[className].camaraderie, spirits = defaultStats[className].spirits) {
       this.name = name;
-      this.maxHp = 10;
+      this.className = className;
+      this.maxHp = maxHp;
+      this.maxSp = maxSp;
+      this.determination = determination;
+      this.camaraderie = camaraderie;
+      this.spirits = spirits;
       this.hp = this.maxHp;
-      this.maxSp = 10;
-      this.sp = this.maxSp;
+      this.sp = Math.min(maxSp, spirits);
+      this.attacksInARow = 0;
     }
   };
 
@@ -1602,10 +1616,10 @@
       this.worldVisited = /* @__PURE__ */ new Set();
       this.worldWalls = /* @__PURE__ */ new Map();
       this.party = [
-        new Player("A"),
-        new Player("B"),
-        new Player("C"),
-        new Player("D")
+        new Player("A", "Brawler"),
+        new Player("B", "Bard"),
+        new Player("C", "Knight"),
+        new Player("D", "Thief")
       ];
       canvas.addEventListener("keyup", (e) => {
         if (e.code === "ArrowLeft")
