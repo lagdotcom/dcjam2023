@@ -158,7 +158,6 @@
         return;
       const [dx, dz] = this.displacement(position);
       this.entries.set(tag, { x, y, dx, dz, width, depth });
-      console.log(tag, { x, y, dx, dz });
       const leftDir = rotate(facing, 3);
       const leftWall = cell.sides[leftDir];
       if (!(leftWall == null ? void 0 : leftWall.wall))
