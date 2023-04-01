@@ -970,7 +970,7 @@
   };
 
   // res/atlas/eotb.png
-  var eotb_default = "./eotb-TITAJ4BE.png";
+  var eotb_default = "./eotb-7ESBBIK6.png";
 
   // res/atlas/eotb.json
   var eotb_default2 = "./eotb-GWJWNFKR.json";
