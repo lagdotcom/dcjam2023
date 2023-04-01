@@ -628,6 +628,12 @@
         void 0,
         (thing) => console.log("[debug]", thing)
       );
+      this.addNative("makePartyFace", ["number"], void 0, (dir) => {
+        if (dir < Dir_default.N || dir > Dir_default.W)
+          throw new Error(`Tried to face direction: ${dir}`);
+        this.g.facing = dir;
+        this.g.draw();
+      });
       this.addNative(
         "message",
         ["string"],

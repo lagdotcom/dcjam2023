@@ -30,6 +30,13 @@ export default class EngineScripting extends DScriptHost {
       console.log("[debug]", thing)
     );
 
+    this.addNative("makePartyFace", ["number"], undefined, (dir: number) => {
+      if (dir < Dir.N || dir > Dir.W)
+        throw new Error(`Tried to face direction: ${dir}`);
+      this.g.facing = dir;
+      this.g.draw();
+    });
+
     this.addNative("message", ["string"], undefined, (msg: string) =>
       this.g.addToLog(msg)
     );
