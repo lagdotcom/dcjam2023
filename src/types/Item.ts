@@ -8,7 +8,13 @@ export type ItemSlot = (typeof ItemSlots)[number];
 export interface ItemAction {
   name: string;
   sp: number;
-  targets: "Self" | "OneEnemy" | "AllEnemy" | "OneParty" | "AllParty";
+  targets:
+    | "Self"
+    | "Opponent"
+    | "OneEnemy"
+    | "AllEnemy"
+    | "OneParty"
+    | "AllParty";
   act(e: { g: Game; targets: Combatant[]; me: Combatant }): void;
 }
 

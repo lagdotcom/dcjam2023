@@ -8,6 +8,7 @@ import Combatant from "./types/Combatant";
 import Dir from "./types/Dir";
 import DungeonRenderer from "./DungeonRenderer";
 import EngineScripting from "./EngineScripting";
+import { ItemAction } from "./types/Item";
 import LogRenderer from "./LogRenderer";
 import MinimapRenderer from "./MinimapRenderer";
 import Player from "./Player";
@@ -316,7 +317,7 @@ export default class Engine implements Game {
 
     for (const effect of this.effects) {
       const handler = effect[name];
-      if (handler) handlers.push(handler);
+      if (handler) handlers.push(handler as GameEventListener[T]);
     }
 
     return handlers;
@@ -326,6 +327,32 @@ export default class Engine implements Game {
     const handlers = this.getHandlers(name);
     for (const handler of handlers) handler(e);
     return e;
+  }
+
+  act(me: Combatant, a: ItemAction, targets: Combatant[]) {
+    me.sp -= a.sp;
+    a.act({ g: this, targets, me });
+
+    me.lastAction = a.name;
+    if (a.name === "Attack") {
+      me.attacksInARow++;
+    } else me.attacksInARow = 0;
+
+    this.draw();
+  }
+
+  endTurn() {
+    for (const c of this.party) {
+      const newSp = c.sp < c.spirits ? c.spirits : c.sp + 1;
+      c.sp = Math.min(newSp, c.maxSp);
+    }
+
+    for (let i = this.effects.length - 1; i >= 0; i--) {
+      const e = this.effects[i];
+      if (--e.duration < 1) this.effects.splice(i, 1);
+    }
+
+    this.draw();
   }
 
   addEffect(effect: GameEffect): void {

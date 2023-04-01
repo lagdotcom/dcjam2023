@@ -1839,6 +1839,16 @@
         handler(e);
       return e;
     }
+    act(me, a, targets) {
+      me.sp -= a.sp;
+      a.act({ g: this, targets, me });
+      me.lastAction = a.name;
+      if (a.name === "Attack") {
+        me.attacksInARow++;
+      } else
+        me.attacksInARow = 0;
+      this.draw();
+    }
     addEffect(effect) {
       this.effects.push(effect);
     }

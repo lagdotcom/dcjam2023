@@ -17,8 +17,6 @@ export default class Player implements Combatant {
   hp: number;
   sp: number;
   equipment: Map<ItemSlot, Item>;
-
-  // TODO
   attacksInARow: number;
 
   constructor(

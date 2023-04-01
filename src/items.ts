@@ -8,7 +8,7 @@ export const MartialHammer: Item = {
   action: {
     name: "Attack",
     sp: 2,
-    targets: "OneEnemy",
+    targets: "Opponent",
     act({ g, targets, me }) {
       const bonus = me.attacksInARow;
       const amount = random(16 + bonus, 9);
@@ -30,6 +30,7 @@ export const BannerOfHaringlee: Item = {
       g.addEffect({
         name: "Reassurance",
         duration: 1,
+        affects: targets,
         onCalculateDamage(e) {
           if (
             targets.includes(e.target) &&
@@ -57,6 +58,7 @@ export const IronGorget: Item = {
       g.addEffect({
         name: "Steel Yourself",
         duration: 1,
+        affects: targets,
         onCalculateDR(e) {
           if (targets.includes(e.who)) e.dr *= 2;
         },

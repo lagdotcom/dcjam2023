@@ -5,6 +5,7 @@ export type DamageType = "hp" | "camaraderie" | "determination";
 
 export interface GameEffect extends Partial<GameEventListener> {
   name: string;
+  affects: Combatant[];
   duration: number;
 }
 
