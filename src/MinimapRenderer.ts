@@ -62,11 +62,14 @@ export default class MinimapRenderer {
     );
 
     for (let y = -size.y; y <= size.y; y++) {
+      const ty = y + position.y;
       dx = startX - tileSize;
       for (let x = -size.x; x <= size.x; x++) {
+        const tx = x + position.x;
         dx += tileSize;
-        const cell = this.g.getCell(x + position.x, y + position.y);
 
+        if (!this.g.isVisited(tx, ty)) continue;
+        const cell = this.g.getCell(tx, ty);
         const north = cell?.sides[Dir.N];
         const east = cell?.sides[Dir.E];
         const south = cell?.sides[Dir.S];

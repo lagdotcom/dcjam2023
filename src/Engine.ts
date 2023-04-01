@@ -1,3 +1,4 @@
+import { XYTag, xyToTag } from "./tools/xyTags";
 import { move, rotate, xy } from "./tools/geometry";
 
 import Dir from "./types/Dir";
@@ -34,8 +35,10 @@ export default class Engine {
   res: ResourceManager;
   showLog: boolean;
   scripting: EngineScripting;
+  visited: Map<string, Set<XYTag>>;
   world?: World;
   worldSize: XY;
+  worldVisited: Set<XYTag>;
 
   constructor(public canvas: HTMLCanvasElement) {
     this.ctx = getCanvasContext(canvas, "2d");
@@ -48,6 +51,8 @@ export default class Engine {
     this.scripting = new EngineScripting(this);
     this.log = [];
     this.showLog = false;
+    this.visited = new Map();
+    this.worldVisited = new Set();
     this.party = [
       new Player("A"),
       new Player("B"),
@@ -70,12 +75,12 @@ export default class Engine {
     });
   }
 
-  async loadWorld(w: World) {
+  async loadWorld(w: World, position?: XY) {
     this.renderSetup = undefined;
 
     this.world = clone(w);
     this.worldSize = xy(this.world.cells[0].length, this.world.cells.length);
-    this.position = w.start;
+    this.position = position ?? w.start;
     this.facing = w.facing;
 
     const [atlas, image] = await Promise.all([
@@ -89,6 +94,14 @@ export default class Engine {
 
     await dungeon.generateImages();
 
+    const visited = this.visited.get(w.name);
+    if (visited) this.worldVisited = visited;
+    else {
+      this.worldVisited = new Set();
+      this.visited.set(w.name, this.worldVisited);
+    }
+    this.worldVisited.add(xyToTag(this.position));
+
     this.renderSetup = { dungeon, log, minimap, stats };
     return this.draw();
   }
@@ -97,11 +110,8 @@ export default class Engine {
     this.renderSetup = undefined;
 
     const map = await this.res.loadGCMap(jsonUrl);
-    const { atlas, cells, scripts, start, facing } = convertGridCartographerMap(
-      map,
-      region,
-      floor
-    );
+    const { atlas, cells, scripts, start, facing, name } =
+      convertGridCartographerMap(map, region, floor);
     if (!atlas) throw new Error(`${jsonUrl} did not contain #ATLAS`);
 
     // TODO how about clearing old script stuff...?
@@ -113,7 +123,12 @@ export default class Engine {
       this.scripting.run(program);
     }
 
-    return this.loadWorld({ atlas, cells, start, facing });
+    return this.loadWorld({ name, atlas, cells, start, facing });
+  }
+
+  isVisited(x: number, y: number) {
+    const tag = xyToTag({ x, y });
+    return this.worldVisited.has(tag);
   }
 
   getCell(x: number, y: number) {
@@ -166,6 +181,7 @@ export default class Engine {
     if (this.canMove(dir)) {
       const old = this.position;
       this.position = move(this.position, dir);
+      this.worldVisited.add(xyToTag(this.position));
       this.draw();
 
       this.scripting.onEnter(this.position, old);

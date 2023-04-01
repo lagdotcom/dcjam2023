@@ -111,8 +111,9 @@ class GCMapConverter {
     }
 
     const { atlas, scripts, start, facing } = this;
+    const name = `${r.name}:${f.index}`;
     const cells = this.grid.asArray();
-    return { atlas, cells, scripts, start, facing };
+    return { name, atlas, cells, scripts, start, facing };
   }
 
   getTexture(index = 0) {

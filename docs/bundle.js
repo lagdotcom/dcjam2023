@@ -53,6 +53,11 @@
     }
   });
 
+  // src/tools/xyTags.ts
+  function xyToTag(pos) {
+    return `${pos.x},${pos.y}`;
+  }
+
   // src/types/Dir.ts
   var Dir = /* @__PURE__ */ ((Dir2) => {
     Dir2[Dir2["N"] = 0] = "N";
@@ -95,11 +100,6 @@
     if (!ctx)
       throw new Error(`canvas.getContext(${type})`);
     return ctx;
-  }
-
-  // src/tools/xyTags.ts
-  function xyToTag(pos) {
-    return `${pos.x},${pos.y}`;
   }
 
   // src/fov.ts
@@ -748,6 +748,8 @@
         dx = startX - tileSize;
         for (let x = -size.x; x <= size.x; x++) {
           dx += tileSize;
+          if (!this.g.isVisited(x + position.x, y + position.y))
+            continue;
           const cell = this.g.getCell(x + position.x, y + position.y);
           const north = cell == null ? void 0 : cell.sides[Dir_default.N];
           const east = cell == null ? void 0 : cell.sides[Dir_default.E];
@@ -1102,8 +1104,9 @@
         }
       }
       const { atlas, scripts, start, facing } = this;
+      const name = `${r.name}:${f.index}`;
       const cells = this.grid.asArray();
-      return { atlas, cells, scripts, start, facing };
+      return { name, atlas, cells, scripts, start, facing };
     }
     getTexture(index = 0) {
       const texture = this.textures.get(index);
@@ -1539,6 +1542,8 @@
       this.scripting = new EngineScripting(this);
       this.log = [];
       this.showLog = false;
+      this.visited = /* @__PURE__ */ new Map();
+      this.worldVisited = /* @__PURE__ */ new Set();
       this.party = [
         new Player("A"),
         new Player("B"),
@@ -1565,12 +1570,12 @@
         }
       });
     }
-    loadWorld(w) {
+    loadWorld(w, position) {
       return __async(this, null, function* () {
         this.renderSetup = void 0;
         this.world = src_default(w);
         this.worldSize = xy(this.world.cells[0].length, this.world.cells.length);
-        this.position = w.start;
+        this.position = position != null ? position : w.start;
         this.facing = w.facing;
         const [atlas, image] = yield Promise.all([
           this.res.loadAtlas(w.atlas.json),
@@ -1581,6 +1586,14 @@
         const stats = new StatsRenderer(this);
         const log = new LogRenderer(this);
         yield dungeon.generateImages();
+        const visited = this.visited.get(w.name);
+        if (visited)
+          this.worldVisited = visited;
+        else {
+          this.worldVisited = /* @__PURE__ */ new Set();
+          this.visited.set(w.name, this.worldVisited);
+        }
+        this.worldVisited.add(xyToTag(this.position));
         this.renderSetup = { dungeon, log, minimap, stats };
         return this.draw();
       });
@@ -1589,11 +1602,7 @@
       return __async(this, null, function* () {
         this.renderSetup = void 0;
         const map = yield this.res.loadGCMap(jsonUrl);
-        const { atlas, cells, scripts, start, facing } = convertGridCartographerMap(
-          map,
-          region,
-          floor
-        );
+        const { atlas, cells, scripts, start, facing, name } = convertGridCartographerMap(map, region, floor);
         if (!atlas)
           throw new Error(`${jsonUrl} did not contain #ATLAS`);
         const codeFiles = yield Promise.all(
@@ -1603,8 +1612,12 @@
           const program = parse(code);
           this.scripting.run(program);
         }
-        return this.loadWorld({ atlas, cells, start, facing });
+        return this.loadWorld({ name, atlas, cells, start, facing });
       });
+    }
+    isVisited(x, y) {
+      const tag = xyToTag({ x, y });
+      return this.worldVisited.has(tag);
     }
     getCell(x, y) {
       var _a;
@@ -1632,6 +1645,7 @@
       if (this.canMove(dir)) {
         const old = this.position;
         this.position = move(this.position, dir);
+        this.worldVisited.add(xyToTag(this.position));
         this.draw();
         this.scripting.onEnter(this.position, old);
       }
