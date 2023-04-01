@@ -1524,6 +1524,10 @@
           this.move(this.facing);
         else if (e.code === "ArrowDown")
           this.move(rotate(this.facing, 2));
+        else if (e.code === "KeyQ")
+          this.move(rotate(this.facing, 3));
+        else if (e.code === "KeyE")
+          this.move(rotate(this.facing, 1));
         else if (e.code === "Space") {
           e.preventDefault();
           this.showLog = !this.showLog;
