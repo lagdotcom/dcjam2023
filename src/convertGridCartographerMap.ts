@@ -1,4 +1,4 @@
-import { AtlasReference, WorldCell } from "./types/World";
+import { AtlasReference, WallDecalType, WorldCell } from "./types/World";
 import { Edge, GCMap } from "./types/GCMap";
 import { dirFromInitial, xy } from "./tools/geometry";
 
@@ -8,7 +8,7 @@ import XY from "./types/XY";
 import { getResourceURL } from "./resources";
 
 interface EdgeSide {
-  decal?: string;
+  decal?: WallDecalType;
   wall?: boolean;
   solid?: boolean;
 }
@@ -17,10 +17,10 @@ interface EdgeEntry {
   opposite: EdgeSide;
 }
 
-const wall = { wall: true, solid: true };
-const door = { decal: "Door", wall: true };
-const invisible = { solid: true };
-const fake = { wall: true };
+const wall: EdgeSide = { wall: true, solid: true };
+const door: EdgeSide = { decal: "Door", wall: true };
+const invisible: EdgeSide = { solid: true };
+const fake: EdgeSide = { wall: true };
 
 const defaultEdge: EdgeEntry = { main: wall, opposite: wall };
 
@@ -190,11 +190,13 @@ class GCMapConverter {
 
     lt.sides[ld] = {
       wall: main.wall ? texture : undefined,
+      decalType: main.decal,
       decal: this.decals.get(`${main.decal ?? ""},${texture}`),
       solid: main.solid,
     };
     rt.sides[rd] = {
       wall: opposite.wall ? texture : undefined,
+      decalType: opposite.decal,
       decal: this.decals.get(`${opposite.decal ?? ""},${texture}`),
       solid: opposite.solid,
     };

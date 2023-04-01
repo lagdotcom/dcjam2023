@@ -53,6 +53,11 @@
     }
   });
 
+  // src/tools/wallTags.ts
+  function wallToTag(pos, dir) {
+    return `${pos.x},${pos.y},${dir}`;
+  }
+
   // src/tools/xyTags.ts
   function xyToTag(pos) {
     return `${pos.x},${pos.y}`;
@@ -711,15 +716,14 @@
   var sideColours = {
     "": "black",
     d: "silver",
-    s: "white",
-    w: "grey",
+    s: "grey",
+    w: "orange",
     ds: "silver",
     dw: "red",
     sw: "white",
     dsw: "silver"
   };
-  function rect(ctx, x, y, ox, oy, w, h, side) {
-    const tag = `${side.decal ? "d" : ""}${side.solid ? "s" : ""}${side.wall ? "w" : ""}`;
+  function rect(ctx, x, y, ox, oy, w, h, tag) {
     ctx.fillStyle = sideColours[tag];
     ctx.fillRect(x + ox, y + oy, w, h);
   }
@@ -752,13 +756,7 @@
         for (let x = -size.x; x <= size.x; x++) {
           const tx = x + position.x;
           dx += tileSize;
-          if (!this.g.isVisited(tx, ty))
-            continue;
-          const cell = this.g.getCell(tx, ty);
-          const north = cell == null ? void 0 : cell.sides[Dir_default.N];
-          const east = cell == null ? void 0 : cell.sides[Dir_default.E];
-          const south = cell == null ? void 0 : cell.sides[Dir_default.S];
-          const west = cell == null ? void 0 : cell.sides[Dir_default.W];
+          const { north, east, south, west } = this.g.getMinimapData(tx, ty);
           const edge = tileSize - wallSize;
           if (north)
             rect(ctx, dx, dy, 0, 0, tileSize, wallSize, north);
@@ -1146,7 +1144,7 @@
           this.facing = dirFromInitial(arg);
           return;
         case "#TAG": {
-          const t = this.grid.getOrDefault({ x, y });
+          const t = this.tile(x, y);
           for (const tag of arg.split(","))
             t.tags.push(tag);
           break;
@@ -1168,11 +1166,13 @@
       const texture = this.getTexture(index);
       lt.sides[ld] = {
         wall: main.wall ? texture : void 0,
+        decalType: main.decal,
         decal: this.decals.get(`${(_b = main.decal) != null ? _b : ""},${texture}`),
         solid: main.solid
       };
       rt.sides[rd] = {
         wall: opposite.wall ? texture : void 0,
+        decalType: opposite.decal,
         decal: this.decals.get(`${(_c = opposite.decal) != null ? _c : ""},${texture}`),
         solid: opposite.solid
       };
@@ -1539,7 +1539,9 @@
       this.log = [];
       this.showLog = false;
       this.visited = /* @__PURE__ */ new Map();
+      this.walls = /* @__PURE__ */ new Map();
       this.worldVisited = /* @__PURE__ */ new Set();
+      this.worldWalls = /* @__PURE__ */ new Map();
       this.party = [
         new Player("A"),
         new Player("B"),
@@ -1589,7 +1591,14 @@
           this.worldVisited = /* @__PURE__ */ new Set();
           this.visited.set(w.name, this.worldVisited);
         }
-        this.worldVisited.add(xyToTag(this.position));
+        const walls = this.walls.get(w.name);
+        if (walls)
+          this.worldWalls = walls;
+        else {
+          this.worldWalls = /* @__PURE__ */ new Map();
+          this.walls.set(w.name, this.worldWalls);
+        }
+        this.markVisited();
         this.renderSetup = { dungeon, log, minimap, stats };
         return this.draw();
       });
@@ -1641,10 +1650,76 @@
       if (this.canMove(dir)) {
         const old = this.position;
         this.position = move(this.position, dir);
-        this.worldVisited.add(xyToTag(this.position));
+        this.markVisited();
+        this.markNavigable(old, dir);
         this.draw();
         this.scripting.onEnter(this.position, old);
+      } else
+        this.markUnnavigable(this.position, dir);
+    }
+    markVisited() {
+      const pos = this.position;
+      const tag = xyToTag(pos);
+      const cell = this.getCell(pos.x, pos.y);
+      if (!this.worldVisited.has(tag) && cell) {
+        this.worldVisited.add(tag);
+        for (let dir = 0; dir <= 3; dir++) {
+          const wall2 = cell.sides[dir];
+          const canSeeDoor = (wall2 == null ? void 0 : wall2.decalType) === "Door";
+          const hasTexture = typeof (wall2 == null ? void 0 : wall2.wall) === "number";
+          const looksSolid = hasTexture;
+          const data = {
+            canSeeDoor,
+            isSolid: looksSolid && !canSeeDoor,
+            canSeeWall: hasTexture
+          };
+          this.worldWalls.set(wallToTag(pos, dir), data);
+        }
       }
+    }
+    markNavigable(pos, dir) {
+      var _a;
+      const tag = wallToTag(pos, dir);
+      const data = (_a = this.worldWalls.get(tag)) != null ? _a : {
+        canSeeDoor: false,
+        isSolid: false,
+        canSeeWall: false
+      };
+      if (data.isSolid) {
+        data.isSolid = false;
+        this.worldWalls.set(tag, data);
+      }
+    }
+    markUnnavigable(pos, dir) {
+      var _a;
+      const tag = wallToTag(pos, dir);
+      const data = (_a = this.worldWalls.get(tag)) != null ? _a : {
+        canSeeDoor: false,
+        isSolid: false,
+        canSeeWall: false
+      };
+      if (!data.isSolid) {
+        data.isSolid = true;
+        this.worldWalls.set(tag, data);
+        this.draw();
+      }
+    }
+    getMinimapData(x, y) {
+      if (!this.isVisited(x, y))
+        return {};
+      const cell = this.getCell(x, y);
+      const north = this.getWallData(x, y, Dir_default.N);
+      const east = this.getWallData(x, y, Dir_default.E);
+      const south = this.getWallData(x, y, Dir_default.S);
+      const west = this.getWallData(x, y, Dir_default.W);
+      return { cell, north, east, south, west };
+    }
+    getWallData(x, y, dir) {
+      const wallData = this.worldWalls.get(wallToTag({ x, y }, dir));
+      const dTag = (wallData == null ? void 0 : wallData.canSeeDoor) ? "d" : "";
+      const sTag = (wallData == null ? void 0 : wallData.isSolid) ? "s" : "";
+      const wTag = (wallData == null ? void 0 : wallData.canSeeWall) ? "w" : "";
+      return `${dTag}${sTag}${wTag}`;
     }
     turn(clockwise) {
       this.facing = rotate(this.facing, clockwise);
@@ -1658,7 +1733,7 @@
   };
 
   // res/map.json
-  var map_default2 = "./map-WBLYAWEV.json";
+  var map_default2 = "./map-BH2G7BUM.json";
 
   // src/index.ts
   function loadEngine(parent) {

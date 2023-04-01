@@ -1,3 +1,4 @@
+import { WallTag, wallToTag } from "./tools/wallTags";
 import { XYTag, xyToTag } from "./tools/xyTags";
 import { move, rotate, xy } from "./tools/geometry";
 
@@ -16,6 +17,8 @@ import clone from "nanoclone";
 import convertGridCartographerMap from "./convertGridCartographerMap";
 import getCanvasContext from "./tools/getCanvasContext";
 import parse from "./DScript/parser";
+
+type WallType = { canSeeDoor: boolean; isSolid: boolean; canSeeWall: boolean };
 
 interface RenderSetup {
   dungeon: DungeonRenderer;
@@ -36,9 +39,11 @@ export default class Engine {
   showLog: boolean;
   scripting: EngineScripting;
   visited: Map<string, Set<XYTag>>;
+  walls: Map<string, Map<WallTag, WallType>>;
   world?: World;
   worldSize: XY;
   worldVisited: Set<XYTag>;
+  worldWalls: Map<WallTag, WallType>;
 
   constructor(public canvas: HTMLCanvasElement) {
     this.ctx = getCanvasContext(canvas, "2d");
@@ -52,7 +57,9 @@ export default class Engine {
     this.log = [];
     this.showLog = false;
     this.visited = new Map();
+    this.walls = new Map();
     this.worldVisited = new Set();
+    this.worldWalls = new Map();
     this.party = [
       new Player("A"),
       new Player("B"),
@@ -100,7 +107,15 @@ export default class Engine {
       this.worldVisited = new Set();
       this.visited.set(w.name, this.worldVisited);
     }
-    this.worldVisited.add(xyToTag(this.position));
+
+    const walls = this.walls.get(w.name);
+    if (walls) this.worldWalls = walls;
+    else {
+      this.worldWalls = new Map();
+      this.walls.set(w.name, this.worldWalls);
+    }
+
+    this.markVisited();
 
     this.renderSetup = { dungeon, log, minimap, stats };
     return this.draw();
@@ -181,11 +196,85 @@ export default class Engine {
     if (this.canMove(dir)) {
       const old = this.position;
       this.position = move(this.position, dir);
-      this.worldVisited.add(xyToTag(this.position));
+      this.markVisited();
+      this.markNavigable(old, dir);
       this.draw();
 
       this.scripting.onEnter(this.position, old);
+    } else this.markUnnavigable(this.position, dir);
+  }
+
+  markVisited() {
+    const pos = this.position;
+    const tag = xyToTag(pos);
+    const cell = this.getCell(pos.x, pos.y);
+
+    if (!this.worldVisited.has(tag) && cell) {
+      this.worldVisited.add(tag);
+
+      for (let dir = 0; dir <= 3; dir++) {
+        const wall = cell.sides[dir as Dir];
+        const canSeeDoor = wall?.decalType === "Door";
+        const hasTexture = typeof wall?.wall === "number";
+        const looksSolid = hasTexture;
+        const data: WallType = {
+          canSeeDoor,
+          isSolid: looksSolid && !canSeeDoor,
+          canSeeWall: hasTexture,
+        };
+
+        this.worldWalls.set(wallToTag(pos, dir), data);
+      }
     }
+  }
+
+  markNavigable(pos: XY, dir: Dir) {
+    const tag = wallToTag(pos, dir);
+    const data: WallType = this.worldWalls.get(tag) ?? {
+      canSeeDoor: false,
+      isSolid: false,
+      canSeeWall: false,
+    };
+
+    if (data.isSolid) {
+      data.isSolid = false;
+      this.worldWalls.set(tag, data);
+    }
+  }
+
+  markUnnavigable(pos: XY, dir: Dir) {
+    const tag = wallToTag(pos, dir);
+    const data: WallType = this.worldWalls.get(tag) ?? {
+      canSeeDoor: false,
+      isSolid: false,
+      canSeeWall: false,
+    };
+
+    if (!data.isSolid) {
+      data.isSolid = true;
+      this.worldWalls.set(tag, data);
+      this.draw();
+    }
+  }
+
+  getMinimapData(x: number, y: number) {
+    if (!this.isVisited(x, y)) return {};
+
+    const cell = this.getCell(x, y);
+    const north = this.getWallData(x, y, Dir.N);
+    const east = this.getWallData(x, y, Dir.E);
+    const south = this.getWallData(x, y, Dir.S);
+    const west = this.getWallData(x, y, Dir.W);
+    return { cell, north, east, south, west };
+  }
+
+  getWallData(x: number, y: number, dir: Dir) {
+    const wallData = this.worldWalls.get(wallToTag({ x, y }, dir));
+
+    const dTag = wallData?.canSeeDoor ? "d" : "";
+    const sTag = wallData?.isSolid ? "s" : "";
+    const wTag = wallData?.canSeeWall ? "w" : "";
+    return `${dTag}${sTag}${wTag}` as const;
   }
 
   turn(clockwise: number) {

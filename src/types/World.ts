@@ -1,10 +1,13 @@
 import Dir from "./Dir";
 import XY from "./XY";
 
+export type WallDecalType = "Door";
+
 export interface WorldSide {
   solid?: boolean;
   wall?: number;
   decal?: number;
+  decalType?: WallDecalType;
 }
 
 export interface WorldCell {

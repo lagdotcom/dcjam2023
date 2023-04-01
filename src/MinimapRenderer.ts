@@ -1,6 +1,4 @@
-import Dir from "./types/Dir";
 import Engine from "./Engine";
-import { WorldSide } from "./types/World";
 import { xy } from "./tools/geometry";
 
 const facingChars = ["^", ">", "v", "<"];
@@ -8,13 +6,15 @@ const facingChars = ["^", ">", "v", "<"];
 const sideColours = {
   "": "black",
   d: "silver",
-  s: "white",
-  w: "grey",
+  s: "grey",
+  w: "orange",
   ds: "silver",
   dw: "red",
   sw: "white",
   dsw: "silver",
 };
+
+type SideType = keyof typeof sideColours;
 
 function rect(
   ctx: CanvasRenderingContext2D,
@@ -24,12 +24,8 @@ function rect(
   oy: number,
   w: number,
   h: number,
-  side: WorldSide
+  tag: SideType
 ) {
-  const tag = `${side.decal ? "d" : ""}${side.solid ? "s" : ""}${
-    side.wall ? "w" : ""
-  }` as const;
-
   ctx.fillStyle = sideColours[tag];
   ctx.fillRect(x + ox, y + oy, w, h);
 }
@@ -68,15 +64,9 @@ export default class MinimapRenderer {
         const tx = x + position.x;
         dx += tileSize;
 
-        if (!this.g.isVisited(tx, ty)) continue;
-        const cell = this.g.getCell(tx, ty);
-        const north = cell?.sides[Dir.N];
-        const east = cell?.sides[Dir.E];
-        const south = cell?.sides[Dir.S];
-        const west = cell?.sides[Dir.W];
+        const { north, east, south, west } = this.g.getMinimapData(tx, ty);
 
         const edge = tileSize - wallSize;
-
         if (north) rect(ctx, dx, dy, 0, 0, tileSize, wallSize, north);
         if (east) rect(ctx, dx, dy, edge, 0, wallSize, tileSize, east);
         if (south) rect(ctx, dx, dy, 0, edge, tileSize, wallSize, south);
