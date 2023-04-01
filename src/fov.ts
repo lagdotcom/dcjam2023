@@ -10,6 +10,8 @@ interface FovEntry {
   y: number;
   dx: number;
   dz: number;
+  width: number;
+  depth: number;
 }
 
 const facingDisplacements: Record<Dir, [number, number, number, number]> = {
@@ -60,7 +62,10 @@ class FovCalculator {
     const { facing } = g;
 
     const tag = xyToTag(position);
-    if (this.entries.has(tag)) return;
+    const old = this.entries.get(tag);
+    if (old) {
+      if (old.width >= width && old.depth >= depth) return;
+    }
 
     const { x, y } = position;
 
@@ -68,7 +73,7 @@ class FovCalculator {
     if (!cell) return;
 
     const [dx, dz] = this.displacement(position);
-    this.entries.set(tag, { x, y, dx, dz });
+    this.entries.set(tag, { x, y, dx, dz, width, depth });
 
     const leftDir = rotate(facing, 3);
     const leftWall = cell.sides[leftDir];

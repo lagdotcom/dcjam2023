@@ -147,14 +147,18 @@
       const { g } = this;
       const { facing } = g;
       const tag = xyToTag(position);
-      if (this.entries.has(tag))
-        return;
+      const old = this.entries.get(tag);
+      if (old) {
+        if (old.width >= width && old.depth >= depth)
+          return;
+      }
       const { x, y } = position;
       const cell = g.getCell(x, y);
       if (!cell)
         return;
       const [dx, dz] = this.displacement(position);
-      this.entries.set(tag, { x, y, dx, dz });
+      this.entries.set(tag, { x, y, dx, dz, width, depth });
+      console.log(tag, { x, y, dx, dz });
       const leftDir = rotate(facing, 3);
       const leftWall = cell.sides[leftDir];
       if (!(leftWall == null ? void 0 : leftWall.wall))
@@ -1014,10 +1018,10 @@
   };
 
   // res/atlas/eotb.png
-  var eotb_default = "./eotb-AVMGZ6CA.png";
+  var eotb_default = "./eotb-QO3KGBK4.png";
 
   // res/atlas/eotb.json
-  var eotb_default2 = "./eotb-FYOYF7PR.json";
+  var eotb_default2 = "./eotb-5KLMJLK4.json";
 
   // res/map.dscript
   var map_default = "./map-7SR66W54.dscript";
@@ -1753,7 +1757,7 @@
   };
 
   // res/map.json
-  var map_default2 = "./map-VROBITBF.json";
+  var map_default2 = "./map-LXS5BRSX.json";
 
   // src/index.ts
   function loadEngine(parent) {
