@@ -3,7 +3,6 @@ import {
   RuntimeValue,
   callFunction,
   num,
-  readOnly,
   run,
 } from "./DScript/logic";
 
@@ -20,10 +19,10 @@ export default class EngineScripting extends DScriptHost {
   constructor(public g: Engine) {
     super();
 
-    this.env.set("NORTH", readOnly(num(Dir.N)));
-    this.env.set("EAST", readOnly(num(Dir.E)));
-    this.env.set("SOUTH", readOnly(num(Dir.S)));
-    this.env.set("WEST", readOnly(num(Dir.W)));
+    this.env.set("NORTH", num(Dir.N, true));
+    this.env.set("EAST", num(Dir.E, true));
+    this.env.set("SOUTH", num(Dir.S, true));
+    this.env.set("WEST", num(Dir.W, true));
 
     this.onTagEnter = new Map();
 
@@ -74,9 +73,9 @@ export default class EngineScripting extends DScriptHost {
   }
 
   run(program: Program) {
-    this.env.set("partyX", readOnly(num(this.g.position.x)));
-    this.env.set("partyY", readOnly(num(this.g.position.y)));
-    this.env.set("partyDir", readOnly(num(this.g.facing)));
+    this.env.set("partyX", num(this.g.position.x, true));
+    this.env.set("partyY", num(this.g.position.y, true));
+    this.env.set("partyDir", num(this.g.facing, true));
 
     return run(this, program);
   }

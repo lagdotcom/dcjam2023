@@ -327,18 +327,14 @@
   };
 
   // src/DScript/logic.ts
-  function readOnly(value) {
-    value.readOnly = true;
-    return value;
+  function bool(value, readOnly = false) {
+    return { _: "bool", value, readOnly };
   }
-  function bool(value) {
-    return { _: "bool", value };
+  function num(value, readOnly = false) {
+    return { _: "number", value, readOnly };
   }
-  function num(value) {
-    return { _: "number", value };
-  }
-  function str(value) {
-    return { _: "string", value };
+  function str(value, readOnly = false) {
+    return { _: "string", value, readOnly };
   }
   function box(value) {
     switch (typeof value) {
@@ -618,10 +614,10 @@
     constructor(g) {
       super();
       this.g = g;
-      this.env.set("NORTH", readOnly(num(Dir_default.N)));
-      this.env.set("EAST", readOnly(num(Dir_default.E)));
-      this.env.set("SOUTH", readOnly(num(Dir_default.S)));
-      this.env.set("WEST", readOnly(num(Dir_default.W)));
+      this.env.set("NORTH", num(Dir_default.N, true));
+      this.env.set("EAST", num(Dir_default.E, true));
+      this.env.set("SOUTH", num(Dir_default.S, true));
+      this.env.set("WEST", num(Dir_default.W, true));
       this.onTagEnter = /* @__PURE__ */ new Map();
       this.addNative(
         "debug",
@@ -669,9 +665,9 @@
       );
     }
     run(program) {
-      this.env.set("partyX", readOnly(num(this.g.position.x)));
-      this.env.set("partyY", readOnly(num(this.g.position.y)));
-      this.env.set("partyDir", readOnly(num(this.g.facing)));
+      this.env.set("partyX", num(this.g.position.x, true));
+      this.env.set("partyY", num(this.g.position.y, true));
+      this.env.set("partyDir", num(this.g.facing, true));
       return run(this, program);
     }
     runCallback(fn, ...args) {

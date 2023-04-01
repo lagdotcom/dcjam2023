@@ -48,21 +48,16 @@ export interface Scope {
   env: Env;
 }
 
-export function readOnly(value: Literal): Literal {
-  value.readOnly = true;
-  return value;
+export function bool(value: boolean, readOnly = false): LiteralBoolean {
+  return { _: "bool", value, readOnly };
 }
 
-export function bool(value: boolean): LiteralBoolean {
-  return { _: "bool", value };
+export function num(value: number, readOnly = false): LiteralNumber {
+  return { _: "number", value, readOnly };
 }
 
-export function num(value: number): LiteralNumber {
-  return { _: "number", value };
-}
-
-export function str(value: string): LiteralString {
-  return { _: "string", value };
+export function str(value: string, readOnly = false): LiteralString {
+  return { _: "string", value, readOnly };
 }
 
 function box(value: unknown): Literal | undefined {
