@@ -27,6 +27,15 @@ export default class EngineScripting extends DScriptHost {
       this.g.addToLog(msg)
     );
 
+    this.addNative("movePartyToTag", ["string"], undefined, (tag: string) => {
+      const position = this.g.findCellWithTag(tag);
+      if (position) {
+        this.g.position = position;
+        this.g.markVisited();
+        this.g.draw();
+      }
+    });
+
     this.addNative(
       "onTagEnter",
       ["string", "function"],
@@ -48,12 +57,16 @@ export default class EngineScripting extends DScriptHost {
   }
 
   run(program: Program) {
+    this.env.set("partyX", num(this.g.position.x));
+    this.env.set("partyY", num(this.g.position.y));
+
     return run(this, program);
   }
 
   runCallback(fn: RuntimeFunction, ...args: RuntimeValue[]) {
-    if (fn._ === "function") return callFunction(this, fn, args);
-    else return fn.value.call(undefined, ...args);
+    if (fn._ === "function")
+      return callFunction(this, fn, args.slice(0, fn.args.length));
+    else return fn.value(...args);
   }
 
   onEnter(newPos: XY, oldPos: XY) {

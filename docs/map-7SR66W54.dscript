@@ -3,5 +3,14 @@ function SlamShutEnter(oldX: number, oldY: number)
     message('The door slams shut behind you!')
   end
 end
-
 onTagEnter('SlamShut', SlamShutEnter)
+
+function TeleportA()
+  movePartyToTag('TeleportExitA')
+end
+onTagEnter('TeleportA', TeleportA)
+
+function TeleportB()
+  movePartyToTag('TeleportExitB')
+end
+onTagEnter('TeleportB', TeleportB)

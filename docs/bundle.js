@@ -613,6 +613,14 @@
         void 0,
         (msg) => this.g.addToLog(msg)
       );
+      this.addNative("movePartyToTag", ["string"], void 0, (tag) => {
+        const position = this.g.findCellWithTag(tag);
+        if (position) {
+          this.g.position = position;
+          this.g.markVisited();
+          this.g.draw();
+        }
+      });
       this.addNative(
         "onTagEnter",
         ["string", "function"],
@@ -632,13 +640,15 @@
       );
     }
     run(program) {
+      this.env.set("partyX", num(this.g.position.x));
+      this.env.set("partyY", num(this.g.position.y));
       return run(this, program);
     }
     runCallback(fn, ...args) {
       if (fn._ === "function")
-        return callFunction(this, fn, args);
+        return callFunction(this, fn, args.slice(0, fn.args.length));
       else
-        return fn.value.call(void 0, ...args);
+        return fn.value(...args);
     }
     onEnter(newPos, oldPos) {
       const tile = this.g.getCell(newPos.x, newPos.y);
@@ -1010,7 +1020,7 @@
   var eotb_default2 = "./eotb-FYOYF7PR.json";
 
   // res/map.dscript
-  var map_default = "./map-4A4FTRKP.dscript";
+  var map_default = "./map-7SR66W54.dscript";
 
   // res/atlas/minma1.png
   var minma1_default = "./minma1-VI5UXWCY.png";
@@ -1630,6 +1640,16 @@
         return;
       return (_a = this.world) == null ? void 0 : _a.cells[y][x];
     }
+    findCellWithTag(tag) {
+      if (!this.world)
+        return;
+      for (let y = 0; y < this.worldSize.y; y++) {
+        for (let x = 0; x < this.worldSize.x; x++) {
+          if (this.world.cells[y][x].tags.includes(tag))
+            return { x, y };
+        }
+      }
+    }
     draw() {
       this.drawSoon.schedule();
     }
@@ -1733,7 +1753,7 @@
   };
 
   // res/map.json
-  var map_default2 = "./map-BH2G7BUM.json";
+  var map_default2 = "./map-VROBITBF.json";
 
   // src/index.ts
   function loadEngine(parent) {

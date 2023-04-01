@@ -153,6 +153,16 @@ export default class Engine {
     return this.world?.cells[y][x];
   }
 
+  findCellWithTag(tag: string) {
+    if (!this.world) return;
+
+    for (let y = 0; y < this.worldSize.y; y++) {
+      for (let x = 0; x < this.worldSize.x; x++) {
+        if (this.world.cells[y][x].tags.includes(tag)) return { x, y };
+      }
+    }
+  }
+
   draw() {
     this.drawSoon.schedule();
   }
