@@ -645,6 +645,32 @@
     }
   };
 
+  // src/tools/textWrap.ts
+  function textWrap(ctx, source, width) {
+    const measurement = ctx.measureText(source);
+    if (measurement.width < width)
+      return { lines: [source], measurement };
+    const words = source.split(" ");
+    const lines = [];
+    let constructed = "";
+    for (const w of words) {
+      if (!constructed) {
+        constructed += w;
+        continue;
+      }
+      const temp = constructed + " " + w;
+      const size = ctx.measureText(temp);
+      if (size.width > width) {
+        lines.push(constructed);
+        constructed = w;
+      } else
+        constructed += " " + w;
+    }
+    if (constructed)
+      lines.push(constructed);
+    return { lines, measurement: ctx.measureText(source) };
+  }
+
   // src/LogRenderer.ts
   var LogRenderer = class {
     constructor(g, position = xy(304, 0), size = xy(144, 160)) {
@@ -662,14 +688,15 @@
       ctx.textBaseline = "bottom";
       ctx.fillStyle = "white";
       for (let i = log.length - 1; i >= 0; i--) {
-        const m = log[i];
-        const draw = ctx.measureText(m);
-        ctx.fillText(m, textX, textY, this.size.x - 6);
-        textY = Math.floor(
-          textY - draw.actualBoundingBoxAscent + draw.actualBoundingBoxDescent
-        );
-        if (textY < this.position.y)
-          break;
+        const { lines, measurement } = textWrap(ctx, log[i], this.size.x - 6);
+        for (const line of lines.reverse()) {
+          ctx.fillText(line, textX, textY);
+          textY = Math.floor(
+            textY - measurement.actualBoundingBoxAscent + measurement.actualBoundingBoxDescent
+          );
+          if (textY < this.position.y)
+            return;
+        }
       }
     }
   };

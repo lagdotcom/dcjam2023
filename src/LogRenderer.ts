@@ -1,4 +1,5 @@
 import Engine from "./Engine";
+import textWrap from "./tools/textWrap";
 import { xy } from "./tools/geometry";
 
 export default class LogRenderer {
@@ -22,16 +23,18 @@ export default class LogRenderer {
     ctx.fillStyle = "white";
 
     for (let i = log.length - 1; i >= 0; i--) {
-      const m = log[i];
+      const { lines, measurement } = textWrap(ctx, log[i], this.size.x - 6);
 
-      // TODO this isn't going to work forever
-      const draw = ctx.measureText(m);
-      ctx.fillText(m, textX, textY, this.size.x - 6);
-      textY = Math.floor(
-        textY - draw.actualBoundingBoxAscent + draw.actualBoundingBoxDescent
-      );
+      for (const line of lines.reverse()) {
+        ctx.fillText(line, textX, textY);
+        textY = Math.floor(
+          textY -
+            measurement.actualBoundingBoxAscent +
+            measurement.actualBoundingBoxDescent
+        );
 
-      if (textY < this.position.y) break;
+        if (textY < this.position.y) return;
+      }
     }
   }
 }
