@@ -1,4 +1,5 @@
 import Engine from "./Engine";
+import withTextStyle from "./withTextStyle";
 import { xy } from "./tools/geometry";
 
 const facingChars = ["^", ">", "v", "<"];
@@ -76,10 +77,8 @@ export default class MinimapRenderer {
       dy += tileSize;
     }
 
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillStyle = "white";
-    ctx.fillText(
+    const { draw } = withTextStyle(ctx, "center", "middle", "white");
+    draw(
       facingChars[facing],
       startX + tileSize * (size.x + 0.5),
       startY + tileSize * (size.y + 0.5)

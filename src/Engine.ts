@@ -17,6 +17,7 @@ import clone from "nanoclone";
 import convertGridCartographerMap from "./convertGridCartographerMap";
 import getCanvasContext from "./tools/getCanvasContext";
 import parse from "./DScript/parser";
+import withTextStyle from "./withTextStyle";
 
 type WallType = { canSeeDoor: boolean; isSolid: boolean; canSeeWall: boolean };
 
@@ -174,10 +175,8 @@ export default class Engine {
     ctx.clearRect(0, 0, width, height);
 
     if (!renderSetup) {
-      ctx.fillStyle = "white";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText(
+      const { draw } = withTextStyle(ctx, "center", "middle", "white");
+      draw(
         `Loading: ${this.res.loaded}/${this.res.loading}`,
         width / 2,
         height / 2

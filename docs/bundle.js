@@ -692,8 +692,8 @@
   };
 
   // src/tools/textWrap.ts
-  function textWrap(ctx, source, width) {
-    const measurement = ctx.measureText(source);
+  function textWrap(source, width, measure) {
+    const measurement = measure(source);
     if (measurement.width < width)
       return { lines: [source], measurement };
     const words = source.split(" ");
@@ -705,7 +705,7 @@
         continue;
       }
       const temp = constructed + " " + w;
-      const size = ctx.measureText(temp);
+      const size = measure(temp);
       if (size.width > width) {
         lines.push(constructed);
         constructed = w;
@@ -714,7 +714,18 @@
     }
     if (constructed)
       lines.push(constructed);
-    return { lines, measurement: ctx.measureText(source) };
+    return { lines, measurement: measure(source) };
+  }
+
+  // src/withTextStyle.ts
+  function withTextStyle(ctx, textAlign, textBaseline, fillStyle) {
+    ctx.textAlign = textAlign;
+    ctx.textBaseline = textBaseline;
+    ctx.fillStyle = fillStyle;
+    return {
+      measure: (text) => ctx.measureText(text),
+      draw: (text, x, y, maxWidth) => ctx.fillText(text, x, y, maxWidth)
+    };
   }
 
   // src/LogRenderer.ts
@@ -733,13 +744,11 @@
       const width = size.x - padding.x * 2;
       const textX = position.x + padding.x;
       let textY = position.y + size.y - padding.y;
-      ctx.textAlign = "left";
-      ctx.textBaseline = "bottom";
-      ctx.fillStyle = "white";
+      const { measure, draw } = withTextStyle(ctx, "left", "bottom", "white");
       for (let i = log.length - 1; i >= 0; i--) {
-        const { lines, measurement } = textWrap(ctx, log[i], width);
+        const { lines, measurement } = textWrap(log[i], width, measure);
         for (const line of lines.reverse()) {
-          ctx.fillText(line, textX, textY);
+          draw(line, textX, textY);
           textY = Math.floor(
             textY - measurement.actualBoundingBoxAscent + measurement.actualBoundingBoxDescent
           );
@@ -808,10 +817,8 @@
         }
         dy += tileSize;
       }
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillStyle = "white";
-      ctx.fillText(
+      const { draw } = withTextStyle(ctx, "center", "middle", "white");
+      draw(
         facingChars[facing],
         startX + tileSize * (size.x + 0.5),
         startY + tileSize * (size.y + 0.5)
@@ -925,6 +932,8 @@
   // src/StatsRenderer.ts
   var hpColour = "rgb(223,113,38)";
   var spColour = "rgb(99,155,255)";
+  var boxWidth = 62;
+  var boxHeight = 30;
   var coordinates = [
     xy(145, 177),
     xy(225, 177),
@@ -946,16 +955,14 @@
     renderPC({ x, y }, pc) {
       const { ctx } = this.g;
       ctx.fillStyle = background;
-      ctx.fillRect(x, y, 62, 30);
-      ctx.textAlign = "left";
-      ctx.textBaseline = "middle";
-      ctx.fillStyle = "white";
-      ctx.fillText(pc.name, x + 3, y + 10, 62 - 6);
+      ctx.fillRect(x, y, boxWidth, boxHeight);
+      const { draw } = withTextStyle(ctx, "left", "middle", "white");
+      draw(pc.name, x + 3, y + 10, boxWidth - 6);
       this.renderBar(x + 3, y + 18, pc.hp, pc.maxHp, hpColour);
       this.renderBar(x + 3, y + 24, pc.sp, pc.maxSp, spColour);
     }
     renderBar(x, y, current, max, colour) {
-      const maxWidth = 62 - 6;
+      const maxWidth = boxWidth - 6;
       const width = maxWidth * Math.max(0, Math.min(1, current / max));
       this.g.ctx.fillStyle = colour;
       this.g.ctx.fillRect(x, y, width, 3);
@@ -1566,10 +1573,8 @@
         const { width, height } = this.canvas;
         ctx.clearRect(0, 0, width, height);
         if (!renderSetup) {
-          ctx.fillStyle = "white";
-          ctx.textAlign = "center";
-          ctx.textBaseline = "middle";
-          ctx.fillText(
+          const { draw } = withTextStyle(ctx, "center", "middle", "white");
+          draw(
             `Loading: ${this.res.loaded}/${this.res.loading}`,
             width / 2,
             height / 2

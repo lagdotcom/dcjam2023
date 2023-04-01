@@ -1,9 +1,9 @@
 export default function textWrap(
-  ctx: CanvasRenderingContext2D,
   source: string,
-  width: number
+  width: number,
+  measure: (str: string) => TextMetrics
 ) {
-  const measurement = ctx.measureText(source);
+  const measurement = measure(source);
   if (measurement.width < width) return { lines: [source], measurement };
 
   const words = source.split(" ");
@@ -16,7 +16,7 @@ export default function textWrap(
     }
 
     const temp = constructed + " " + w;
-    const size = ctx.measureText(temp);
+    const size = measure(temp);
 
     if (size.width > width) {
       lines.push(constructed);
@@ -26,5 +26,5 @@ export default function textWrap(
 
   if (constructed) lines.push(constructed);
 
-  return { lines, measurement: ctx.measureText(source) };
+  return { lines, measurement: measure(source) };
 }
