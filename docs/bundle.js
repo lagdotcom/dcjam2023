@@ -171,10 +171,11 @@
   // src/DungeonRenderer.ts
   var tileTag = (id2, type, tile) => `${type}${id2}:${tile.x},${tile.z}`;
   var DungeonRenderer = class {
-    constructor(g, dungeon, atlasImage) {
+    constructor(g, dungeon, atlasImage, offset = xy(32, 0)) {
       this.g = g;
       this.dungeon = dungeon;
       this.atlasImage = atlasImage;
+      this.offset = offset;
       this.imageData = /* @__PURE__ */ new Map();
     }
     generateImages() {
@@ -255,12 +256,12 @@
     draw(result) {
       const dx = result.screen.x - (result.flipped ? result.coords.w : 0);
       const dy = result.screen.y;
-      this.g.ctx.drawImage(result.image, dx, dy);
+      this.g.ctx.drawImage(result.image, dx + this.offset.x, dy + this.offset.y);
     }
     drawFront(result, x) {
       const dx = result.screen.x + x * result.coords.fullWidth;
       const dy = result.screen.y;
-      this.g.ctx.drawImage(result.image, dx, dy);
+      this.g.ctx.drawImage(result.image, dx + this.offset.x, dy + this.offset.y);
     }
     drawImage(id2, type, x, z) {
       const result = this.getImage(id2, type, x, z);
@@ -309,6 +310,14 @@
         if (cell.floor)
           this.drawImage(cell.floor, "floor", pos.dx, pos.dz);
       }
+      this.g.ctx.fillStyle = "black";
+      this.g.ctx.fillRect(0, 0, this.offset.x, 160);
+      this.g.ctx.fillRect(
+        this.g.canvas.width - this.offset.x,
+        0,
+        this.offset.x,
+        160
+      );
     }
   };
 
@@ -648,7 +657,7 @@
     ctx.fillRect(x + ox, y + oy, w, h);
   }
   var MinimapRenderer = class {
-    constructor(g, tileSize = 10, wallSize = 1, size = xy(2, 2), offset = xy(100, 100)) {
+    constructor(g, tileSize = 16, wallSize = 2, size = xy(2, 2), offset = xy(112, 94)) {
       this.g = g;
       this.tileSize = tileSize;
       this.wallSize = wallSize;
@@ -663,7 +672,7 @@
       const startY = height - offset.y;
       let dx = 0;
       let dy = startY;
-      ctx.fillStyle = "black";
+      ctx.fillStyle = "rgb(64,64,64)";
       ctx.fillRect(
         startX,
         startY,
@@ -699,6 +708,17 @@
         startX + tileSize * (size.x + 0.5),
         startY + tileSize * (size.y + 0.5)
       );
+    }
+  };
+
+  // src/Player.ts
+  var Player = class {
+    constructor(name) {
+      this.name = name;
+      this.maxHp = 10;
+      this.hp = this.maxHp;
+      this.maxSp = 10;
+      this.sp = this.maxSp;
     }
   };
 
@@ -786,6 +806,45 @@
     }
   };
 
+  // src/StatsRenderer.ts
+  var hpColour = "rgb(223,113,38)";
+  var spColour = "rgb(99,155,255)";
+  var coordinates = [
+    xy(145, 177),
+    xy(225, 177),
+    xy(145, 225),
+    xy(225, 225)
+  ];
+  var StatsRenderer = class {
+    constructor(g) {
+      this.g = g;
+    }
+    render() {
+      for (let i = 0; i < 4; i++) {
+        const xy2 = coordinates[i];
+        const pc = this.g.party[i];
+        this.renderPC(xy2, pc);
+      }
+    }
+    renderPC({ x, y }, pc) {
+      const { ctx } = this.g;
+      ctx.fillStyle = "rgb(64,64,64)";
+      ctx.fillRect(x, y, 62, 30);
+      ctx.textAlign = "left";
+      ctx.textBaseline = "middle";
+      ctx.fillStyle = "white";
+      ctx.fillText(pc.name, x + 3, y + 10, 62 - 6);
+      this.renderBar(x + 3, y + 18, pc.hp, pc.maxHp, hpColour);
+      this.renderBar(x + 3, y + 24, pc.sp, pc.maxSp, spColour);
+    }
+    renderBar(x, y, current, max, colour) {
+      const maxWidth = 62 - 6;
+      const width = maxWidth * Math.max(0, Math.min(1, current / max));
+      this.g.ctx.fillStyle = colour;
+      this.g.ctx.fillRect(x, y, width, 3);
+    }
+  };
+
   // node_modules/nanoclone/src/index.js
   function clone(src, seen = /* @__PURE__ */ new Map()) {
     if (!src || typeof src !== "object")
@@ -869,6 +928,12 @@
     }
   };
 
+  // res/atlas/eotb.png
+  var eotb_default = "./eotb-TITAJ4BE.png";
+
+  // res/atlas/eotb.json
+  var eotb_default2 = "./eotb-GWJWNFKR.json";
+
   // res/map.dscript
   var map_default = "./map-IDDG5SUA.dscript";
 
@@ -880,6 +945,8 @@
 
   // src/resources.ts
   var Resources = {
+    "eotb.png": eotb_default,
+    "eotb.json": eotb_default2,
     "minma1.png": minma1_default,
     "minma1.json": minma1_default2,
     "map.dscript": map_default
@@ -1387,6 +1454,7 @@
           return;
         }
         renderSetup.dungeon.render();
+        renderSetup.stats.render();
         renderSetup.minimap.render();
       };
       this.ctx = getCanvasContext(canvas, "2d");
@@ -1396,6 +1464,12 @@
       this.res = new ResourceManager();
       this.drawSoon = new Soon(this.render);
       this.scripting = new EngineScripting(this);
+      this.party = [
+        new Player("A"),
+        new Player("B"),
+        new Player("C"),
+        new Player("D")
+      ];
       canvas.addEventListener("keyup", (e) => {
         if (e.key === "ArrowLeft")
           this.turn(-1);
@@ -1420,8 +1494,9 @@
         ]);
         const dungeon = new DungeonRenderer(this, atlas, image);
         const minimap = new MinimapRenderer(this);
+        const stats = new StatsRenderer(this);
         yield dungeon.generateImages();
-        this.renderSetup = { dungeon, minimap };
+        this.renderSetup = { dungeon, minimap, stats };
         return this.draw();
       });
     }
@@ -1483,7 +1558,7 @@
   };
 
   // res/map.json
-  var map_default2 = "./map-W63ZI7ST.json";
+  var map_default2 = "./map-EZMJXB5W.json";
 
   // src/index.ts
   function loadEngine(parent) {
@@ -1496,8 +1571,8 @@
     requestAnimationFrame(() => canvas.focus());
     window.g = g;
     const onResize = () => {
-      const wantWidth = 320;
-      const wantHeight = 240;
+      const wantWidth = 480;
+      const wantHeight = 270;
       const ratioWidth = Math.floor(window.innerWidth / wantWidth);
       const ratioHeight = Math.floor(window.innerHeight / wantHeight);
       const ratio = Math.max(1, Math.min(ratioWidth, ratioHeight));

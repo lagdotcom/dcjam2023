@@ -1,12 +1,13 @@
 // adapted from https://dungeoncrawlers.org/tools/dungeonrenderer/
 
 import Atlas, { AtlasLayer, AtlasTile } from "./types/Atlas";
+import { rotate, xy } from "./tools/geometry";
 
 import Dir from "./types/Dir";
 import Engine from "./Engine";
+import XY from "./types/XY";
 import getCanvasContext from "./tools/getCanvasContext";
 import getFieldOfView from "./fov";
-import { rotate } from "./tools/geometry";
 
 export const tileTag = (
   id: number,
@@ -20,7 +21,8 @@ export default class DungeonRenderer {
   constructor(
     public g: Engine,
     public dungeon: Atlas,
-    public atlasImage: HTMLImageElement
+    public atlasImage: HTMLImageElement,
+    public offset: XY = xy(32, 0)
   ) {
     this.imageData = new Map();
   }
@@ -113,13 +115,13 @@ export default class DungeonRenderer {
   draw(result: AtlasTile) {
     const dx = result.screen.x - (result.flipped ? result.coords.w : 0);
     const dy = result.screen.y;
-    this.g.ctx.drawImage(result.image, dx, dy);
+    this.g.ctx.drawImage(result.image, dx + this.offset.x, dy + this.offset.y);
   }
 
   drawFront(result: AtlasTile, x: number) {
     const dx = result.screen.x + x * result.coords.fullWidth;
     const dy = result.screen.y;
-    this.g.ctx.drawImage(result.image, dx, dy);
+    this.g.ctx.drawImage(result.image, dx + this.offset.x, dy + this.offset.y);
   }
 
   drawImage(id: number, type: AtlasTile["type"], x: number, z: number) {
@@ -173,5 +175,15 @@ export default class DungeonRenderer {
 
       // TODO object?
     }
+
+    // for now just draw black boxes at the side lol
+    this.g.ctx.fillStyle = "black";
+    this.g.ctx.fillRect(0, 0, this.offset.x, 160);
+    this.g.ctx.fillRect(
+      this.g.canvas.width - this.offset.x,
+      0,
+      this.offset.x,
+      160
+    );
   }
 }

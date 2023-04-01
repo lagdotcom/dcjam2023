@@ -37,10 +37,10 @@ function rect(
 export default class MinimapRenderer {
   constructor(
     public g: Engine,
-    public tileSize = 10,
-    public wallSize = 1,
+    public tileSize = 16,
+    public wallSize = 2,
     public size = xy(2, 2),
-    public offset = xy(100, 100)
+    public offset = xy(112, 94)
   ) {}
 
   render() {
@@ -53,7 +53,7 @@ export default class MinimapRenderer {
     let dx = 0;
     let dy = startY;
 
-    ctx.fillStyle = "black";
+    ctx.fillStyle = "rgb(64,64,64)";
     ctx.fillRect(
       startX,
       startY,

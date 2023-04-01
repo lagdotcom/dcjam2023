@@ -14,8 +14,8 @@ function loadEngine(parent: HTMLElement) {
   (window as any).g = g;
 
   const onResize = () => {
-    const wantWidth = 320;
-    const wantHeight = 240;
+    const wantWidth = 480;
+    const wantHeight = 270;
 
     const ratioWidth = Math.floor(window.innerWidth / wantWidth);
     const ratioHeight = Math.floor(window.innerHeight / wantHeight);

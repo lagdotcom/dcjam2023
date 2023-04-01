@@ -4,8 +4,10 @@ import Dir from "./types/Dir";
 import DungeonRenderer from "./DungeonRenderer";
 import EngineScripting from "./EngineScripting";
 import MinimapRenderer from "./MinimapRenderer";
+import Player from "./Player";
 import ResourceManager from "./ResourceManager";
 import Soon from "./Soon";
+import StatsRenderer from "./StatsRenderer";
 import World from "./types/World";
 import XY from "./types/XY";
 import clone from "nanoclone";
@@ -16,12 +18,14 @@ import parse from "./DScript/parser";
 interface RenderSetup {
   dungeon: DungeonRenderer;
   minimap: MinimapRenderer;
+  stats: StatsRenderer;
 }
 
 export default class Engine {
   ctx: CanvasRenderingContext2D;
   drawSoon: Soon;
   facing: Dir;
+  party: Player[];
   position: XY;
   renderSetup?: RenderSetup;
   res: ResourceManager;
@@ -38,6 +42,12 @@ export default class Engine {
     this.res = new ResourceManager();
     this.drawSoon = new Soon(this.render);
     this.scripting = new EngineScripting(this);
+    this.party = [
+      new Player("A"),
+      new Player("B"),
+      new Player("C"),
+      new Player("D"),
+    ];
 
     canvas.addEventListener("keyup", (e) => {
       if (e.key === "ArrowLeft") this.turn(-1);
@@ -61,10 +71,11 @@ export default class Engine {
     ]);
     const dungeon = new DungeonRenderer(this, atlas, image);
     const minimap = new MinimapRenderer(this);
+    const stats = new StatsRenderer(this);
 
     await dungeon.generateImages();
 
-    this.renderSetup = { dungeon, minimap };
+    this.renderSetup = { dungeon, minimap, stats };
     return this.draw();
   }
 
@@ -114,6 +125,7 @@ export default class Engine {
     }
 
     renderSetup.dungeon.render();
+    renderSetup.stats.render();
     renderSetup.minimap.render();
   };
 
