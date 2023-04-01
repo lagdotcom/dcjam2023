@@ -11,8 +11,6 @@ export default class LogRenderer {
   render() {
     const { ctx, log } = this.g;
 
-    const messages = log.slice(-5);
-
     ctx.fillStyle = "rgba(0,0,0,0.4)";
     ctx.fillRect(this.position.x, this.position.y, this.size.x, this.size.y);
 
@@ -22,12 +20,18 @@ export default class LogRenderer {
     ctx.textAlign = "left";
     ctx.textBaseline = "bottom";
     ctx.fillStyle = "white";
-    for (const m of messages) {
+
+    for (let i = log.length - 1; i >= 0; i--) {
+      const m = log[i];
+
       // TODO this isn't going to work forever
       const draw = ctx.measureText(m);
-
       ctx.fillText(m, textX, textY, this.size.x - 6);
-      textY -= draw.actualBoundingBoxAscent + draw.actualBoundingBoxDescent;
+      textY = Math.floor(
+        textY - draw.actualBoundingBoxAscent + draw.actualBoundingBoxDescent
+      );
+
+      if (textY < this.position.y) break;
     }
   }
 }
