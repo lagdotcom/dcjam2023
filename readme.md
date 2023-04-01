@@ -1,4 +1,6 @@
-# Dungeon Crawler Jam 2023
+# Poisoned Daggers
+
+Sad Folks Interactive's entry for Dungeon Crawler Jam 2023!
 
 ## Setup
 
