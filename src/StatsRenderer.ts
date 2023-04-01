@@ -13,6 +13,8 @@ const coordinates: XY[] = [
   xy(225, 225),
 ];
 
+const background = "rgb(64,64,64)";
+
 export default class StatsRenderer {
   constructor(public g: Engine) {}
 
@@ -27,7 +29,7 @@ export default class StatsRenderer {
   renderPC({ x, y }: XY, pc: Player) {
     const { ctx } = this.g;
 
-    ctx.fillStyle = "rgb(64,64,64)";
+    ctx.fillStyle = background;
     ctx.fillRect(x, y, 62, 30);
 
     ctx.textAlign = "left";
@@ -51,5 +53,11 @@ export default class StatsRenderer {
 
     this.g.ctx.fillStyle = colour;
     this.g.ctx.fillRect(x, y, width, 3);
+
+    this.g.ctx.fillStyle = background;
+    this.g.ctx.fillRect(x, y, 1, 1);
+    this.g.ctx.fillRect(x, y + 2, 1, 1);
+    this.g.ctx.fillRect(x + width - 1, y, 1, 1);
+    this.g.ctx.fillRect(x + width - 1, y + 2, 1, 1);
   }
 }

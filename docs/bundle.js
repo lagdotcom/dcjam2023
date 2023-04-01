@@ -846,6 +846,7 @@
     xy(145, 225),
     xy(225, 225)
   ];
+  var background = "rgb(64,64,64)";
   var StatsRenderer = class {
     constructor(g) {
       this.g = g;
@@ -859,7 +860,7 @@
     }
     renderPC({ x, y }, pc) {
       const { ctx } = this.g;
-      ctx.fillStyle = "rgb(64,64,64)";
+      ctx.fillStyle = background;
       ctx.fillRect(x, y, 62, 30);
       ctx.textAlign = "left";
       ctx.textBaseline = "middle";
@@ -873,6 +874,11 @@
       const width = maxWidth * Math.max(0, Math.min(1, current / max));
       this.g.ctx.fillStyle = colour;
       this.g.ctx.fillRect(x, y, width, 3);
+      this.g.ctx.fillStyle = background;
+      this.g.ctx.fillRect(x, y, 1, 1);
+      this.g.ctx.fillRect(x, y + 2, 1, 1);
+      this.g.ctx.fillRect(x + width - 1, y, 1, 1);
+      this.g.ctx.fillRect(x + width - 1, y + 2, 1, 1);
     }
   };
 
