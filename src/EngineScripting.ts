@@ -59,6 +59,10 @@ export default class EngineScripting extends DScriptHost {
       }
     );
 
+    this.addNative("random", ["number"], "number", (max: number) =>
+      Math.floor(Math.random() * max)
+    );
+
     this.addNative(
       "tileHasTag",
       ["number", "number", "string"],

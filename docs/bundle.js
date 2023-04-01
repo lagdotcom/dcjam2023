@@ -657,6 +657,12 @@
         }
       );
       this.addNative(
+        "random",
+        ["number"],
+        "number",
+        (max) => Math.floor(Math.random() * max)
+      );
+      this.addNative(
         "tileHasTag",
         ["number", "number", "string"],
         "bool",
