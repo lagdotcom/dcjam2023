@@ -1,7 +1,7 @@
 import Colours from "./Colours";
 import Engine from "./Engine";
 import textWrap from "./tools/textWrap";
-import withTextStyle from "./withTextStyle";
+import withTextStyle from "./tools/withTextStyle";
 import { xy } from "./tools/geometry";
 
 export default class LogRenderer {

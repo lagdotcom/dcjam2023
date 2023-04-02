@@ -1,6 +1,6 @@
 import Colours from "./Colours";
 import Engine from "./Engine";
-import withTextStyle from "./withTextStyle";
+import withTextStyle from "./tools/withTextStyle";
 import { xy } from "./tools/geometry";
 
 const facingChars = ["^", ">", "v", "<"];
@@ -66,7 +66,14 @@ export default class MinimapRenderer {
         const tx = x + position.x;
         dx += tileSize;
 
-        const { north, east, south, west } = this.g.getMinimapData(tx, ty);
+        const { cell, north, east, south, west } = this.g.getMinimapData(
+          tx,
+          ty
+        );
+        if (cell) {
+          ctx.fillStyle = Colours.mapVisited;
+          ctx.fillRect(dx, dy, tileSize, tileSize);
+        }
 
         const edge = tileSize - wallSize;
         if (north) rect(ctx, dx, dy, 0, 0, tileSize, wallSize, north);

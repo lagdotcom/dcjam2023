@@ -5,9 +5,11 @@ import { WallTag, wallToTag } from "./tools/wallTags";
 import { XYTag, xyToTag } from "./tools/xyTags";
 import { move, rotate, xy } from "./tools/geometry";
 
+import DefaultControls from "./DefaultControls";
 import Dir from "./types/Dir";
 import DungeonRenderer from "./DungeonRenderer";
 import EngineScripting from "./EngineScripting";
+import GameInput from "./types/GameInput";
 import HUDRenderer from "./HUDRenderer";
 import { ItemAction } from "./types/Item";
 import LogRenderer from "./LogRenderer";
@@ -23,7 +25,7 @@ import convertGridCartographerMap from "./convertGridCartographerMap";
 import getCanvasContext from "./tools/getCanvasContext";
 import hudUrl from "../res/hud.png";
 import parse from "./DScript/parser";
-import withTextStyle from "./withTextStyle";
+import withTextStyle from "./tools/withTextStyle";
 
 type WallType = { canSeeDoor: boolean; isSolid: boolean; canSeeWall: boolean };
 
@@ -36,6 +38,7 @@ interface RenderSetup {
 }
 
 export default class Engine implements Game {
+  controls: Map<string, GameInput>;
   ctx: CanvasRenderingContext2D;
   drawSoon: Soon;
   effects: GameEffect[];
@@ -57,6 +60,7 @@ export default class Engine implements Game {
   constructor(public canvas: HTMLCanvasElement) {
     this.ctx = getCanvasContext(canvas, "2d");
 
+    this.controls = new Map(DefaultControls);
     this.facing = Dir.N;
     this.position = xy(0, 0);
     this.worldSize = xy(0, 0);
@@ -78,21 +82,36 @@ export default class Engine implements Game {
     ];
 
     canvas.addEventListener("keyup", (e) => {
-      if (e.code === "ArrowLeft") this.turn(-1);
-      else if (e.code === "ArrowRight") this.turn(1);
-      else if (e.code === "ArrowUp") this.move(this.facing);
-      else if (e.code === "ArrowDown") this.move(rotate(this.facing, 2));
-      else if (e.code === "KeyQ") this.move(rotate(this.facing, 3));
-      else if (e.code === "KeyE") this.move(rotate(this.facing, 1));
-      else if (e.code === "Space") {
+      let key = e.code;
+      if (e.shiftKey) key = "Shift+" + key;
+
+      const input = this.controls.get(key);
+      if (input) {
         e.preventDefault();
-        this.showLog = !this.showLog;
-        this.draw();
-      } else if (e.code === "Enter" || e.code === "Return") {
-        e.preventDefault();
-        this.scripting.onInteract();
+        this.processInput(input);
       }
     });
+  }
+
+  processInput(i: GameInput) {
+    switch (i) {
+      case "Forward":
+        return this.move(this.facing);
+      case "SlideRight":
+        return this.move(rotate(this.facing, 1));
+      case "Back":
+        return this.move(rotate(this.facing, 2));
+      case "SlideLeft":
+        return this.move(rotate(this.facing, 3));
+      case "TurnLeft":
+        return this.turn(-1);
+      case "TurnRight":
+        return this.turn(1);
+      case "ToggleLog":
+        return this.toggleLog();
+      case "Interact":
+        return this.interact();
+    }
   }
 
   async loadWorld(w: World, position?: XY) {
@@ -236,6 +255,15 @@ export default class Engine implements Game {
 
       this.scripting.onEnter(this.position, old);
     } else this.markUnnavigable(this.position, dir);
+  }
+
+  toggleLog() {
+    this.showLog = !this.showLog;
+    this.draw();
+  }
+
+  interact() {
+    this.scripting.onInteract();
   }
 
   markVisited() {

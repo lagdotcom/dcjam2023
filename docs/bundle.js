@@ -99,6 +99,26 @@
     }
   }
 
+  // src/DefaultControls.ts
+  var DefaultControls = [
+    ["ArrowUp", "Forward"],
+    ["ArrowDown", "Back"],
+    ["ArrowLeft", "TurnLeft"],
+    ["ArrowRight", "TurnRight"],
+    ["Shift+ArrowLeft", "SlideLeft"],
+    ["Shift+ArrowRight", "SlideRight"],
+    ["KeyQ", "TurnLeft"],
+    ["KeyE", "TurnRight"],
+    ["KeyW", "Forward"],
+    ["KeyD", "SlideRight"],
+    ["KeyS", "Back"],
+    ["KeyA", "SlideLeft"],
+    ["Space", "ToggleLog"],
+    ["Enter", "Interact"],
+    ["Return", "Interact"]
+  ];
+  var DefaultControls_default = DefaultControls;
+
   // src/tools/getCanvasContext.ts
   function getCanvasContext(canvas, type, options) {
     const ctx = canvas.getContext(type, options);
@@ -807,8 +827,10 @@
 
   // src/Colours.ts
   var Colours = {
-    background: "rgb(64,64,64)",
+    background: "rgb(32,32,32)",
     logShadow: "rgba(0,0,0,0.4)",
+    currentPC: "rgb(92,92,64)",
+    mapVisited: "rgb(64,64,64)",
     hp: "rgb(223,113,38)",
     sp: "rgb(99,155,255)"
   };
@@ -840,7 +862,7 @@
     return { lines, measurement: measure(source) };
   }
 
-  // src/withTextStyle.ts
+  // src/tools/withTextStyle.ts
   function withTextStyle(ctx, textAlign, textBaseline, fillStyle) {
     ctx.textAlign = textAlign;
     ctx.textBaseline = textBaseline;
@@ -927,7 +949,14 @@
         for (let x = -size.x; x <= size.x; x++) {
           const tx = x + position.x;
           dx += tileSize;
-          const { north, east, south, west } = this.g.getMinimapData(tx, ty);
+          const { cell, north, east, south, west } = this.g.getMinimapData(
+            tx,
+            ty
+          );
+          if (cell) {
+            ctx.fillStyle = Colours_default.mapVisited;
+            ctx.fillRect(dx, dy, tileSize, tileSize);
+          }
           const edge = tileSize - wallSize;
           if (north)
             rect(ctx, dx, dy, 0, 0, tileSize, wallSize, north);
@@ -1080,10 +1109,10 @@
   var boxWidth = 62;
   var boxHeight = 30;
   var coordinates = [
-    xy(145, 177),
-    xy(225, 177),
-    xy(145, 225),
-    xy(225, 225)
+    xy(180, 162),
+    xy(220, 194),
+    xy(180, 226),
+    xy(140, 194)
   ];
   var StatsRenderer = class {
     constructor(g) {
@@ -1093,24 +1122,25 @@
       for (let i = 0; i < 4; i++) {
         const xy2 = coordinates[i];
         const pc = this.g.party[i];
-        this.renderPC(xy2, pc);
+        this.renderPC(xy2, pc, i);
       }
     }
-    renderPC({ x, y }, pc) {
+    renderPC({ x, y }, pc, index) {
       const { ctx } = this.g;
-      ctx.fillStyle = Colours_default.background;
+      const bg = index === this.g.facing ? Colours_default.currentPC : Colours_default.background;
+      ctx.fillStyle = bg;
       ctx.fillRect(x, y, boxWidth, boxHeight);
       const { draw } = withTextStyle(ctx, "left", "middle", "white");
       draw(pc.name, x + 3, y + 10, boxWidth - 6);
-      this.renderBar(x + 3, y + 18, pc.hp, pc.maxHp, Colours_default.hp);
-      this.renderBar(x + 3, y + 24, pc.sp, pc.maxSp, Colours_default.sp);
+      this.renderBar(x + 3, y + 18, pc.hp, pc.maxHp, Colours_default.hp, bg);
+      this.renderBar(x + 3, y + 24, pc.sp, pc.maxSp, Colours_default.sp, bg);
     }
-    renderBar(x, y, current, max, colour) {
+    renderBar(x, y, current, max, colour, bgColour) {
       const maxWidth = boxWidth - 6;
       const width = maxWidth * Math.max(0, Math.min(1, current / max));
       this.g.ctx.fillStyle = colour;
       this.g.ctx.fillRect(x, y, width, 3);
-      this.g.ctx.fillStyle = Colours_default.background;
+      this.g.ctx.fillStyle = bgColour;
       this.g.ctx.fillRect(x, y, 1, 1);
       this.g.ctx.fillRect(x, y + 2, 1, 1);
       this.g.ctx.fillRect(x + width - 1, y, 1, 1);
@@ -1762,6 +1792,7 @@
           renderSetup.log.render();
       };
       this.ctx = getCanvasContext(canvas, "2d");
+      this.controls = new Map(DefaultControls_default);
       this.facing = Dir_default.N;
       this.position = xy(0, 0);
       this.worldSize = xy(0, 0);
@@ -1782,27 +1813,35 @@
         new Player("D", "Thief")
       ];
       canvas.addEventListener("keyup", (e) => {
-        if (e.code === "ArrowLeft")
-          this.turn(-1);
-        else if (e.code === "ArrowRight")
-          this.turn(1);
-        else if (e.code === "ArrowUp")
-          this.move(this.facing);
-        else if (e.code === "ArrowDown")
-          this.move(rotate(this.facing, 2));
-        else if (e.code === "KeyQ")
-          this.move(rotate(this.facing, 3));
-        else if (e.code === "KeyE")
-          this.move(rotate(this.facing, 1));
-        else if (e.code === "Space") {
+        let key = e.code;
+        if (e.shiftKey)
+          key = "Shift+" + key;
+        const input = this.controls.get(key);
+        if (input) {
           e.preventDefault();
-          this.showLog = !this.showLog;
-          this.draw();
-        } else if (e.code === "Enter" || e.code === "Return") {
-          e.preventDefault();
-          this.scripting.onInteract();
+          this.processInput(input);
         }
       });
+    }
+    processInput(i) {
+      switch (i) {
+        case "Forward":
+          return this.move(this.facing);
+        case "SlideRight":
+          return this.move(rotate(this.facing, 1));
+        case "Back":
+          return this.move(rotate(this.facing, 2));
+        case "SlideLeft":
+          return this.move(rotate(this.facing, 3));
+        case "TurnLeft":
+          return this.turn(-1);
+        case "TurnRight":
+          return this.turn(1);
+        case "ToggleLog":
+          return this.toggleLog();
+        case "Interact":
+          return this.interact();
+      }
     }
     loadWorld(w, position) {
       return __async(this, null, function* () {
@@ -1904,6 +1943,13 @@
         this.scripting.onEnter(this.position, old);
       } else
         this.markUnnavigable(this.position, dir);
+    }
+    toggleLog() {
+      this.showLog = !this.showLog;
+      this.draw();
+    }
+    interact() {
+      this.scripting.onInteract();
     }
     markVisited() {
       const pos = this.position;
