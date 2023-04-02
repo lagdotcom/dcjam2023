@@ -1,8 +1,8 @@
 {
 	"export": {
 		"from": "2021.3",
-		"date": "2023-04-01",
-		"time": "20:28:55"
+		"date": "2023-04-02",
+		"time": "11:48:11"
 	},
 	"regions": [
 		{
@@ -348,7 +348,6 @@
 										"r": 1
 									},
 									{
-										"m": 14,
 										"t": 39,
 										"c": "1"
 									},
@@ -512,7 +511,7 @@
 						{
 							"x": -2,
 							"y": 0,
-							"__data": "#ATLAS eotb\n#DEFINE tGreyBrick,1\n#DEFINE oWerewolf,2\n#DEFINE dDoor,3\n#STYLE 0,tGreyBrick\n#DECAL Door,tGreyBrick,dDoor\n#SCRIPT map.dscript"
+							"__data": "#ATLAS test1\n#DEFINE tGreyBrick,1\n#DEFINE dDoor,3\n#STYLE 0,tGreyBrick\n#DECAL Door,tGreyBrick,dDoor\n#SCRIPT map.dscript"
 						},
 						{
 							"x": 0,
@@ -533,11 +532,6 @@
 							"x": 6,
 							"y": 13,
 							"__data": "#TAG SlamShutBefore"
-						},
-						{
-							"x": 0,
-							"y": 12,
-							"__data": "#OBJECT oWerewolf"
 						},
 						{
 							"x": 3,

@@ -1,10 +1,12 @@
 import Combatant, { AttackableStat } from "./types/Combatant";
+import { Enemy, EnemyName, EnemyObjects, spawn } from "./enemies";
 import Game, { GameEffect } from "./types/Game";
 import { GameEventListener, GameEventName, GameEvents } from "./types/events";
 import { WallTag, wallToTag } from "./tools/wallTags";
 import { XYTag, xyToTag } from "./tools/xyTags";
-import { move, rotate, xy } from "./tools/geometry";
+import { getCardinalOffset, move, rotate, xy } from "./tools/geometry";
 
+import CombatRenderer from "./CombatRenderer";
 import DefaultControls from "./DefaultControls";
 import Dir from "./types/Dir";
 import DungeonRenderer from "./DungeonRenderer";
@@ -23,6 +25,7 @@ import XY from "./types/XY";
 import clone from "nanoclone";
 import convertGridCartographerMap from "./convertGridCartographerMap";
 import getCanvasContext from "./tools/getCanvasContext";
+import { getResourceURL } from "./resources";
 import hudUrl from "../res/hud.png";
 import parse from "./DScript/parser";
 import withTextStyle from "./tools/withTextStyle";
@@ -35,6 +38,7 @@ interface RenderSetup {
   log: LogRenderer;
   minimap: MinimapRenderer;
   stats: StatsRenderer;
+  combat: CombatRenderer;
 }
 
 export default class Engine implements Game {
@@ -42,7 +46,9 @@ export default class Engine implements Game {
   ctx: CanvasRenderingContext2D;
   drawSoon: Soon;
   effects: GameEffect[];
+  enemies: Record<Dir, Enemy[]>;
   facing: Dir;
+  inCombat: boolean;
   log: string[];
   party: Player[];
   position: XY;
@@ -70,6 +76,8 @@ export default class Engine implements Game {
     this.log = [];
     this.showLog = false;
     this.effects = [];
+    this.enemies = { 0: [], 1: [], 2: [], 3: [] };
+    this.inCombat = false;
     this.visited = new Map();
     this.walls = new Map();
     this.worldVisited = new Set();
@@ -122,18 +130,23 @@ export default class Engine implements Game {
     this.position = position ?? w.start;
     this.facing = w.facing;
 
-    const [hudImage, atlas, image] = await Promise.all([
+    const [hudImage, atlas, image, enemyAtlas, enemyImage] = await Promise.all([
       this.res.loadImage(hudUrl),
       this.res.loadAtlas(w.atlas.json),
       this.res.loadImage(w.atlas.image),
+      this.res.loadAtlas(getResourceURL("enemies.json")),
+      this.res.loadImage(getResourceURL("enemies.png")),
     ]);
+    const combat = new CombatRenderer(this);
     const dungeon = new DungeonRenderer(this, atlas, image);
     const hud = new HUDRenderer(this, hudImage);
     const minimap = new MinimapRenderer(this);
     const stats = new StatsRenderer(this);
     const log = new LogRenderer(this);
 
-    await dungeon.generateImages();
+    await dungeon.addAtlas(atlas.layers, image);
+    await dungeon.addAtlas(enemyAtlas.layers, enemyImage);
+    dungeon.dungeon.layers.push(...enemyAtlas.layers);
 
     const visited = this.visited.get(w.name);
     if (visited) this.worldVisited = visited;
@@ -151,7 +164,7 @@ export default class Engine implements Game {
 
     this.markVisited();
 
-    this.renderSetup = { dungeon, hud, log, minimap, stats };
+    this.renderSetup = { combat, dungeon, hud, log, minimap, stats };
     return this.draw();
   }
 
@@ -160,7 +173,7 @@ export default class Engine implements Game {
 
     const map = await this.res.loadGCMap(jsonUrl);
     const { atlas, cells, scripts, start, facing, name } =
-      convertGridCartographerMap(map, region, floor);
+      convertGridCartographerMap(map, region, floor, EnemyObjects);
     if (!atlas) throw new Error(`${jsonUrl} did not contain #ATLAS`);
 
     // TODO how about clearing old script stuff...?
@@ -184,7 +197,22 @@ export default class Engine implements Game {
     if (x < 0 || x >= this.worldSize.x || y < 0 || y >= this.worldSize.y)
       return;
 
-    return this.world?.cells[y][x];
+    const cell = this.world?.cells[y][x];
+
+    if (cell && this.inCombat) {
+      const result = getCardinalOffset(this.position, { x, y });
+      if (result) {
+        const enemy = this.enemies[result.dir][result.offset - 1];
+        // show the enemy sprite instead of whatever is there (temporarily)
+        if (enemy) {
+          const replaced = clone(cell);
+          replaced.object = enemy.template.object;
+          return replaced;
+        }
+      }
+    }
+
+    return cell;
   }
 
   findCellWithTag(tag: string) {
@@ -225,6 +253,7 @@ export default class Engine implements Game {
     renderSetup.stats.render();
     renderSetup.minimap.render();
     if (this.showLog) renderSetup.log.render();
+    if (this.inCombat) renderSetup.combat.render();
   };
 
   canMove(dir: Dir) {
@@ -246,6 +275,8 @@ export default class Engine implements Game {
   }
 
   move(dir: Dir) {
+    if (this.inCombat) return false;
+
     if (this.canMove(dir)) {
       const old = this.position;
       this.position = move(this.position, dir);
@@ -254,16 +285,21 @@ export default class Engine implements Game {
       this.draw();
 
       this.scripting.onEnter(this.position, old);
-    } else this.markUnnavigable(this.position, dir);
+      return true;
+    }
+
+    this.markUnnavigable(this.position, dir);
+    return false;
   }
 
   toggleLog() {
     this.showLog = !this.showLog;
     this.draw();
+    return true;
   }
 
   interact() {
-    this.scripting.onInteract();
+    return this.scripting.onInteract();
   }
 
   markVisited() {
@@ -342,6 +378,7 @@ export default class Engine implements Game {
   turn(clockwise: number) {
     this.facing = rotate(this.facing, clockwise);
     this.draw();
+    return true;
   }
 
   addToLog(message: string) {
@@ -393,7 +430,7 @@ export default class Engine implements Game {
     this.draw();
   }
 
-  addEffect(effect: GameEffect): void {
+  addEffect(effect: GameEffect) {
     this.effects.push(effect);
   }
 
@@ -402,7 +439,7 @@ export default class Engine implements Game {
     targets: Combatant[],
     amount: number,
     type: AttackableStat
-  ): void {
+  ) {
     for (const target of targets) {
       const damage = this.fire("onCalculateDamage", {
         attacker,
@@ -416,7 +453,7 @@ export default class Engine implements Game {
           ? this.fire("onCalculateDR", { who: target, dr: target.dr }).dr
           : 0;
 
-      const deal = Math.floor(damage.amount) - Math.floor(resist);
+      const deal = Math.floor(damage.amount - resist);
       if (deal > 0) {
         target[type] -= deal;
         this.draw();
@@ -424,5 +461,29 @@ export default class Engine implements Game {
         // TODO dying etc.
       }
     }
+  }
+
+  startCombat(
+    north: EnemyName[],
+    east: EnemyName[],
+    south: EnemyName[],
+    west: EnemyName[]
+  ) {
+    this.enemies = {
+      0: north.map(spawn),
+      1: east.map(spawn),
+      2: south.map(spawn),
+      3: west.map(spawn),
+    };
+
+    this.inCombat = true;
+    this.draw();
+  }
+
+  endCombat() {
+    this.enemies = { 0: [], 1: [], 2: [], 3: [] };
+
+    this.inCombat = false;
+    this.draw();
   }
 }

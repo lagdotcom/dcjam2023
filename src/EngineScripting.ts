@@ -193,11 +193,17 @@ export default class EngineScripting extends DScriptHost {
 
   onInteract() {
     const tile = this.g.getCell(this.g.position.x, this.g.position.y);
-    if (!tile) return;
+    if (!tile) return false;
 
+    let result = false;
     for (const tag of tile.tags) {
       const cb = this.onTagInteract.get(tag);
-      if (cb) this.runCallback(cb);
+      if (cb) {
+        this.runCallback(cb);
+        result = true;
+      }
     }
+
+    return result;
   }
 }

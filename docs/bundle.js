@@ -53,6 +53,126 @@
     }
   });
 
+  // src/tools/random.ts
+  function random(max, min = 0) {
+    const diff = max - min;
+    return min + Math.floor(Math.random() * diff);
+  }
+
+  // src/enemies.ts
+  var EnemyObjects = {
+    eSage: 100,
+    eMonk: 101,
+    eRogue: 102
+  };
+  var enemies = {
+    Sage: {
+      object: EnemyObjects.eSage,
+      name: "Sage",
+      maxHp: 20,
+      maxSp: 10,
+      determination: 3,
+      camaraderie: 3,
+      spirits: 3,
+      dr: 0,
+      actions: [
+        {
+          name: "Attack",
+          sp: 0,
+          targets: "Opponent",
+          act({ g, targets, me }) {
+            const bonus = me.attacksInARow;
+            const amount = random(5 + bonus, 2);
+            g.applyDamage(me, targets, amount, "hp");
+          }
+        },
+        {
+          name: "Zap",
+          sp: 2,
+          targets: "AllParty",
+          act({ g, targets, me }) {
+            g.applyDamage(me, targets, 3, "hp");
+          }
+        }
+      ]
+    },
+    Monk: {
+      object: EnemyObjects.eMonk,
+      name: "Monk",
+      maxHp: 20,
+      maxSp: 10,
+      determination: 3,
+      camaraderie: 3,
+      spirits: 3,
+      dr: 0,
+      actions: [
+        {
+          name: "Attack",
+          sp: 0,
+          targets: "Opponent",
+          act({ g, targets, me }) {
+            const bonus = me.attacksInARow;
+            const amount = random(16 + bonus, 9);
+            g.applyDamage(me, targets, amount, "hp");
+          }
+        }
+      ]
+    },
+    Rogue: {
+      object: EnemyObjects.eRogue,
+      name: "Rogue",
+      maxHp: 20,
+      maxSp: 10,
+      determination: 3,
+      camaraderie: 3,
+      spirits: 3,
+      dr: 0,
+      actions: [
+        {
+          name: "Attack",
+          sp: 0,
+          targets: "Opponent",
+          act({ g, targets, me }) {
+            const bonus = me.attacksInARow;
+            const amount = random(9 + bonus, 4);
+            g.applyDamage(me, targets, amount, "hp");
+          }
+        },
+        {
+          name: "Arrow",
+          sp: 0,
+          targets: "OneParty",
+          act({ g, targets, me }) {
+            g.applyDamage(me, targets, random(14, 1), "hp");
+          }
+        }
+      ]
+    }
+  };
+  var Enemy = class {
+    constructor(template) {
+      this.template = template;
+      this.name = template.name;
+      this.maxHp = template.maxHp;
+      this.maxSp = template.maxSp;
+      this.hp = this.maxHp;
+      this.sp = this.maxSp;
+      this.determination = template.determination;
+      this.camaraderie = template.camaraderie;
+      this.spirits = template.spirits;
+      this.dr = template.dr;
+      this.actions = template.actions;
+      this.equipment = /* @__PURE__ */ new Map();
+      this.attacksInARow = 0;
+    }
+    get alive() {
+      return this.hp > 0;
+    }
+  };
+  function spawn(name) {
+    return new Enemy(enemies[name]);
+  }
+
   // src/tools/wallTags.ts
   function wallToTag(pos, dir) {
     return `${pos.x},${pos.y},${dir}`;
@@ -98,6 +218,29 @@
         return Dir_default.N;
     }
   }
+  function getCardinalOffset(start, destination) {
+    const dx = destination.x - start.x;
+    const dy = destination.y - start.y;
+    if (dx && dy)
+      return;
+    if (dy < 0)
+      return { dir: Dir_default.N, offset: -dy };
+    if (dx > 0)
+      return { dir: Dir_default.E, offset: dx };
+    if (dy > 0)
+      return { dir: Dir_default.S, offset: dy };
+    if (dx < 0)
+      return { dir: Dir_default.W, offset: -dx };
+  }
+
+  // src/CombatRenderer.ts
+  var CombatRenderer = class {
+    constructor(g) {
+      this.g = g;
+    }
+    render() {
+    }
+  };
 
   // src/DefaultControls.ts
   var DefaultControls = [
@@ -206,16 +349,16 @@
       this.offset = offset;
       this.imageData = /* @__PURE__ */ new Map();
     }
-    generateImages() {
+    addAtlas(layers, image) {
       const atlasCanvas = document.createElement("canvas");
-      atlasCanvas.width = this.atlasImage.width;
-      atlasCanvas.height = this.atlasImage.height;
+      atlasCanvas.width = image.width;
+      atlasCanvas.height = image.height;
       const atlasCtx = getCanvasContext(atlasCanvas, "2d", {
         willReadFrequently: true
       });
-      atlasCtx.drawImage(this.atlasImage, 0, 0);
+      atlasCtx.drawImage(image, 0, 0);
       const promises = [];
-      for (const layer of this.dungeon.layers) {
+      for (const layer of layers) {
         for (const entry of layer.tiles) {
           const imageData = atlasCtx.getImageData(
             entry.coords.x,
@@ -629,12 +772,6 @@
     return AttackableStats.includes(s);
   }
 
-  // src/tools/random.ts
-  function random(max, min = 0) {
-    const diff = max - min;
-    return min + Math.floor(Math.random() * diff);
-  }
-
   // src/tools/oneOf.ts
   function oneOf(items) {
     const index = random(items.length);
@@ -805,12 +942,16 @@
     onInteract() {
       const tile = this.g.getCell(this.g.position.x, this.g.position.y);
       if (!tile)
-        return;
+        return false;
+      let result = false;
       for (const tag of tile.tags) {
         const cb = this.onTagInteract.get(tag);
-        if (cb)
+        if (cb) {
           this.runCallback(cb);
+          result = true;
+        }
       }
+      return result;
     }
   };
 
@@ -1010,6 +1151,9 @@
         if (item == null ? void 0 : item.dr)
           value += item.dr;
       return value;
+    }
+    get actions() {
+      return Array.from(this.equipment.values()).map((i) => i.action);
     }
   };
 
@@ -1231,27 +1375,27 @@
     }
   };
 
-  // res/atlas/eotb.png
-  var eotb_default = "./eotb-QO3KGBK4.png";
+  // res/atlas/enemies.png
+  var enemies_default = "./enemies-RG7TVYUO.png";
 
-  // res/atlas/eotb.json
-  var eotb_default2 = "./eotb-5KLMJLK4.json";
+  // res/atlas/enemies.json
+  var enemies_default2 = "./enemies-O2A7ZZCK.json";
 
   // res/map.dscript
   var map_default = "./map-HKPF3IHV.dscript";
 
-  // res/atlas/minma1.png
-  var minma1_default = "./minma1-VI5UXWCY.png";
+  // res/atlas/test1.png
+  var test1_default = "./test1-D6IUR7Z2.png";
 
-  // res/atlas/minma1.json
-  var minma1_default2 = "./minma1-6Z2CTON5.json";
+  // res/atlas/test1.json
+  var test1_default2 = "./test1-47JUQ3PA.json";
 
   // src/resources.ts
   var Resources = {
-    "eotb.png": eotb_default,
-    "eotb.json": eotb_default2,
-    "minma1.png": minma1_default,
-    "minma1.json": minma1_default2,
+    "enemies.png": enemies_default,
+    "enemies.json": enemies_default2,
+    "test1.png": test1_default,
+    "test1.json": test1_default2,
     "map.dscript": map_default
   };
   function getResourceURL(id2) {
@@ -1279,9 +1423,9 @@
     [7 /* Wall_OneWayLU */]: { main: wall, opposite: fake }
   };
   var GCMapConverter = class {
-    constructor() {
+    constructor(env = {}) {
       this.decals = /* @__PURE__ */ new Map();
-      this.definitions = /* @__PURE__ */ new Map();
+      this.definitions = new Map(Object.entries(env));
       this.facing = Dir_default.N;
       this.grid = new Grid(() => ({ sides: {}, tags: [] }));
       this.scripts = [];
@@ -1408,8 +1552,8 @@
       };
     }
   };
-  function convertGridCartographerMap(j, region = 0, floor = 0) {
-    const converter = new GCMapConverter();
+  function convertGridCartographerMap(j, region = 0, floor = 0, env = {}) {
+    const converter = new GCMapConverter(env);
     return converter.convert(j, region, floor);
   }
 
@@ -1790,6 +1934,8 @@
         renderSetup.minimap.render();
         if (this.showLog)
           renderSetup.log.render();
+        if (this.inCombat)
+          renderSetup.combat.render();
       };
       this.ctx = getCanvasContext(canvas, "2d");
       this.controls = new Map(DefaultControls_default);
@@ -1802,6 +1948,8 @@
       this.log = [];
       this.showLog = false;
       this.effects = [];
+      this.enemies = { 0: [], 1: [], 2: [], 3: [] };
+      this.inCombat = false;
       this.visited = /* @__PURE__ */ new Map();
       this.walls = /* @__PURE__ */ new Map();
       this.worldVisited = /* @__PURE__ */ new Set();
@@ -1850,17 +1998,22 @@
         this.worldSize = xy(this.world.cells[0].length, this.world.cells.length);
         this.position = position != null ? position : w.start;
         this.facing = w.facing;
-        const [hudImage, atlas, image] = yield Promise.all([
+        const [hudImage, atlas, image, enemyAtlas, enemyImage] = yield Promise.all([
           this.res.loadImage(hud_default),
           this.res.loadAtlas(w.atlas.json),
-          this.res.loadImage(w.atlas.image)
+          this.res.loadImage(w.atlas.image),
+          this.res.loadAtlas(getResourceURL("enemies.json")),
+          this.res.loadImage(getResourceURL("enemies.png"))
         ]);
+        const combat = new CombatRenderer(this);
         const dungeon = new DungeonRenderer(this, atlas, image);
         const hud = new HUDRenderer(this, hudImage);
         const minimap = new MinimapRenderer(this);
         const stats = new StatsRenderer(this);
         const log = new LogRenderer(this);
-        yield dungeon.generateImages();
+        yield dungeon.addAtlas(atlas.layers, image);
+        yield dungeon.addAtlas(enemyAtlas.layers, enemyImage);
+        dungeon.dungeon.layers.push(...enemyAtlas.layers);
         const visited = this.visited.get(w.name);
         if (visited)
           this.worldVisited = visited;
@@ -1876,7 +2029,7 @@
           this.walls.set(w.name, this.worldWalls);
         }
         this.markVisited();
-        this.renderSetup = { dungeon, hud, log, minimap, stats };
+        this.renderSetup = { combat, dungeon, hud, log, minimap, stats };
         return this.draw();
       });
     }
@@ -1884,7 +2037,7 @@
       return __async(this, null, function* () {
         this.renderSetup = void 0;
         const map = yield this.res.loadGCMap(jsonUrl);
-        const { atlas, cells, scripts, start, facing, name } = convertGridCartographerMap(map, region, floor);
+        const { atlas, cells, scripts, start, facing, name } = convertGridCartographerMap(map, region, floor, EnemyObjects);
         if (!atlas)
           throw new Error(`${jsonUrl} did not contain #ATLAS`);
         const codeFiles = yield Promise.all(
@@ -1905,7 +2058,19 @@
       var _a;
       if (x < 0 || x >= this.worldSize.x || y < 0 || y >= this.worldSize.y)
         return;
-      return (_a = this.world) == null ? void 0 : _a.cells[y][x];
+      const cell = (_a = this.world) == null ? void 0 : _a.cells[y][x];
+      if (cell && this.inCombat) {
+        const result = getCardinalOffset(this.position, { x, y });
+        if (result) {
+          const enemy = this.enemies[result.dir][result.offset - 1];
+          if (enemy) {
+            const replaced = src_default(cell);
+            replaced.object = enemy.template.object;
+            return replaced;
+          }
+        }
+      }
+      return cell;
     }
     findCellWithTag(tag) {
       if (!this.world)
@@ -1934,6 +2099,8 @@
       return true;
     }
     move(dir) {
+      if (this.inCombat)
+        return false;
       if (this.canMove(dir)) {
         const old = this.position;
         this.position = move(this.position, dir);
@@ -1941,15 +2108,18 @@
         this.markNavigable(old, dir);
         this.draw();
         this.scripting.onEnter(this.position, old);
-      } else
-        this.markUnnavigable(this.position, dir);
+        return true;
+      }
+      this.markUnnavigable(this.position, dir);
+      return false;
     }
     toggleLog() {
       this.showLog = !this.showLog;
       this.draw();
+      return true;
     }
     interact() {
-      this.scripting.onInteract();
+      return this.scripting.onInteract();
     }
     markVisited() {
       const pos = this.position;
@@ -2018,6 +2188,7 @@
     turn(clockwise) {
       this.facing = rotate(this.facing, clockwise);
       this.draw();
+      return true;
     }
     addToLog(message) {
       this.log.push(message);
@@ -2073,17 +2244,32 @@
           type
         });
         const resist = type === "hp" ? this.fire("onCalculateDR", { who: target, dr: target.dr }).dr : 0;
-        const deal = Math.floor(damage.amount) - Math.floor(resist);
+        const deal = Math.floor(damage.amount - resist);
         if (deal > 0) {
           target[type] -= deal;
           this.draw();
         }
       }
     }
+    startCombat(north, east, south, west) {
+      this.enemies = {
+        0: north.map(spawn),
+        1: east.map(spawn),
+        2: south.map(spawn),
+        3: west.map(spawn)
+      };
+      this.inCombat = true;
+      this.draw();
+    }
+    endCombat() {
+      this.enemies = { 0: [], 1: [], 2: [], 3: [] };
+      this.inCombat = false;
+      this.draw();
+    }
   };
 
   // res/map.json
-  var map_default2 = "./map-K2FGT3OL.json";
+  var map_default2 = "./map-245TL46A.json";
 
   // src/index.ts
   function loadEngine(parent) {

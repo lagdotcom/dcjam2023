@@ -44,4 +44,8 @@ export default class Player implements Combatant {
 
     return value;
   }
+
+  get actions() {
+    return Array.from(this.equipment.values()).map((i) => i.action);
+  }
 }

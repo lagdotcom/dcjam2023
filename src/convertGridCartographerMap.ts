@@ -46,9 +46,9 @@ class GCMapConverter {
   start: XY;
   textures: Map<number, number>;
 
-  constructor() {
+  constructor(env: Record<string, number> = {}) {
     this.decals = new Map();
-    this.definitions = new Map();
+    this.definitions = new Map(Object.entries(env));
     this.facing = Dir.N;
     this.grid = new Grid<WorldCell>(() => ({ sides: {}, tags: [] }));
     this.scripts = [];
@@ -208,8 +208,9 @@ class GCMapConverter {
 export default function convertGridCartographerMap(
   j: GCMap,
   region = 0,
-  floor = 0
+  floor = 0,
+  env: Record<string, number> = {}
 ) {
-  const converter = new GCMapConverter();
+  const converter = new GCMapConverter(env);
   return converter.convert(j, region, floor);
 }

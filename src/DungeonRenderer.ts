@@ -26,18 +26,18 @@ export default class DungeonRenderer {
     this.imageData = new Map();
   }
 
-  generateImages() {
+  addAtlas(layers: Atlas["layers"], image: HTMLImageElement) {
     const atlasCanvas = document.createElement("canvas");
-    atlasCanvas.width = this.atlasImage.width;
-    atlasCanvas.height = this.atlasImage.height;
+    atlasCanvas.width = image.width;
+    atlasCanvas.height = image.height;
     const atlasCtx = getCanvasContext(atlasCanvas, "2d", {
       willReadFrequently: true,
     });
-    atlasCtx.drawImage(this.atlasImage, 0, 0);
+    atlasCtx.drawImage(image, 0, 0);
 
     const promises = [];
 
-    for (const layer of this.dungeon.layers) {
+    for (const layer of layers) {
       for (const entry of layer.tiles) {
         const imageData = atlasCtx.getImageData(
           entry.coords.x,

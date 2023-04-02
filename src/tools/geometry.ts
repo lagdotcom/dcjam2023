@@ -33,3 +33,14 @@ export function dirFromInitial(initial: string): Dir {
       return Dir.N;
   }
 }
+
+export function getCardinalOffset(start: XY, destination: XY) {
+  const dx = destination.x - start.x;
+  const dy = destination.y - start.y;
+
+  if (dx && dy) return;
+  if (dy < 0) return { dir: Dir.N, offset: -dy };
+  if (dx > 0) return { dir: Dir.E, offset: dx };
+  if (dy > 0) return { dir: Dir.S, offset: dy };
+  if (dx < 0) return { dir: Dir.W, offset: -dx };
+}
