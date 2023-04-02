@@ -21,9 +21,9 @@ function LockedDoorA()
       message(getPCName(pcIndex) + ' fiddles with the lock for a while before it clicks.')
       unlock(partyX, partyY, NORTH)
     else
-      message('A dart shoots at ' + getPCName(pcIndex) + ', hurting them!')
+      message('A dart shoots at ' + getPCName(pcIndex) + '!')
       damagePC(pcIndex, 'hp', 1)
-      damagePC(pcIndex, 'spirits', 1)
+      damagePC(pcIndex, 'spirit', 1)
     end
   end
 end

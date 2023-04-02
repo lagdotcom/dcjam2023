@@ -7,7 +7,7 @@ import { xy } from "./tools/geometry";
 export default class LogRenderer {
   constructor(
     public g: Engine,
-    public position = xy(304, 0),
+    public position = xy(274, 0),
     public size = xy(144, 160),
     public padding = xy(2, 2)
   ) {}
@@ -23,17 +23,18 @@ export default class LogRenderer {
     const textX = position.x + padding.x;
     let textY = position.y + size.y - padding.y;
 
-    const { measure, draw } = withTextStyle(ctx, "left", "bottom", "white");
+    const { lineHeight, measure, draw } = withTextStyle(
+      ctx,
+      "left",
+      "bottom",
+      "white"
+    );
     for (let i = log.length - 1; i >= 0; i--) {
-      const { lines, measurement } = textWrap(log[i], width, measure);
+      const { lines } = textWrap(log[i], width, measure);
 
       for (const line of lines.reverse()) {
         draw(line, textX, textY);
-        textY = Math.floor(
-          textY -
-            measurement.actualBoundingBoxAscent +
-            measurement.actualBoundingBoxDescent
-        );
+        textY = textY - lineHeight;
 
         if (textY < position.y) return;
       }

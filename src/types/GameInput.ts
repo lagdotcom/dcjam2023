@@ -6,5 +6,6 @@ type GameInput =
   | "SlideLeft"
   | "SlideRight"
   | "ToggleLog"
-  | "Interact";
+  | "Interact"
+  | "MenuChoose";
 export default GameInput;

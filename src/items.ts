@@ -1,20 +1,49 @@
 import Item from "./types/Item";
-import random from "./tools/random";
+import { generateAttack } from "./actions";
+
+// TODO STARTING ITEMS
+export const Dagger: Item = {
+  name: "Dagger",
+  className: "Bard",
+  slot: "Weapon",
+  action: generateAttack(1, 4),
+};
+export const Axe: Item = {
+  name: "Axe",
+  className: "Brawler",
+  slot: "Weapon",
+  action: generateAttack(1, 10),
+};
+export const Sword: Item = {
+  name: "Sword",
+  className: "Knight",
+  slot: "Weapon",
+  action: generateAttack(1, 8),
+};
+export const Staff: Item = {
+  name: "Staff",
+  className: "Mage",
+  slot: "Weapon",
+  action: generateAttack(1, 4),
+};
+export const Mace: Item = {
+  name: "Mace",
+  className: "Paladin",
+  slot: "Weapon",
+  action: generateAttack(1, 8),
+};
+export const Club: Item = {
+  name: "Club",
+  className: "Thief",
+  slot: "Weapon",
+  action: generateAttack(1, 6),
+};
 
 export const MartialHammer: Item = {
   name: "Martial Hammer",
   className: "Paladin",
   slot: "Weapon",
-  action: {
-    name: "Attack",
-    sp: 2,
-    targets: "Opponent",
-    act({ g, targets, me }) {
-      const bonus = me.attacksInARow;
-      const amount = random(16 + bonus, 9);
-      g.applyDamage(me, targets, amount, "hp");
-    },
-  },
+  action: generateAttack(9, 16),
 };
 
 export const BannerOfHaringlee: Item = {

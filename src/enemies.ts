@@ -2,16 +2,11 @@ import Item, { ItemAction, ItemSlot } from "./types/Item";
 
 import Combatant from "./types/Combatant";
 import random from "./tools/random";
+import { generateAttack } from "./actions";
 
 type EnemyTemplate = Pick<
   Combatant,
-  | "name"
-  | "maxHp"
-  | "maxSp"
-  | "determination"
-  | "camaraderie"
-  | "spirits"
-  | "dr"
+  "name" | "maxHp" | "maxSp" | "determination" | "camaraderie" | "spirit" | "dr"
 > & { actions: ItemAction[]; object: number };
 
 export const EnemyObjects = {
@@ -28,19 +23,10 @@ const enemies = {
     maxSp: 10,
     determination: 3,
     camaraderie: 3,
-    spirits: 3,
+    spirit: 3,
     dr: 0,
     actions: [
-      {
-        name: "Attack",
-        sp: 0,
-        targets: "Opponent",
-        act({ g, targets, me }) {
-          const bonus = me.attacksInARow;
-          const amount = random(5 + bonus, 2);
-          g.applyDamage(me, targets, amount, "hp");
-        },
-      },
+      generateAttack(2, 5),
       {
         name: "Zap",
         sp: 2,
@@ -59,20 +45,9 @@ const enemies = {
     maxSp: 10,
     determination: 3,
     camaraderie: 3,
-    spirits: 3,
+    spirit: 3,
     dr: 0,
-    actions: [
-      {
-        name: "Attack",
-        sp: 0,
-        targets: "Opponent",
-        act({ g, targets, me }) {
-          const bonus = me.attacksInARow;
-          const amount = random(16 + bonus, 9);
-          g.applyDamage(me, targets, amount, "hp");
-        },
-      },
-    ],
+    actions: [generateAttack(9, 16)],
   },
 
   Rogue: {
@@ -82,19 +57,10 @@ const enemies = {
     maxSp: 10,
     determination: 3,
     camaraderie: 3,
-    spirits: 3,
+    spirit: 3,
     dr: 0,
     actions: [
-      {
-        name: "Attack",
-        sp: 0,
-        targets: "Opponent",
-        act({ g, targets, me }) {
-          const bonus = me.attacksInARow;
-          const amount = random(9 + bonus, 4);
-          g.applyDamage(me, targets, amount, "hp");
-        },
-      },
+      generateAttack(4, 9),
       {
         name: "Arrow",
         sp: 0,
@@ -109,6 +75,7 @@ const enemies = {
 export type EnemyName = keyof typeof enemies;
 
 export class Enemy implements Combatant {
+  isPC: false;
   name: string;
   hp: number;
   sp: number;
@@ -116,7 +83,7 @@ export class Enemy implements Combatant {
   maxSp: number;
   determination: number;
   camaraderie: number;
-  spirits: number;
+  spirit: number;
 
   dr: number;
   actions: ItemAction[];
@@ -125,6 +92,7 @@ export class Enemy implements Combatant {
   lastAction?: string;
 
   constructor(public template: EnemyTemplate) {
+    this.isPC = false;
     this.name = template.name;
     this.maxHp = template.maxHp;
     this.maxSp = template.maxSp;
@@ -132,7 +100,7 @@ export class Enemy implements Combatant {
     this.sp = this.maxSp;
     this.determination = template.determination;
     this.camaraderie = template.camaraderie;
-    this.spirits = template.spirits;
+    this.spirit = template.spirit;
     this.dr = template.dr;
     this.actions = template.actions;
     this.equipment = new Map();

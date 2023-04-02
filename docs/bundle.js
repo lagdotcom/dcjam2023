@@ -53,126 +53,6 @@
     }
   });
 
-  // src/tools/random.ts
-  function random(max, min = 0) {
-    const diff = max - min;
-    return min + Math.floor(Math.random() * diff);
-  }
-
-  // src/enemies.ts
-  var EnemyObjects = {
-    eSage: 100,
-    eMonk: 101,
-    eRogue: 102
-  };
-  var enemies = {
-    Sage: {
-      object: EnemyObjects.eSage,
-      name: "Sage",
-      maxHp: 20,
-      maxSp: 10,
-      determination: 3,
-      camaraderie: 3,
-      spirits: 3,
-      dr: 0,
-      actions: [
-        {
-          name: "Attack",
-          sp: 0,
-          targets: "Opponent",
-          act({ g, targets, me }) {
-            const bonus = me.attacksInARow;
-            const amount = random(5 + bonus, 2);
-            g.applyDamage(me, targets, amount, "hp");
-          }
-        },
-        {
-          name: "Zap",
-          sp: 2,
-          targets: "AllParty",
-          act({ g, targets, me }) {
-            g.applyDamage(me, targets, 3, "hp");
-          }
-        }
-      ]
-    },
-    Monk: {
-      object: EnemyObjects.eMonk,
-      name: "Monk",
-      maxHp: 20,
-      maxSp: 10,
-      determination: 3,
-      camaraderie: 3,
-      spirits: 3,
-      dr: 0,
-      actions: [
-        {
-          name: "Attack",
-          sp: 0,
-          targets: "Opponent",
-          act({ g, targets, me }) {
-            const bonus = me.attacksInARow;
-            const amount = random(16 + bonus, 9);
-            g.applyDamage(me, targets, amount, "hp");
-          }
-        }
-      ]
-    },
-    Rogue: {
-      object: EnemyObjects.eRogue,
-      name: "Rogue",
-      maxHp: 20,
-      maxSp: 10,
-      determination: 3,
-      camaraderie: 3,
-      spirits: 3,
-      dr: 0,
-      actions: [
-        {
-          name: "Attack",
-          sp: 0,
-          targets: "Opponent",
-          act({ g, targets, me }) {
-            const bonus = me.attacksInARow;
-            const amount = random(9 + bonus, 4);
-            g.applyDamage(me, targets, amount, "hp");
-          }
-        },
-        {
-          name: "Arrow",
-          sp: 0,
-          targets: "OneParty",
-          act({ g, targets, me }) {
-            g.applyDamage(me, targets, random(14, 1), "hp");
-          }
-        }
-      ]
-    }
-  };
-  var Enemy = class {
-    constructor(template) {
-      this.template = template;
-      this.name = template.name;
-      this.maxHp = template.maxHp;
-      this.maxSp = template.maxSp;
-      this.hp = this.maxHp;
-      this.sp = this.maxSp;
-      this.determination = template.determination;
-      this.camaraderie = template.camaraderie;
-      this.spirits = template.spirits;
-      this.dr = template.dr;
-      this.actions = template.actions;
-      this.equipment = /* @__PURE__ */ new Map();
-      this.attacksInARow = 0;
-    }
-    get alive() {
-      return this.hp > 0;
-    }
-  };
-  function spawn(name) {
-    return new Enemy(enemies[name]);
-  }
-
   // src/tools/wallTags.ts
   function wallToTag(pos, dir) {
     return `${pos.x},${pos.y},${dir}`;
@@ -233,32 +113,268 @@
       return { dir: Dir_default.W, offset: -dx };
   }
 
-  // src/CombatRenderer.ts
-  var CombatRenderer = class {
+  // src/tools/random.ts
+  function random(max, min = 0) {
+    const diff = max - min;
+    return min + Math.floor(Math.random() * diff);
+  }
+
+  // src/actions.ts
+  var generateAttack = (minDamage, maxDamage, sp = 2) => ({
+    name: "Attack",
+    sp,
+    targets: "Opponent",
+    act({ g, targets, me }) {
+      const bonus = me.attacksInARow;
+      const amount = random(maxDamage + bonus, minDamage);
+      g.applyDamage(me, targets, amount, "hp");
+    }
+  });
+
+  // src/enemies.ts
+  var EnemyObjects = {
+    eSage: 100,
+    eMonk: 101,
+    eRogue: 102
+  };
+  var enemies = {
+    Sage: {
+      object: EnemyObjects.eSage,
+      name: "Sage",
+      maxHp: 20,
+      maxSp: 10,
+      determination: 3,
+      camaraderie: 3,
+      spirit: 3,
+      dr: 0,
+      actions: [
+        generateAttack(2, 5),
+        {
+          name: "Zap",
+          sp: 2,
+          targets: "AllParty",
+          act({ g, targets, me }) {
+            g.applyDamage(me, targets, 3, "hp");
+          }
+        }
+      ]
+    },
+    Monk: {
+      object: EnemyObjects.eMonk,
+      name: "Monk",
+      maxHp: 20,
+      maxSp: 10,
+      determination: 3,
+      camaraderie: 3,
+      spirit: 3,
+      dr: 0,
+      actions: [generateAttack(9, 16)]
+    },
+    Rogue: {
+      object: EnemyObjects.eRogue,
+      name: "Rogue",
+      maxHp: 20,
+      maxSp: 10,
+      determination: 3,
+      camaraderie: 3,
+      spirit: 3,
+      dr: 0,
+      actions: [
+        generateAttack(4, 9),
+        {
+          name: "Arrow",
+          sp: 0,
+          targets: "OneParty",
+          act({ g, targets, me }) {
+            g.applyDamage(me, targets, random(14, 1), "hp");
+          }
+        }
+      ]
+    }
+  };
+  var Enemy = class {
+    constructor(template) {
+      this.template = template;
+      this.isPC = false;
+      this.name = template.name;
+      this.maxHp = template.maxHp;
+      this.maxSp = template.maxSp;
+      this.hp = this.maxHp;
+      this.sp = this.maxSp;
+      this.determination = template.determination;
+      this.camaraderie = template.camaraderie;
+      this.spirit = template.spirit;
+      this.dr = template.dr;
+      this.actions = template.actions;
+      this.equipment = /* @__PURE__ */ new Map();
+      this.attacksInARow = 0;
+    }
+    get alive() {
+      return this.hp > 0;
+    }
+  };
+  function spawn(name) {
+    return new Enemy(enemies[name]);
+  }
+
+  // src/CombatManager.ts
+  var CombatManager = class {
     constructor(g) {
       this.g = g;
+      this.effects = [];
+      this.resetEnemies();
+      this.inCombat = false;
+      this.index = 0;
+      this.side = "player";
+    }
+    resetEnemies() {
+      this.enemies = { 0: [], 1: [], 2: [], 3: [] };
+    }
+    get aliveCombatants() {
+      return [
+        ...this.g.party,
+        ...this.enemies[0],
+        ...this.enemies[1],
+        ...this.enemies[2],
+        ...this.enemies[3]
+      ].filter((c) => c.alive);
+    }
+    get allEnemies() {
+      return [
+        ...this.enemies[0],
+        ...this.enemies[1],
+        ...this.enemies[2],
+        ...this.enemies[3]
+      ];
+    }
+    begin(enemies2) {
+      this.resetEnemies();
+      for (const name of enemies2) {
+        const enemy = spawn(name);
+        const dir = random(4);
+        this.enemies[dir].push(enemy);
+      }
+      this.inCombat = true;
+      this.side = "player";
+      this.g.draw();
+    }
+    end() {
+      this.resetEnemies();
+      this.inCombat = false;
+      this.g.draw();
+    }
+    getFromOffset(dir, offset) {
+      return this.enemies[dir][offset - 1];
+    }
+    getDir(c) {
+      for (let dir = 0; dir < 4; dir++) {
+        if (this.enemies[dir].includes(c))
+          return dir;
+      }
+      throw new Error(`${c.name} not found in combat`);
+    }
+    endTurn() {
+      for (const c of this.aliveCombatants) {
+        const newSp = c.sp < c.spirit ? c.spirit : c.sp + 1;
+        c.sp = Math.min(newSp, c.maxSp);
+      }
+      for (let i = this.effects.length - 1; i >= 0; i--) {
+        const e = this.effects[i];
+        if (--e.duration < 1)
+          this.effects.splice(i, 1);
+      }
+      this.g.draw();
+    }
+  };
+
+  // src/Colours.ts
+  var Colours = {
+    background: "rgb(32,32,32)",
+    logShadow: "rgba(0,0,0,0.4)",
+    currentPC: "rgb(92,92,64)",
+    mapVisited: "rgb(64,64,64)",
+    hp: "rgb(223,113,38)",
+    sp: "rgb(99,155,255)"
+  };
+  var Colours_default = Colours;
+
+  // src/tools/withTextStyle.ts
+  function withTextStyle(ctx, textAlign, textBaseline, fillStyle, fontSize = 10, fontFace = "sans-serif") {
+    ctx.textAlign = textAlign;
+    ctx.textBaseline = textBaseline;
+    ctx.fillStyle = fillStyle;
+    ctx.font = `${fontSize}px ${fontFace}`;
+    return {
+      lineHeight: fontSize + 4,
+      measure: (text) => ctx.measureText(text),
+      draw: (text, x, y, maxWidth) => ctx.fillText(text, x, y, maxWidth)
+    };
+  }
+
+  // src/CombatRenderer.ts
+  var CombatRenderer = class {
+    constructor(g, position = xy(60, 0), size = xy(144, 160), padding = xy(2, 2), rowPadding = 5) {
+      this.g = g;
+      this.position = position;
+      this.size = size;
+      this.padding = padding;
+      this.rowPadding = rowPadding;
     }
     render() {
+      const { padding, position, rowPadding, size } = this;
+      const { combat, ctx, facing, party } = this.g;
+      const active = combat.side === "player" ? party[facing] : void 0;
+      if (active) {
+        ctx.fillStyle = Colours_default.logShadow;
+        ctx.fillRect(position.x, position.y, size.x, size.y);
+        const { draw, lineHeight } = withTextStyle(
+          ctx,
+          "left",
+          "middle",
+          "white"
+        );
+        const x = position.x;
+        let y = position.y + padding.y + lineHeight / 2;
+        draw(`${active.name} has ${active.sp}SP:`, x + padding.x, y);
+        y += lineHeight;
+        const rowHeight = lineHeight + rowPadding * 2;
+        const actions = active.actions;
+        for (let i = 0; i < actions.length; i++) {
+          const action = actions[i];
+          if (i === combat.index) {
+            ctx.fillStyle = Colours_default.currentPC;
+            ctx.fillRect(x, y, size.x, rowHeight);
+            ctx.fillStyle = "white";
+          }
+          draw(
+            `${action.name} (${action.sp})`,
+            x + padding.x,
+            y + rowHeight / 2,
+            void 0
+          );
+          y += rowHeight;
+        }
+      }
     }
   };
 
   // src/DefaultControls.ts
   var DefaultControls = [
-    ["ArrowUp", "Forward"],
-    ["ArrowDown", "Back"],
-    ["ArrowLeft", "TurnLeft"],
-    ["ArrowRight", "TurnRight"],
-    ["Shift+ArrowLeft", "SlideLeft"],
-    ["Shift+ArrowRight", "SlideRight"],
-    ["KeyQ", "TurnLeft"],
-    ["KeyE", "TurnRight"],
-    ["KeyW", "Forward"],
-    ["KeyD", "SlideRight"],
-    ["KeyS", "Back"],
-    ["KeyA", "SlideLeft"],
-    ["Space", "ToggleLog"],
-    ["Enter", "Interact"],
-    ["Return", "Interact"]
+    ["ArrowUp", ["Forward"]],
+    ["ArrowDown", ["Back"]],
+    ["ArrowLeft", ["TurnLeft"]],
+    ["ArrowRight", ["TurnRight"]],
+    ["Shift+ArrowLeft", ["SlideLeft"]],
+    ["Shift+ArrowRight", ["SlideRight"]],
+    ["KeyQ", ["TurnLeft"]],
+    ["KeyE", ["TurnRight"]],
+    ["KeyW", ["Forward"]],
+    ["KeyD", ["SlideRight"]],
+    ["KeyS", ["Back"]],
+    ["KeyA", ["SlideLeft"]],
+    ["Space", ["ToggleLog"]],
+    ["Enter", ["Interact", "MenuChoose"]],
+    ["Return", ["Interact", "MenuChoose"]]
   ];
   var DefaultControls_default = DefaultControls;
 
@@ -764,7 +880,7 @@
     "sp",
     "determination",
     "camaraderie",
-    "spirits"
+    "spirit"
   ];
 
   // src/tools/combatants.ts
@@ -966,17 +1082,6 @@
     }
   };
 
-  // src/Colours.ts
-  var Colours = {
-    background: "rgb(32,32,32)",
-    logShadow: "rgba(0,0,0,0.4)",
-    currentPC: "rgb(92,92,64)",
-    mapVisited: "rgb(64,64,64)",
-    hp: "rgb(223,113,38)",
-    sp: "rgb(99,155,255)"
-  };
-  var Colours_default = Colours;
-
   // src/tools/textWrap.ts
   function textWrap(source, width, measure) {
     const measurement = measure(source);
@@ -1003,20 +1108,9 @@
     return { lines, measurement: measure(source) };
   }
 
-  // src/tools/withTextStyle.ts
-  function withTextStyle(ctx, textAlign, textBaseline, fillStyle) {
-    ctx.textAlign = textAlign;
-    ctx.textBaseline = textBaseline;
-    ctx.fillStyle = fillStyle;
-    return {
-      measure: (text) => ctx.measureText(text),
-      draw: (text, x, y, maxWidth) => ctx.fillText(text, x, y, maxWidth)
-    };
-  }
-
   // src/LogRenderer.ts
   var LogRenderer = class {
-    constructor(g, position = xy(304, 0), size = xy(144, 160), padding = xy(2, 2)) {
+    constructor(g, position = xy(274, 0), size = xy(144, 160), padding = xy(2, 2)) {
       this.g = g;
       this.position = position;
       this.size = size;
@@ -1030,14 +1124,17 @@
       const width = size.x - padding.x * 2;
       const textX = position.x + padding.x;
       let textY = position.y + size.y - padding.y;
-      const { measure, draw } = withTextStyle(ctx, "left", "bottom", "white");
+      const { lineHeight, measure, draw } = withTextStyle(
+        ctx,
+        "left",
+        "bottom",
+        "white"
+      );
       for (let i = log.length - 1; i >= 0; i--) {
-        const { lines, measurement } = textWrap(log[i], width, measure);
+        const { lines } = textWrap(log[i], width, measure);
         for (const line of lines.reverse()) {
           draw(line, textX, textY);
-          textY = Math.floor(
-            textY - measurement.actualBoundingBoxAscent + measurement.actualBoundingBoxDescent
-          );
+          textY = textY - lineHeight;
           if (textY < position.y)
             return;
         }
@@ -1119,28 +1216,83 @@
     }
   };
 
+  // src/items.ts
+  var Dagger = {
+    name: "Dagger",
+    className: "Bard",
+    slot: "Weapon",
+    action: generateAttack(1, 4)
+  };
+  var Axe = {
+    name: "Axe",
+    className: "Brawler",
+    slot: "Weapon",
+    action: generateAttack(1, 10)
+  };
+  var Sword = {
+    name: "Sword",
+    className: "Knight",
+    slot: "Weapon",
+    action: generateAttack(1, 8)
+  };
+  var Staff = {
+    name: "Staff",
+    className: "Mage",
+    slot: "Weapon",
+    action: generateAttack(1, 4)
+  };
+  var Mace = {
+    name: "Mace",
+    className: "Paladin",
+    slot: "Weapon",
+    action: generateAttack(1, 8)
+  };
+  var Club = {
+    name: "Club",
+    className: "Thief",
+    slot: "Weapon",
+    action: generateAttack(1, 6)
+  };
+  var MartialHammer = {
+    name: "Martial Hammer",
+    className: "Paladin",
+    slot: "Weapon",
+    action: generateAttack(9, 16)
+  };
+
   // src/Player.ts
   var defaultStats = {
-    Bard: { hp: 10, sp: 10, determination: 5, camaraderie: 5, spirits: 5 },
-    Brawler: { hp: 10, sp: 10, determination: 5, camaraderie: 5, spirits: 5 },
-    Knight: { hp: 10, sp: 10, determination: 5, camaraderie: 5, spirits: 5 },
-    Mage: { hp: 10, sp: 10, determination: 5, camaraderie: 5, spirits: 5 },
-    Paladin: { hp: 10, sp: 10, determination: 5, camaraderie: 5, spirits: 5 },
-    Thief: { hp: 10, sp: 10, determination: 5, camaraderie: 5, spirits: 5 }
+    Bard: { hp: 10, sp: 10, determination: 5, camaraderie: 5, spirit: 5 },
+    Brawler: { hp: 10, sp: 10, determination: 5, camaraderie: 5, spirit: 5 },
+    Knight: { hp: 10, sp: 10, determination: 5, camaraderie: 5, spirit: 5 },
+    Mage: { hp: 10, sp: 10, determination: 5, camaraderie: 5, spirit: 5 },
+    Paladin: { hp: 10, sp: 10, determination: 5, camaraderie: 5, spirit: 5 },
+    Thief: { hp: 10, sp: 10, determination: 5, camaraderie: 5, spirit: 5 }
+  };
+  var startingItems = {
+    Bard: [Dagger],
+    Brawler: [Axe],
+    Knight: [Sword],
+    Mage: [Staff],
+    Paladin: [Mace],
+    Thief: [Club]
   };
   var Player = class {
-    constructor(name, className, maxHp = defaultStats[className].hp, maxSp = defaultStats[className].sp, determination = defaultStats[className].determination, camaraderie = defaultStats[className].camaraderie, spirits = defaultStats[className].spirits) {
+    constructor(name, className, maxHp = defaultStats[className].hp, maxSp = defaultStats[className].sp, determination = defaultStats[className].determination, camaraderie = defaultStats[className].camaraderie, spirit = defaultStats[className].spirit, items = startingItems[className]) {
       this.name = name;
       this.className = className;
       this.maxHp = maxHp;
       this.maxSp = maxSp;
       this.determination = determination;
       this.camaraderie = camaraderie;
-      this.spirits = spirits;
+      this.spirit = spirit;
+      this.isPC = true;
       this.hp = this.maxHp;
-      this.sp = Math.min(maxSp, spirits);
+      this.sp = Math.min(maxSp, spirit);
       this.attacksInARow = 0;
       this.equipment = /* @__PURE__ */ new Map();
+      for (const item of items)
+        this.equipment.set(item.slot, item);
     }
     get alive() {
       return this.hp > 0;
@@ -1382,7 +1534,7 @@
   var enemies_default2 = "./enemies-O2A7ZZCK.json";
 
   // res/map.dscript
-  var map_default = "./map-HKPF3IHV.dscript";
+  var map_default = "./map-77UIRMZF.dscript";
 
   // res/atlas/test1.png
   var test1_default = "./test1-D6IUR7Z2.png";
@@ -1934,7 +2086,7 @@
         renderSetup.minimap.render();
         if (this.showLog)
           renderSetup.log.render();
-        if (this.inCombat)
+        if (this.combat.inCombat)
           renderSetup.combat.render();
       };
       this.ctx = getCanvasContext(canvas, "2d");
@@ -1947,9 +2099,7 @@
       this.scripting = new EngineScripting(this);
       this.log = [];
       this.showLog = false;
-      this.effects = [];
-      this.enemies = { 0: [], 1: [], 2: [], 3: [] };
-      this.inCombat = false;
+      this.combat = new CombatManager(this);
       this.visited = /* @__PURE__ */ new Map();
       this.walls = /* @__PURE__ */ new Map();
       this.worldVisited = /* @__PURE__ */ new Set();
@@ -1967,7 +2117,10 @@
         const input = this.controls.get(key);
         if (input) {
           e.preventDefault();
-          this.processInput(input);
+          for (const check of input) {
+            if (this.processInput(check))
+              return;
+          }
         }
       });
     }
@@ -1989,6 +2142,8 @@
           return this.toggleLog();
         case "Interact":
           return this.interact();
+        case "MenuChoose":
+          return this.menuChoose();
       }
     }
     loadWorld(w, position) {
@@ -2059,10 +2214,10 @@
       if (x < 0 || x >= this.worldSize.x || y < 0 || y >= this.worldSize.y)
         return;
       const cell = (_a = this.world) == null ? void 0 : _a.cells[y][x];
-      if (cell && this.inCombat) {
+      if (cell && this.combat.inCombat) {
         const result = getCardinalOffset(this.position, { x, y });
         if (result) {
-          const enemy = this.enemies[result.dir][result.offset - 1];
+          const enemy = this.combat.getFromOffset(result.dir, result.offset);
           if (enemy) {
             const replaced = src_default(cell);
             replaced.object = enemy.template.object;
@@ -2099,7 +2254,7 @@
       return true;
     }
     move(dir) {
-      if (this.inCombat)
+      if (this.combat.inCombat)
         return false;
       if (this.canMove(dir)) {
         const old = this.position;
@@ -2119,6 +2274,8 @@
       return true;
     }
     interact() {
+      if (this.combat.inCombat)
+        return false;
       return this.scripting.onInteract();
     }
     markVisited() {
@@ -2186,9 +2343,46 @@
       return `${dTag}${sTag}${wTag}`;
     }
     turn(clockwise) {
+      this.combat.index = 0;
       this.facing = rotate(this.facing, clockwise);
       this.draw();
       return true;
+    }
+    menuChoose() {
+      if (!this.combat.inCombat)
+        return false;
+      if (this.combat.side === "enemy")
+        return false;
+      const pc = this.party[this.facing];
+      if (!pc.alive)
+        return false;
+      const action = pc.actions[this.combat.index];
+      if (!action)
+        return false;
+      if (action.sp > pc.sp)
+        return false;
+      const targets = this.getActionTargets(pc, action).filter(isDefined).filter((c) => c.alive);
+      if (!targets.length)
+        return false;
+      this.act(pc, action, targets);
+      return true;
+    }
+    getActionTargets(c, a) {
+      const dir = c.isPC ? this.party.indexOf(c) : this.combat.getDir(c);
+      switch (a.targets) {
+        case "Self":
+          return [c];
+        case "Opponent":
+          if (c.isPC)
+            return [this.combat.enemies[dir][0]];
+          return [this.party[dir]];
+        case "AllParty":
+          return this.party;
+        case "AllEnemy":
+          return this.combat.allEnemies;
+        default:
+          throw new Error(`Cannot resolve target type ${a.targets} yet`);
+      }
     }
     addToLog(message) {
       this.log.push(message);
@@ -2197,7 +2391,7 @@
     }
     getHandlers(name) {
       const handlers = [];
-      for (const effect of this.effects) {
+      for (const effect of this.combat.effects) {
         const handler = effect[name];
         if (handler)
           handlers.push(handler);
@@ -2220,20 +2414,8 @@
         me.attacksInARow = 0;
       this.draw();
     }
-    endTurn() {
-      for (const c of this.party) {
-        const newSp = c.sp < c.spirits ? c.spirits : c.sp + 1;
-        c.sp = Math.min(newSp, c.maxSp);
-      }
-      for (let i = this.effects.length - 1; i >= 0; i--) {
-        const e = this.effects[i];
-        if (--e.duration < 1)
-          this.effects.splice(i, 1);
-      }
-      this.draw();
-    }
     addEffect(effect) {
-      this.effects.push(effect);
+      this.combat.effects.push(effect);
     }
     applyDamage(attacker, targets, amount, type) {
       for (const target of targets) {
@@ -2248,23 +2430,10 @@
         if (deal > 0) {
           target[type] -= deal;
           this.draw();
+          const message = type === "hp" ? `${target.name} takes ${deal} damage.` : `${target.name} loses ${deal} ${type}.`;
+          this.addToLog(message);
         }
       }
-    }
-    startCombat(north, east, south, west) {
-      this.enemies = {
-        0: north.map(spawn),
-        1: east.map(spawn),
-        2: south.map(spawn),
-        3: west.map(spawn)
-      };
-      this.inCombat = true;
-      this.draw();
-    }
-    endCombat() {
-      this.enemies = { 0: [], 1: [], 2: [], 3: [] };
-      this.inCombat = false;
-      this.draw();
     }
   };
 

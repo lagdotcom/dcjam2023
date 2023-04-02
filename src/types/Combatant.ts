@@ -5,11 +5,12 @@ export const AttackableStats = [
   "sp",
   "determination",
   "camaraderie",
-  "spirits",
+  "spirit",
 ] as const;
 export type AttackableStat = (typeof AttackableStats)[number];
 
 export default interface Combatant {
+  isPC: boolean;
   name: string;
   hp: number;
   sp: number;
@@ -17,7 +18,7 @@ export default interface Combatant {
   maxSp: number;
   determination: number;
   camaraderie: number;
-  spirits: number;
+  spirit: number;
 
   alive: boolean;
   dr: number;

@@ -1,15 +1,16 @@
 import Combatant, { AttackableStat } from "./types/Combatant";
-import { Enemy, EnemyName, EnemyObjects, spawn } from "./enemies";
 import Game, { GameEffect } from "./types/Game";
 import { GameEventListener, GameEventName, GameEvents } from "./types/events";
 import { WallTag, wallToTag } from "./tools/wallTags";
 import { XYTag, xyToTag } from "./tools/xyTags";
 import { getCardinalOffset, move, rotate, xy } from "./tools/geometry";
 
+import CombatManager from "./CombatManager";
 import CombatRenderer from "./CombatRenderer";
 import DefaultControls from "./DefaultControls";
 import Dir from "./types/Dir";
 import DungeonRenderer from "./DungeonRenderer";
+import { EnemyObjects } from "./enemies";
 import EngineScripting from "./EngineScripting";
 import GameInput from "./types/GameInput";
 import HUDRenderer from "./HUDRenderer";
@@ -29,6 +30,7 @@ import { getResourceURL } from "./resources";
 import hudUrl from "../res/hud.png";
 import parse from "./DScript/parser";
 import withTextStyle from "./tools/withTextStyle";
+import isDefined from "./tools/isDefined";
 
 type WallType = { canSeeDoor: boolean; isSolid: boolean; canSeeWall: boolean };
 
@@ -42,13 +44,11 @@ interface RenderSetup {
 }
 
 export default class Engine implements Game {
-  controls: Map<string, GameInput>;
+  combat: CombatManager;
+  controls: Map<string, GameInput[]>;
   ctx: CanvasRenderingContext2D;
   drawSoon: Soon;
-  effects: GameEffect[];
-  enemies: Record<Dir, Enemy[]>;
   facing: Dir;
-  inCombat: boolean;
   log: string[];
   party: Player[];
   position: XY;
@@ -75,9 +75,7 @@ export default class Engine implements Game {
     this.scripting = new EngineScripting(this);
     this.log = [];
     this.showLog = false;
-    this.effects = [];
-    this.enemies = { 0: [], 1: [], 2: [], 3: [] };
-    this.inCombat = false;
+    this.combat = new CombatManager(this);
     this.visited = new Map();
     this.walls = new Map();
     this.worldVisited = new Set();
@@ -96,12 +94,15 @@ export default class Engine implements Game {
       const input = this.controls.get(key);
       if (input) {
         e.preventDefault();
-        this.processInput(input);
+
+        for (const check of input) {
+          if (this.processInput(check)) return;
+        }
       }
     });
   }
 
-  processInput(i: GameInput) {
+  processInput(i: GameInput): boolean {
     switch (i) {
       case "Forward":
         return this.move(this.facing);
@@ -119,6 +120,8 @@ export default class Engine implements Game {
         return this.toggleLog();
       case "Interact":
         return this.interact();
+      case "MenuChoose":
+        return this.menuChoose();
     }
   }
 
@@ -199,10 +202,10 @@ export default class Engine implements Game {
 
     const cell = this.world?.cells[y][x];
 
-    if (cell && this.inCombat) {
+    if (cell && this.combat.inCombat) {
       const result = getCardinalOffset(this.position, { x, y });
       if (result) {
-        const enemy = this.enemies[result.dir][result.offset - 1];
+        const enemy = this.combat.getFromOffset(result.dir, result.offset);
         // show the enemy sprite instead of whatever is there (temporarily)
         if (enemy) {
           const replaced = clone(cell);
@@ -253,7 +256,7 @@ export default class Engine implements Game {
     renderSetup.stats.render();
     renderSetup.minimap.render();
     if (this.showLog) renderSetup.log.render();
-    if (this.inCombat) renderSetup.combat.render();
+    if (this.combat.inCombat) renderSetup.combat.render();
   };
 
   canMove(dir: Dir) {
@@ -275,7 +278,7 @@ export default class Engine implements Game {
   }
 
   move(dir: Dir) {
-    if (this.inCombat) return false;
+    if (this.combat.inCombat) return false;
 
     if (this.canMove(dir)) {
       const old = this.position;
@@ -299,6 +302,8 @@ export default class Engine implements Game {
   }
 
   interact() {
+    if (this.combat.inCombat) return false;
+
     return this.scripting.onInteract();
   }
 
@@ -376,9 +381,50 @@ export default class Engine implements Game {
   }
 
   turn(clockwise: number) {
+    this.combat.index = 0;
     this.facing = rotate(this.facing, clockwise);
     this.draw();
     return true;
+  }
+
+  menuChoose() {
+    if (!this.combat.inCombat) return false;
+    if (this.combat.side === "enemy") return false;
+
+    const pc = this.party[this.facing];
+    if (!pc.alive) return false;
+
+    const action = pc.actions[this.combat.index];
+    if (!action) return false;
+    if (action.sp > pc.sp) return false;
+
+    const targets = this.getActionTargets(pc, action)
+      .filter(isDefined)
+      .filter((c) => c.alive); // TODO resurrection?
+    if (!targets.length) return false;
+
+    this.act(pc, action, targets);
+    return true;
+  }
+
+  getActionTargets(c: Combatant, a: ItemAction): Combatant[] {
+    const dir = c.isPC ? (this.party.indexOf(c) as Dir) : this.combat.getDir(c);
+
+    switch (a.targets) {
+      case "Self":
+        return [c];
+      case "Opponent":
+        if (c.isPC) return [this.combat.enemies[dir][0]];
+        return [this.party[dir]];
+
+      case "AllParty":
+        return this.party;
+      case "AllEnemy":
+        return this.combat.allEnemies;
+
+      default:
+        throw new Error(`Cannot resolve target type ${a.targets} yet`);
+    }
   }
 
   addToLog(message: string) {
@@ -390,7 +436,7 @@ export default class Engine implements Game {
   getHandlers<T extends GameEventName>(name: T) {
     const handlers: GameEventListener[T][] = [];
 
-    for (const effect of this.effects) {
+    for (const effect of this.combat.effects) {
       const handler = effect[name];
       if (handler) handlers.push(handler as GameEventListener[T]);
     }
@@ -416,22 +462,8 @@ export default class Engine implements Game {
     this.draw();
   }
 
-  endTurn() {
-    for (const c of this.party) {
-      const newSp = c.sp < c.spirits ? c.spirits : c.sp + 1;
-      c.sp = Math.min(newSp, c.maxSp);
-    }
-
-    for (let i = this.effects.length - 1; i >= 0; i--) {
-      const e = this.effects[i];
-      if (--e.duration < 1) this.effects.splice(i, 1);
-    }
-
-    this.draw();
-  }
-
   addEffect(effect: GameEffect) {
-    this.effects.push(effect);
+    this.combat.effects.push(effect);
   }
 
   applyDamage(
@@ -458,32 +490,14 @@ export default class Engine implements Game {
         target[type] -= deal;
         this.draw();
 
+        const message =
+          type === "hp"
+            ? `${target.name} takes ${deal} damage.`
+            : `${target.name} loses ${deal} ${type}.`;
+        this.addToLog(message);
+
         // TODO dying etc.
       }
     }
-  }
-
-  startCombat(
-    north: EnemyName[],
-    east: EnemyName[],
-    south: EnemyName[],
-    west: EnemyName[]
-  ) {
-    this.enemies = {
-      0: north.map(spawn),
-      1: east.map(spawn),
-      2: south.map(spawn),
-      3: west.map(spawn),
-    };
-
-    this.inCombat = true;
-    this.draw();
-  }
-
-  endCombat() {
-    this.enemies = { 0: [], 1: [], 2: [], 3: [] };
-
-    this.inCombat = false;
-    this.draw();
   }
 }
