@@ -315,14 +315,6 @@
         if (cell.object)
           this.drawImage(cell.object, "object", pos.dx, pos.dz);
       }
-      this.g.ctx.fillStyle = "black";
-      this.g.ctx.fillRect(0, 0, this.offset.x, 160);
-      this.g.ctx.fillRect(
-        this.g.canvas.width - this.offset.x,
-        0,
-        this.offset.x,
-        160
-      );
     }
   };
 
@@ -799,6 +791,17 @@
         if (cb)
           this.runCallback(cb);
       }
+    }
+  };
+
+  // src/HUDRenderer.ts
+  var HUDRenderer = class {
+    constructor(g, img) {
+      this.g = g;
+      this.img = img;
+    }
+    render() {
+      this.g.ctx.drawImage(this.img, 0, 0);
     }
   };
 
@@ -1380,6 +1383,9 @@
     return converter.convert(j, region, floor);
   }
 
+  // res/hud.png
+  var hud_default = "./hud-CLJU2TVL.png";
+
   // src/DScript/parser.ts
   var import_nearley = __toESM(require_nearley());
 
@@ -1749,6 +1755,7 @@
           return;
         }
         renderSetup.dungeon.render();
+        renderSetup.hud.render();
         renderSetup.stats.render();
         renderSetup.minimap.render();
         if (this.showLog)
@@ -1804,11 +1811,13 @@
         this.worldSize = xy(this.world.cells[0].length, this.world.cells.length);
         this.position = position != null ? position : w.start;
         this.facing = w.facing;
-        const [atlas, image] = yield Promise.all([
+        const [hudImage, atlas, image] = yield Promise.all([
+          this.res.loadImage(hud_default),
           this.res.loadAtlas(w.atlas.json),
           this.res.loadImage(w.atlas.image)
         ]);
         const dungeon = new DungeonRenderer(this, atlas, image);
+        const hud = new HUDRenderer(this, hudImage);
         const minimap = new MinimapRenderer(this);
         const stats = new StatsRenderer(this);
         const log = new LogRenderer(this);
@@ -1828,7 +1837,7 @@
           this.walls.set(w.name, this.worldWalls);
         }
         this.markVisited();
-        this.renderSetup = { dungeon, log, minimap, stats };
+        this.renderSetup = { dungeon, hud, log, minimap, stats };
         return this.draw();
       });
     }

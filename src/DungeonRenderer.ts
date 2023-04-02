@@ -167,15 +167,5 @@ export default class DungeonRenderer {
 
       if (cell.object) this.drawImage(cell.object, "object", pos.dx, pos.dz);
     }
-
-    // for now just draw black boxes at the side lol
-    this.g.ctx.fillStyle = "black";
-    this.g.ctx.fillRect(0, 0, this.offset.x, 160);
-    this.g.ctx.fillRect(
-      this.g.canvas.width - this.offset.x,
-      0,
-      this.offset.x,
-      160
-    );
   }
 }

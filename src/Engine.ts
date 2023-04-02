@@ -8,6 +8,7 @@ import { move, rotate, xy } from "./tools/geometry";
 import Dir from "./types/Dir";
 import DungeonRenderer from "./DungeonRenderer";
 import EngineScripting from "./EngineScripting";
+import HUDRenderer from "./HUDRenderer";
 import { ItemAction } from "./types/Item";
 import LogRenderer from "./LogRenderer";
 import MinimapRenderer from "./MinimapRenderer";
@@ -20,6 +21,7 @@ import XY from "./types/XY";
 import clone from "nanoclone";
 import convertGridCartographerMap from "./convertGridCartographerMap";
 import getCanvasContext from "./tools/getCanvasContext";
+import hudUrl from "../res/hud.png";
 import parse from "./DScript/parser";
 import withTextStyle from "./withTextStyle";
 
@@ -27,6 +29,7 @@ type WallType = { canSeeDoor: boolean; isSolid: boolean; canSeeWall: boolean };
 
 interface RenderSetup {
   dungeon: DungeonRenderer;
+  hud: HUDRenderer;
   log: LogRenderer;
   minimap: MinimapRenderer;
   stats: StatsRenderer;
@@ -100,11 +103,13 @@ export default class Engine implements Game {
     this.position = position ?? w.start;
     this.facing = w.facing;
 
-    const [atlas, image] = await Promise.all([
+    const [hudImage, atlas, image] = await Promise.all([
+      this.res.loadImage(hudUrl),
       this.res.loadAtlas(w.atlas.json),
       this.res.loadImage(w.atlas.image),
     ]);
     const dungeon = new DungeonRenderer(this, atlas, image);
+    const hud = new HUDRenderer(this, hudImage);
     const minimap = new MinimapRenderer(this);
     const stats = new StatsRenderer(this);
     const log = new LogRenderer(this);
@@ -127,7 +132,7 @@ export default class Engine implements Game {
 
     this.markVisited();
 
-    this.renderSetup = { dungeon, log, minimap, stats };
+    this.renderSetup = { dungeon, hud, log, minimap, stats };
     return this.draw();
   }
 
@@ -197,6 +202,7 @@ export default class Engine implements Game {
     }
 
     renderSetup.dungeon.render();
+    renderSetup.hud.render();
     renderSetup.stats.render();
     renderSetup.minimap.render();
     if (this.showLog) renderSetup.log.render();
