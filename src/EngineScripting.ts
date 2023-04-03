@@ -14,7 +14,6 @@ import Engine from "./Engine";
 import { Program } from "./DScript/ast";
 import XY from "./types/XY";
 import isStat from "./tools/combatants";
-import oneOf from "./tools/oneOf";
 import random from "./tools/random";
 
 export default class EngineScripting extends DScriptHost {
@@ -110,9 +109,8 @@ export default class EngineScripting extends DScriptHost {
       (type: string, dc: number) => {
         const stat = getStat(type);
 
-        const pc = oneOf(this.g.party.filter((pc) => pc.alive));
-        const index = this.g.party.indexOf(pc);
-        this.env.set("pcIndex", num(index, true));
+        this.env.set("pcIndex", num(this.g.facing, true));
+        const pc = this.g.party[this.g.facing];
 
         const roll = this.g.roll(10) + pc[stat];
         return roll >= dc;

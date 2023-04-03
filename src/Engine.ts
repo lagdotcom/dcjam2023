@@ -352,6 +352,7 @@ export default class Engine implements Game {
   }
 
   interact() {
+    if (!this.party[this.facing].alive) return false;
     if (this.combat.inCombat) return false;
 
     return this.scripting.onInteract();

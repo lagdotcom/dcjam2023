@@ -920,12 +920,6 @@
     return AttackableStats.includes(s);
   }
 
-  // src/tools/oneOf.ts
-  function oneOf(items) {
-    const index = random(items.length);
-    return items[index];
-  }
-
   // src/EngineScripting.ts
   var EngineScripting = class extends DScriptHost {
     constructor(g) {
@@ -1016,9 +1010,8 @@
         "bool",
         (type, dc) => {
           const stat = getStat(type);
-          const pc = oneOf(this.g.party.filter((pc2) => pc2.alive));
-          const index = this.g.party.indexOf(pc);
-          this.env.set("pcIndex", num(index, true));
+          this.env.set("pcIndex", num(this.g.facing, true));
+          const pc = this.g.party[this.g.facing];
           const roll = this.g.roll(10) + pc[stat];
           return roll >= dc;
         }
@@ -2477,6 +2470,8 @@
       return true;
     }
     interact() {
+      if (!this.party[this.facing].alive)
+        return false;
       if (this.combat.inCombat)
         return false;
       return this.scripting.onInteract();
