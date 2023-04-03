@@ -29,6 +29,7 @@ function loadEngine(parent: HTMLElement) {
     canvas.width = wantWidth;
     canvas.height = wantHeight;
 
+    g.zoomRatio = ratio;
     g.draw();
   };
   window.addEventListener("resize", onResize);

@@ -21,7 +21,7 @@ export default class DungeonRenderer {
     public g: Engine,
     public dungeon: Atlas,
     public atlasImage: HTMLImageElement,
-    public offset = xy(32, 0)
+    public offset = xy(91, 21)
   ) {
     this.imageData = new Map();
   }

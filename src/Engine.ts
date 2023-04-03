@@ -8,7 +8,7 @@ import {
 } from "./types/events";
 import { WallTag, wallToTag } from "./tools/wallTags";
 import { XYTag, xyToTag } from "./tools/xyTags";
-import { getCardinalOffset, move, rotate, xy } from "./tools/geometry";
+import { getCardinalOffset, move, rotate, xyi } from "./tools/geometry";
 
 import CombatManager from "./CombatManager";
 import CombatRenderer from "./CombatRenderer";
@@ -35,6 +35,7 @@ import withTextStyle from "./tools/withTextStyle";
 import isDefined from "./tools/isDefined";
 import random from "./tools/random";
 import getKeyNames from "./tools/getKeyNames";
+import { contains } from "./tools/aabb";
 
 type WallType = { canSeeDoor: boolean; isSolid: boolean; canSeeWall: boolean };
 
@@ -65,14 +66,16 @@ export default class Engine implements Game {
   worldSize: XY;
   worldVisited: Set<XYTag>;
   worldWalls: Map<WallTag, WallType>;
+  zoomRatio: number;
 
   constructor(public canvas: HTMLCanvasElement) {
     this.ctx = getCanvasContext(canvas, "2d");
 
+    this.zoomRatio = 1;
     this.controls = new Map(DefaultControls);
     this.facing = Dir.N;
-    this.position = xy(0, 0);
-    this.worldSize = xy(0, 0);
+    this.position = xyi(0, 0);
+    this.worldSize = xyi(0, 0);
     this.res = new ResourceManager();
     this.drawSoon = new Soon(this.render);
     this.scripting = new EngineScripting(this);
@@ -108,6 +111,34 @@ export default class Engine implements Game {
         }
       }
     });
+
+    const transform = (e: MouseEvent): XY =>
+      xyi(e.offsetX / this.zoomRatio, e.offsetY / this.zoomRatio);
+
+    canvas.addEventListener("mousemove", (e) => this.onMouseMove(transform(e)));
+    canvas.addEventListener("click", (e) => this.onClick(transform(e)));
+  }
+
+  get spotElements() {
+    if (this.renderSetup) return [this.renderSetup.hud.stats];
+    return [];
+  }
+
+  getSpot(pos: XY) {
+    for (const element of this.spotElements) {
+      const spot = element.spots.find((s) => contains(s, pos));
+      if (spot) return { element, spot };
+    }
+  }
+
+  onMouseMove(pos: XY) {
+    const result = this.getSpot(pos);
+    this.canvas.style.cursor = result?.spot.cursor ?? "";
+  }
+
+  onClick(pos: XY) {
+    const result = this.getSpot(pos);
+    if (result) result.element.spotClicked(result.spot);
   }
 
   processInput(i: GameInput): boolean {
@@ -147,7 +178,7 @@ export default class Engine implements Game {
     this.renderSetup = undefined;
 
     this.world = clone(w);
-    this.worldSize = xy(this.world.cells[0].length, this.world.cells.length);
+    this.worldSize = xyi(this.world.cells[0].length, this.world.cells.length);
     this.position = position ?? w.start;
     this.facing = w.facing;
 
@@ -476,6 +507,8 @@ export default class Engine implements Game {
     this.combat.effects.push(effect);
     for (const name of GameEventNames) {
       const handler = effect[name];
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-expect-error
       if (handler) this.eventHandlers[name].add(handler);
     }
   }
@@ -483,6 +516,8 @@ export default class Engine implements Game {
   removeEffect(effect: GameEffect) {
     for (const name of GameEventNames) {
       const handler = effect[name];
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-expect-error
       if (handler) this.eventHandlers[name].delete(handler);
     }
   }
@@ -547,7 +582,7 @@ export default class Engine implements Game {
     return true;
   }
 
-  partySwap(side: -1 | 1 | 2) {
+  partySwap(side: number) {
     if (this.combat.inCombat) {
       // TODO make it cost SP...
       return false;

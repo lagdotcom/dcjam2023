@@ -4,6 +4,8 @@ import Player from "./Player";
 import XY from "./types/XY";
 import withTextStyle from "./tools/withTextStyle";
 import { xy } from "./tools/geometry";
+import Hotspot from "./tools/Hotspot";
+import HasHotspots from "./types/HasHotspots";
 
 const barWidth = 38;
 const coordinates: XY[] = [
@@ -13,15 +15,21 @@ const coordinates: XY[] = [
   xy(140, 166),
 ];
 
-export default class StatsRenderer {
+export default class StatsRenderer implements HasHotspots {
+  public spots: Hotspot[];
+
   constructor(
     public g: Engine,
     public text = xy(21, 36),
     public hp = xy(22, 43),
     public sp = xy(22, 49)
-  ) {}
+  ) {
+    this.spots = [];
+  }
 
   render(bg: HTMLImageElement) {
+    this.spots = [];
+
     for (let i = 0; i < 4; i++) {
       const xy = coordinates[i];
       const pc = this.g.party[i];
@@ -46,6 +54,20 @@ export default class StatsRenderer {
       fillStyle: "white",
     });
     draw(pc.name, x + text.x, y + text.y, barWidth);
+
+    this.spots.push({
+      id: index,
+      x,
+      y,
+      ex: x + bg.width,
+      ey: y + bg.height,
+      cursor: "pointer",
+    });
+  }
+
+  spotClicked(spot: Hotspot) {
+    const pos = spot.id;
+    if (this.g.facing !== pos) this.g.partySwap(pos - this.g.facing);
   }
 
   renderBar(

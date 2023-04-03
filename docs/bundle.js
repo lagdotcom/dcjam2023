@@ -490,7 +490,7 @@
   // src/DungeonRenderer.ts
   var tileTag = (id2, type, tile) => `${type}${id2}:${tile.x},${tile.z}`;
   var DungeonRenderer = class {
-    constructor(g, dungeon, atlasImage, offset = xy(32, 0)) {
+    constructor(g, dungeon, atlasImage, offset = xy(91, 21)) {
       this.g = g;
       this.dungeon = dungeon;
       this.atlasImage = atlasImage;
@@ -1132,8 +1132,10 @@
       this.text = text;
       this.hp = hp;
       this.sp = sp;
+      this.spots = [];
     }
     render(bg) {
+      this.spots = [];
       for (let i = 0; i < 4; i++) {
         const xy2 = coordinates[i];
         const pc = this.g.party[i];
@@ -1154,6 +1156,19 @@
         fillStyle: "white"
       });
       draw(pc.name, x + text.x, y + text.y, barWidth);
+      this.spots.push({
+        id: index,
+        x,
+        y,
+        ex: x + bg.width,
+        ey: y + bg.height,
+        cursor: "pointer"
+      });
+    }
+    spotClicked(spot) {
+      const pos = spot.id;
+      if (this.g.facing !== pos)
+        this.g.partySwap(pos - this.g.facing);
     }
     renderBar(x, y, current, max, colour) {
       const width = Math.floor(
@@ -1668,19 +1683,19 @@
   };
 
   // res/atlas/enemies.png
-  var enemies_default = "./enemies-RG7TVYUO.png";
+  var enemies_default = "./enemies-XNAMP7AV.png";
 
   // res/atlas/enemies.json
-  var enemies_default2 = "./enemies-O2A7ZZCK.json";
+  var enemies_default2 = "./enemies-TKYHHQDG.json";
 
   // res/map.dscript
   var map_default = "./map-77UIRMZF.dscript";
 
   // res/atlas/test1.png
-  var test1_default = "./test1-D6IUR7Z2.png";
+  var test1_default = "./test1-MYU5F6VR.png";
 
   // res/atlas/test1.json
-  var test1_default2 = "./test1-47JUQ3PA.json";
+  var test1_default2 = "./test1-DCKQ56SO.json";
 
   // src/resources.ts
   var Resources = {
@@ -2210,6 +2225,11 @@
     return names;
   }
 
+  // src/tools/aabb.ts
+  function contains(spot, pos) {
+    return pos.x >= spot.x && pos.y >= spot.y && pos.x < spot.ex && pos.y < spot.ey;
+  }
+
   // src/Engine.ts
   var Engine = class {
     constructor(canvas) {
@@ -2241,10 +2261,11 @@
           renderSetup.combat.render();
       };
       this.ctx = getCanvasContext(canvas, "2d");
+      this.zoomRatio = 1;
       this.controls = new Map(DefaultControls_default);
       this.facing = Dir_default.N;
-      this.position = xy(0, 0);
-      this.worldSize = xy(0, 0);
+      this.position = xyi(0, 0);
+      this.worldSize = xyi(0, 0);
       this.res = new ResourceManager();
       this.drawSoon = new Soon(this.render);
       this.scripting = new EngineScripting(this);
@@ -2279,6 +2300,31 @@
           }
         }
       });
+      const transform = (e) => xyi(e.offsetX / this.zoomRatio, e.offsetY / this.zoomRatio);
+      canvas.addEventListener("mousemove", (e) => this.onMouseMove(transform(e)));
+      canvas.addEventListener("click", (e) => this.onClick(transform(e)));
+    }
+    get spotElements() {
+      if (this.renderSetup)
+        return [this.renderSetup.hud.stats];
+      return [];
+    }
+    getSpot(pos) {
+      for (const element of this.spotElements) {
+        const spot = element.spots.find((s) => contains(s, pos));
+        if (spot)
+          return { element, spot };
+      }
+    }
+    onMouseMove(pos) {
+      var _a;
+      const result = this.getSpot(pos);
+      this.canvas.style.cursor = (_a = result == null ? void 0 : result.spot.cursor) != null ? _a : "";
+    }
+    onClick(pos) {
+      const result = this.getSpot(pos);
+      if (result)
+        result.element.spotClicked(result.spot);
     }
     processInput(i) {
       switch (i) {
@@ -2316,7 +2362,7 @@
       return __async(this, null, function* () {
         this.renderSetup = void 0;
         this.world = src_default(w);
-        this.worldSize = xy(this.world.cells[0].length, this.world.cells.length);
+        this.worldSize = xyi(this.world.cells[0].length, this.world.cells.length);
         this.position = position != null ? position : w.start;
         this.facing = w.facing;
         const combat = new CombatRenderer(this);
@@ -2660,6 +2706,7 @@
       container.style.height = `${height}px`;
       canvas.width = wantWidth;
       canvas.height = wantHeight;
+      g.zoomRatio = ratio;
       g.draw();
     };
     window.addEventListener("resize", onResize);
