@@ -1182,13 +1182,13 @@
   // src/MinimapRenderer.ts
   var facingChars = ["^", ">", "v", "<"];
   var sideColours = {
-    "": "black",
+    "": "white",
     d: "silver",
     s: "grey",
     w: "orange",
     ds: "silver",
     dw: "red",
-    sw: "white",
+    sw: "black",
     dsw: "silver"
   };
   function rect(ctx, x, y, ox, oy, w, h, tag) {
@@ -1210,13 +1210,6 @@
       const startY = position.y;
       let dx = 0;
       let dy = startY;
-      ctx.fillStyle = Colours_default.background;
-      ctx.fillRect(
-        startX,
-        startY,
-        tileSize * (size.x * 2 + 1),
-        tileSize * (size.y * 2 + 1)
-      );
       for (let y = -size.y; y <= size.y; y++) {
         const ty = y + partyPos.y;
         dx = startX - tileSize;

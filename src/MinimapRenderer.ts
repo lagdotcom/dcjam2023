@@ -6,13 +6,13 @@ import { xy } from "./tools/geometry";
 const facingChars = ["^", ">", "v", "<"];
 
 const sideColours = {
-  "": "black",
+  "": "white",
   d: "silver",
   s: "grey",
   w: "orange",
   ds: "silver",
   dw: "red",
-  sw: "white",
+  sw: "black",
   dsw: "silver",
 };
 
@@ -50,13 +50,13 @@ export default class MinimapRenderer {
     let dx = 0;
     let dy = startY;
 
-    ctx.fillStyle = Colours.background;
-    ctx.fillRect(
-      startX,
-      startY,
-      tileSize * (size.x * 2 + 1),
-      tileSize * (size.y * 2 + 1)
-    );
+    // ctx.fillStyle = Colours.background;
+    // ctx.fillRect(
+    //   startX,
+    //   startY,
+    //   tileSize * (size.x * 2 + 1),
+    //   tileSize * (size.y * 2 + 1)
+    // );
 
     for (let y = -size.y; y <= size.y; y++) {
       const ty = y + partyPos.y;
