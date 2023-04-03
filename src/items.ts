@@ -4,51 +4,45 @@ import { generateAttack } from "./actions";
 // TODO STARTING ITEMS
 export const Dagger: Item = {
   name: "Dagger",
-  className: "Bard",
   slot: "Weapon",
   action: generateAttack(1, 4),
 };
 export const Axe: Item = {
   name: "Axe",
-  className: "Brawler",
   slot: "Weapon",
   action: generateAttack(1, 10),
 };
 export const Sword: Item = {
   name: "Sword",
-  className: "Knight",
   slot: "Weapon",
   action: generateAttack(1, 8),
 };
 export const Staff: Item = {
   name: "Staff",
-  className: "Mage",
   slot: "Weapon",
   action: generateAttack(1, 4),
 };
 export const Mace: Item = {
   name: "Mace",
-  className: "Paladin",
   slot: "Weapon",
   action: generateAttack(1, 8),
 };
 export const Club: Item = {
   name: "Club",
-  className: "Thief",
   slot: "Weapon",
   action: generateAttack(1, 6),
 };
 
 export const MartialHammer: Item = {
   name: "Martial Hammer",
-  className: "Paladin",
+  restrict: ["Paladin"],
   slot: "Weapon",
   action: generateAttack(9, 16),
 };
 
 export const BannerOfHaringlee: Item = {
   name: "The Banner of Haringlee",
-  className: "Bard",
+  restrict: ["Bard"],
   slot: "Special",
   dr: 1,
   action: {
@@ -76,7 +70,7 @@ export const BannerOfHaringlee: Item = {
 
 export const IronGorget: Item = {
   name: "Iron Gorget",
-  className: "Knight",
+  restrict: ["Knight"],
   slot: "Armour",
   dr: 2,
   action: {

@@ -1,4 +1,5 @@
-import Item, { ItemAction, ItemSlot } from "./Item";
+import Item, { ItemSlot } from "./Item";
+import CombatAction from "./CombatAction";
 
 export const AttackableStats = [
   "hp",
@@ -22,7 +23,7 @@ export default interface Combatant {
 
   alive: boolean;
   dr: number;
-  actions: ItemAction[];
+  actions: CombatAction[];
   equipment: Map<ItemSlot, Item>;
   attacksInARow: number;
   lastAction?: string;

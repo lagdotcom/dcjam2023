@@ -1,27 +1,13 @@
 import { ClassName } from "./ClassName";
-import Combatant from "./Combatant";
-import Game from "./Game";
+import CombatAction from "./CombatAction";
 
 export const ItemSlots = ["Weapon", "Special", "Armour"] as const;
 export type ItemSlot = (typeof ItemSlots)[number];
 
-export interface ItemAction {
-  name: string;
-  sp: number;
-  targets:
-    | "Self"
-    | "Opponent"
-    | "OneEnemy"
-    | "AllEnemy"
-    | "OneParty"
-    | "AllParty";
-  act(e: { g: Game; targets: Combatant[]; me: Combatant }): void;
-}
-
 export default interface Item {
   name: string;
-  className: ClassName;
+  restrict?: ClassName[];
   slot: ItemSlot;
-  action: ItemAction;
+  action: CombatAction;
   dr?: number;
 }

@@ -1,4 +1,5 @@
-import Item, { ItemAction, ItemSlot } from "./types/Item";
+import Item, { ItemSlot } from "./types/Item";
+import CombatAction from "./types/CombatAction";
 
 import Combatant from "./types/Combatant";
 import random from "./tools/random";
@@ -7,7 +8,7 @@ import { generateAttack } from "./actions";
 type EnemyTemplate = Pick<
   Combatant,
   "name" | "maxHp" | "maxSp" | "determination" | "camaraderie" | "spirit" | "dr"
-> & { actions: ItemAction[]; object: number };
+> & { actions: CombatAction[]; object: number };
 
 export const EnemyObjects = {
   eSage: 100,
@@ -86,7 +87,7 @@ export class Enemy implements Combatant {
   spirit: number;
 
   dr: number;
-  actions: ItemAction[];
+  actions: CombatAction[];
   equipment: Map<ItemSlot, Item>;
   attacksInARow: number;
   lastAction?: string;

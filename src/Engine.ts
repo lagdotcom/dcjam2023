@@ -19,7 +19,7 @@ import { EnemyObjects } from "./enemies";
 import EngineScripting from "./EngineScripting";
 import GameInput from "./types/GameInput";
 import HUDRenderer from "./HUDRenderer";
-import { ItemAction } from "./types/Item";
+import CombatAction from "./types/CombatAction";
 import LogRenderer from "./LogRenderer";
 import Player from "./Player";
 import ResourceManager from "./ResourceManager";
@@ -426,7 +426,7 @@ export default class Engine implements Game {
     return true;
   }
 
-  getActionTargets(c: Combatant, a: ItemAction): Combatant[] {
+  getActionTargets(c: Combatant, a: CombatAction): Combatant[] {
     const dir = c.isPC
       ? (this.party.indexOf(c as Player) as Dir)
       : this.combat.getDir(c);
@@ -460,7 +460,7 @@ export default class Engine implements Game {
     return e;
   }
 
-  act(me: Combatant, a: ItemAction, targets: Combatant[]) {
+  act(me: Combatant, a: CombatAction, targets: Combatant[]) {
     me.sp -= a.sp;
     a.act({ g: this, targets, me });
 
@@ -542,6 +542,7 @@ export default class Engine implements Game {
       this.party.unshift(west);
     }
 
+    // TODO: replace with return this.turn(rotate(this.facing, dir)) ?
     this.draw();
     return true;
   }
@@ -560,6 +561,7 @@ export default class Engine implements Game {
     this.party[this.facing] = them;
     this.party[dir] = me;
 
+    // TODO: replace with return this.turn(side) ?
     this.draw();
     return true;
   }

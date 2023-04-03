@@ -1408,43 +1408,37 @@
   // src/items.ts
   var Dagger = {
     name: "Dagger",
-    className: "Bard",
     slot: "Weapon",
     action: generateAttack(1, 4)
   };
   var Axe = {
     name: "Axe",
-    className: "Brawler",
     slot: "Weapon",
     action: generateAttack(1, 10)
   };
   var Sword = {
     name: "Sword",
-    className: "Knight",
     slot: "Weapon",
     action: generateAttack(1, 8)
   };
   var Staff = {
     name: "Staff",
-    className: "Mage",
     slot: "Weapon",
     action: generateAttack(1, 4)
   };
   var Mace = {
     name: "Mace",
-    className: "Paladin",
     slot: "Weapon",
     action: generateAttack(1, 8)
   };
   var Club = {
     name: "Club",
-    className: "Thief",
     slot: "Weapon",
     action: generateAttack(1, 6)
   };
   var MartialHammer = {
     name: "Martial Hammer",
-    className: "Paladin",
+    restrict: ["Paladin"],
     slot: "Weapon",
     action: generateAttack(9, 16)
   };

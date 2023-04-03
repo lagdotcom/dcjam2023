@@ -1,11 +1,11 @@
 import random from "./tools/random";
-import { ItemAction } from "./types/Item";
+import CombatAction from "./types/CombatAction";
 
 export const generateAttack = (
   minDamage: number,
   maxDamage: number,
   sp = 2
-): ItemAction => ({
+): CombatAction => ({
   name: "Attack",
   sp,
   targets: "Opponent",
