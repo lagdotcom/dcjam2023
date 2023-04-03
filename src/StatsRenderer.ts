@@ -35,14 +35,15 @@ export default class StatsRenderer {
 
     this.renderBar(x + hp.x, y + hp.y, pc.hp, pc.maxHp, Colours.hp);
     this.renderBar(x + sp.x, y + sp.y, pc.sp, pc.maxSp, Colours.sp);
-    ctx.drawImage(bg, x, y);
 
-    // TODO find a better way to highlight this
-    const fillStyle = index === this.g.facing ? "yellow" : "white";
+    ctx.globalAlpha = index === this.g.facing ? 1 : 0.7;
+    ctx.drawImage(bg, x, y);
+    ctx.globalAlpha = 1;
+
     const { draw } = withTextStyle(ctx, {
       textAlign: "left",
       textBaseline: "middle",
-      fillStyle,
+      fillStyle: "white",
     });
     draw(pc.name, x + text.x, y + text.y, barWidth);
   }

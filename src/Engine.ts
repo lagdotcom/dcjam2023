@@ -34,6 +34,7 @@ import parse from "./DScript/parser";
 import withTextStyle from "./tools/withTextStyle";
 import isDefined from "./tools/isDefined";
 import random from "./tools/random";
+import getKeyNames from "./tools/getKeyNames";
 
 type WallType = { canSeeDoor: boolean; isSolid: boolean; canSeeWall: boolean };
 
@@ -95,15 +96,15 @@ export default class Engine implements Game {
     };
 
     canvas.addEventListener("keyup", (e) => {
-      let key = e.code;
-      if (e.shiftKey) key = "Shift+" + key;
+      const keys = getKeyNames(e.code, e.shiftKey, e.altKey, e.ctrlKey);
+      for (const key of keys) {
+        const input = this.controls.get(key);
+        if (input) {
+          e.preventDefault();
 
-      const input = this.controls.get(key);
-      if (input) {
-        e.preventDefault();
-
-        for (const check of input) {
-          if (this.processInput(check)) return;
+          for (const check of input) {
+            if (this.processInput(check)) return;
+          }
         }
       }
     });
@@ -129,6 +130,16 @@ export default class Engine implements Game {
         return this.interact();
       case "MenuChoose":
         return this.menuChoose();
+      case "RotateLeft":
+        return this.partyRotate(-1);
+      case "RotateRight":
+        return this.partyRotate(1);
+      case "SwapLeft":
+        return this.partySwap(-1);
+      case "SwapRight":
+        return this.partySwap(1);
+      case "SwapBehind":
+        return this.partySwap(2);
     }
   }
 
@@ -515,5 +526,41 @@ export default class Engine implements Game {
         // TODO dying etc.
       }
     }
+  }
+
+  partyRotate(dir: -1 | 1) {
+    if (this.combat.inCombat) {
+      // TODO make it cost SP...
+      return false;
+    }
+
+    if (dir === -1) {
+      const north = this.party.shift()!;
+      this.party.push(north);
+    } else {
+      const west = this.party.pop()!;
+      this.party.unshift(west);
+    }
+
+    this.draw();
+    return true;
+  }
+
+  partySwap(side: -1 | 1 | 2) {
+    if (this.combat.inCombat) {
+      // TODO make it cost SP...
+      return false;
+    }
+
+    const dir = rotate(this.facing, side);
+
+    const me = this.party[this.facing];
+    const them = this.party[dir];
+
+    this.party[this.facing] = them;
+    this.party[dir] = me;
+
+    this.draw();
+    return true;
   }
 }

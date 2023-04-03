@@ -177,7 +177,7 @@
       determination: 3,
       camaraderie: 3,
       spirit: 3,
-      dr: 0,
+      dr: 1,
       actions: [generateAttack(9, 16)]
     },
     Rogue: {
@@ -383,17 +383,27 @@
   // src/DefaultControls.ts
   var DefaultControls = [
     ["ArrowUp", ["Forward"]],
-    ["ArrowDown", ["Back"]],
-    ["ArrowLeft", ["TurnLeft"]],
-    ["ArrowRight", ["TurnRight"]],
-    ["Shift+ArrowLeft", ["SlideLeft"]],
-    ["Shift+ArrowRight", ["SlideRight"]],
-    ["KeyQ", ["TurnLeft"]],
-    ["KeyE", ["TurnRight"]],
     ["KeyW", ["Forward"]],
-    ["KeyD", ["SlideRight"]],
+    ["ArrowRight", ["TurnRight"]],
+    ["KeyE", ["TurnRight"]],
+    ["ArrowDown", ["Back"]],
     ["KeyS", ["Back"]],
+    ["ArrowLeft", ["TurnLeft"]],
+    ["KeyQ", ["TurnLeft"]],
+    ["Shift+ArrowRight", ["SlideRight"]],
+    ["KeyD", ["SlideRight"]],
+    ["Shift+ArrowLeft", ["SlideLeft"]],
     ["KeyA", ["SlideLeft"]],
+    ["Ctrl+ArrowRight", ["RotateRight"]],
+    ["Ctrl+KeyD", ["RotateRight"]],
+    ["Ctrl+ArrowLeft", ["RotateLeft"]],
+    ["Ctrl+KeyA", ["RotateLeft"]],
+    ["Alt+ArrowRight", ["SwapRight"]],
+    ["Alt+KeyD", ["SwapRight"]],
+    ["Alt+ArrowDown", ["SwapBehind"]],
+    ["Alt+KeyS", ["SwapBehind"]],
+    ["Alt+ArrowLeft", ["SwapLeft"]],
+    ["Alt+KeyA", ["SwapLeft"]],
     ["Space", ["ToggleLog"]],
     ["Enter", ["Interact", "MenuChoose"]],
     ["Return", ["Interact", "MenuChoose"]]
@@ -614,7 +624,7 @@
         if (cell.floor)
           this.drawImage(cell.floor, "floor", pos.dx, pos.dz);
         if (cell.object)
-          this.drawImage(cell.object, "object", pos.dx, pos.dz);
+          this.drawFrontImage(cell.object, "object", pos.dx, pos.dz);
       }
     }
   };
@@ -1135,12 +1145,13 @@
       const { ctx } = this.g;
       this.renderBar(x + hp.x, y + hp.y, pc.hp, pc.maxHp, Colours_default.hp);
       this.renderBar(x + sp.x, y + sp.y, pc.sp, pc.maxSp, Colours_default.sp);
+      ctx.globalAlpha = index === this.g.facing ? 1 : 0.7;
       ctx.drawImage(bg, x, y);
-      const fillStyle = index === this.g.facing ? "yellow" : "white";
+      ctx.globalAlpha = 1;
       const { draw } = withTextStyle(ctx, {
         textAlign: "left",
         textBaseline: "middle",
-        fillStyle
+        fillStyle: "white"
       });
       draw(pc.name, x + text.x, y + text.y, barWidth);
     }
@@ -2193,6 +2204,18 @@
     return result[0];
   }
 
+  // src/tools/getKeyNames.ts
+  function getKeyNames(key, shift, alt, ctrl) {
+    const names = [key];
+    if (shift)
+      names.unshift("Shift+" + key);
+    if (alt)
+      names.unshift("Alt+" + key);
+    if (ctrl)
+      names.unshift("Ctrl+" + key);
+    return names;
+  }
+
   // src/Engine.ts
   var Engine = class {
     constructor(canvas) {
@@ -2250,15 +2273,15 @@
         onRoll: /* @__PURE__ */ new Set()
       };
       canvas.addEventListener("keyup", (e) => {
-        let key = e.code;
-        if (e.shiftKey)
-          key = "Shift+" + key;
-        const input = this.controls.get(key);
-        if (input) {
-          e.preventDefault();
-          for (const check of input) {
-            if (this.processInput(check))
-              return;
+        const keys = getKeyNames(e.code, e.shiftKey, e.altKey, e.ctrlKey);
+        for (const key of keys) {
+          const input = this.controls.get(key);
+          if (input) {
+            e.preventDefault();
+            for (const check of input) {
+              if (this.processInput(check))
+                return;
+            }
           }
         }
       });
@@ -2283,6 +2306,16 @@
           return this.interact();
         case "MenuChoose":
           return this.menuChoose();
+        case "RotateLeft":
+          return this.partyRotate(-1);
+        case "RotateRight":
+          return this.partyRotate(1);
+        case "SwapLeft":
+          return this.partySwap(-1);
+        case "SwapRight":
+          return this.partySwap(1);
+        case "SwapBehind":
+          return this.partySwap(2);
       }
     }
     loadWorld(w, position) {
@@ -2579,6 +2612,32 @@
           this.addToLog(message);
         }
       }
+    }
+    partyRotate(dir) {
+      if (this.combat.inCombat) {
+        return false;
+      }
+      if (dir === -1) {
+        const north = this.party.shift();
+        this.party.push(north);
+      } else {
+        const west = this.party.pop();
+        this.party.unshift(west);
+      }
+      this.draw();
+      return true;
+    }
+    partySwap(side) {
+      if (this.combat.inCombat) {
+        return false;
+      }
+      const dir = rotate(this.facing, side);
+      const me = this.party[this.facing];
+      const them = this.party[dir];
+      this.party[this.facing] = them;
+      this.party[dir] = me;
+      this.draw();
+      return true;
     }
   };
 

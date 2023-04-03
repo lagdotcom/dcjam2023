@@ -5,6 +5,11 @@ type GameInput =
   | "TurnRight"
   | "SlideLeft"
   | "SlideRight"
+  | "RotateLeft"
+  | "RotateRight"
+  | "SwapLeft"
+  | "SwapRight"
+  | "SwapBehind"
   | "ToggleLog"
   | "Interact"
   | "MenuChoose";

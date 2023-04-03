@@ -46,7 +46,7 @@ const enemies = {
     determination: 3,
     camaraderie: 3,
     spirit: 3,
-    dr: 0,
+    dr: 1,
     actions: [generateAttack(9, 16)],
   },
 

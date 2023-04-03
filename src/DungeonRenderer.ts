@@ -165,7 +165,8 @@ export default class DungeonRenderer {
       if (cell.ceiling) this.drawImage(cell.ceiling, "ceiling", pos.dx, pos.dz);
       if (cell.floor) this.drawImage(cell.floor, "floor", pos.dx, pos.dz);
 
-      if (cell.object) this.drawImage(cell.object, "object", pos.dx, pos.dz);
+      if (cell.object)
+        this.drawFrontImage(cell.object, "object", pos.dx, pos.dz);
     }
   }
 }
