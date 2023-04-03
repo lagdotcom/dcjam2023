@@ -57,6 +57,7 @@
   var GameEventNames = [
     "onCalculateDamage",
     "onCalculateDR",
+    "onKilled",
     "onRoll"
   ];
 
@@ -124,9 +125,24 @@
       return { dir: Dir_default.W, offset: -dx };
   }
 
-  // src/tools/random.ts
+  // src/tools/rng.ts
   function random(max) {
     return Math.floor(Math.random() * max);
+  }
+  function oneOf(items) {
+    return items[random(items.length)];
+  }
+  function pickN(items, count) {
+    const left = items.slice();
+    if (count >= items.length)
+      return left;
+    const picked = /* @__PURE__ */ new Set();
+    for (let i = 0; i < count; i++) {
+      const item = oneOf(left);
+      picked.add(item);
+      left.splice(left.indexOf(item), 1);
+    }
+    return Array.from(picked);
   }
 
   // src/actions.ts
@@ -161,8 +177,8 @@
         generateAttack(2, 5),
         {
           name: "Zap",
-          sp: 2,
-          targets: "AllParty",
+          sp: 3,
+          targets: "AllEnemy",
           act({ g, targets, me }) {
             g.applyDamage(me, targets, 3, "hp");
           }
@@ -193,8 +209,8 @@
         generateAttack(4, 9),
         {
           name: "Arrow",
-          sp: 0,
-          targets: "OneParty",
+          sp: 3,
+          targets: "OneEnemy",
           act({ g, targets, me }) {
             g.applyDamage(me, targets, random(14) + 1, "hp");
           }
@@ -227,15 +243,52 @@
     return new Enemy(enemies[name]);
   }
 
+  // src/tools/isDefined.ts
+  function isDefined(item) {
+    return typeof item !== "undefined";
+  }
+
   // src/CombatManager.ts
   var CombatManager = class {
-    constructor(g) {
+    constructor(g, enemyInitialDelay = 3e3, enemyTurnDelay = 1e3) {
       this.g = g;
+      this.enemyInitialDelay = enemyInitialDelay;
+      this.enemyTurnDelay = enemyTurnDelay;
+      this.enemyTick = () => {
+        const moves = this.allEnemies.flatMap(
+          (enemy2) => enemy2.actions.map((action2) => {
+            if (action2.sp > enemy2.sp)
+              return;
+            const { amount: amount2, possibilities: possibilities2 } = this.g.getTargetPossibilities(
+              enemy2,
+              action2
+            );
+            if (possibilities2.length)
+              return { enemy: enemy2, action: action2, amount: amount2, possibilities: possibilities2 };
+          }).filter(isDefined)
+        );
+        if (!moves.length) {
+          this.timeout = void 0;
+          return this.endTurn();
+        }
+        const { enemy, action, amount, possibilities } = oneOf(moves);
+        const targets = pickN(possibilities, amount);
+        this.g.act(enemy, action, targets);
+        this.timeout = setTimeout(this.enemyTick, this.enemyTurnDelay);
+      };
+      this.onKilled = (c) => {
+        if (!c.isPC) {
+          const { dir, distance } = this.getPosition(c);
+          this.enemies[dir].splice(distance, 1);
+          this.g.draw();
+        }
+      };
       this.effects = [];
       this.resetEnemies();
       this.inCombat = false;
       this.index = 0;
       this.side = "player";
+      g.eventHandlers.onKilled.add(({ who }) => this.onKilled(who));
     }
     resetEnemies() {
       this.enemies = { 0: [], 1: [], 2: [], 3: [] };
@@ -279,25 +332,31 @@
     getFromOffset(dir, offset) {
       return this.enemies[dir][offset - 1];
     }
-    getDir(c) {
+    getPosition(c) {
+      if (c.isPC)
+        return { dir: this.g.party.indexOf(c), distance: NaN };
       for (let dir = 0; dir < 4; dir++) {
-        if (this.enemies[dir].includes(c))
-          return dir;
+        const distance = this.enemies[dir].indexOf(c);
+        if (distance >= 0)
+          return { dir, distance };
       }
       throw new Error(`${c.name} not found in combat`);
     }
     endTurn() {
-      for (const c of this.aliveCombatants) {
+      this.side = this.side === "player" ? "enemy" : "player";
+      const combatants = this.side === "player" ? this.g.party : this.allEnemies;
+      for (const c of combatants) {
+        if (!c.alive)
+          continue;
         const newSp = c.sp < c.spirit ? c.spirit : c.sp + 1;
         c.sp = Math.min(newSp, c.maxSp);
       }
-      const removing = [];
-      for (const e of this.effects) {
+      for (const e of this.effects.slice()) {
         if (--e.duration < 1)
-          removing.push(e);
+          this.g.removeEffect(e);
       }
-      for (const e of removing)
-        this.g.removeEffect(e);
+      if (this.side === "enemy")
+        this.timeout = setTimeout(this.enemyTick, this.enemyInitialDelay);
       this.g.draw();
     }
   };
@@ -382,12 +441,12 @@
 
   // src/DefaultControls.ts
   var DefaultControls = [
-    ["ArrowUp", ["Forward"]],
-    ["KeyW", ["Forward"]],
+    ["ArrowUp", ["Forward", "MenuUp"]],
+    ["KeyW", ["Forward", "MenuUp"]],
     ["ArrowRight", ["TurnRight"]],
     ["KeyE", ["TurnRight"]],
-    ["ArrowDown", ["Back"]],
-    ["KeyS", ["Back"]],
+    ["ArrowDown", ["Back", "MenuDown"]],
+    ["KeyS", ["Back", "MenuDown"]],
     ["ArrowLeft", ["TurnLeft"]],
     ["KeyQ", ["TurnLeft"]],
     ["Shift+ArrowRight", ["SlideRight"]],
@@ -1489,7 +1548,14 @@
       return value;
     }
     get actions() {
-      return Array.from(this.equipment.values()).map((i) => i.action);
+      return Array.from(this.equipment.values()).map((i) => i.action).concat({
+        name: "End Turn",
+        sp: 0,
+        targets: "AllAlly",
+        act({ g }) {
+          g.endTurn();
+        }
+      });
     }
   };
 
@@ -2135,11 +2201,6 @@
   };
   var grammar_default = grammar;
 
-  // src/tools/isDefined.ts
-  function isDefined(item) {
-    return typeof item !== "undefined";
-  }
-
   // src/tools/uniq.ts
   function uniq(items) {
     const set = new Set(items);
@@ -2216,6 +2277,12 @@
     return pos.x >= spot.x && pos.y >= spot.y && pos.x < spot.ex && pos.y < spot.ey;
   }
 
+  // src/tools/numbers.ts
+  function wrap(n, max) {
+    const m = n % max;
+    return m < 0 ? m + max : m;
+  }
+
   // src/Engine.ts
   var Engine = class {
     constructor(canvas) {
@@ -2247,6 +2314,12 @@
           renderSetup.combat.render();
       };
       this.ctx = getCanvasContext(canvas, "2d");
+      this.eventHandlers = {
+        onCalculateDamage: /* @__PURE__ */ new Set(),
+        onCalculateDR: /* @__PURE__ */ new Set(),
+        onKilled: /* @__PURE__ */ new Set(),
+        onRoll: /* @__PURE__ */ new Set()
+      };
       this.zoomRatio = 1;
       this.controls = new Map(DefaultControls_default);
       this.facing = Dir_default.N;
@@ -2268,11 +2341,6 @@
         new Player("C", "Knight"),
         new Player("D", "Thief")
       ];
-      this.eventHandlers = {
-        onCalculateDamage: /* @__PURE__ */ new Set(),
-        onCalculateDR: /* @__PURE__ */ new Set(),
-        onRoll: /* @__PURE__ */ new Set()
-      };
       canvas.addEventListener("keyup", (e) => {
         const keys = getKeyNames(e.code, e.shiftKey, e.altKey, e.ctrlKey);
         for (const key of keys) {
@@ -2330,6 +2398,10 @@
           return this.toggleLog();
         case "Interact":
           return this.interact();
+        case "MenuDown":
+          return this.menuMove(1);
+        case "MenuUp":
+          return this.menuMove(-1);
         case "MenuChoose":
           return this.menuChoose();
         case "RotateLeft":
@@ -2546,6 +2618,17 @@
       this.draw();
       return true;
     }
+    menuMove(mod) {
+      if (!this.combat.inCombat)
+        return false;
+      if (this.combat.side === "enemy")
+        return false;
+      const actions = this.party[this.facing].actions;
+      const index = wrap(this.combat.index + mod, actions.length);
+      this.combat.index = index;
+      this.draw();
+      return true;
+    }
     menuChoose() {
       if (!this.combat.inCombat)
         return false;
@@ -2559,27 +2642,45 @@
         return false;
       if (action.sp > pc.sp)
         return false;
-      const targets = this.getActionTargets(pc, action).filter(isDefined).filter((c) => c.alive);
-      if (!targets.length)
+      const { possibilities, amount } = this.getTargetPossibilities(pc, action);
+      if (!possibilities.length)
         return false;
+      const targets = pickN(
+        possibilities.filter((c) => c.alive),
+        amount
+      );
       this.act(pc, action, targets);
       return true;
     }
-    getActionTargets(c, a) {
-      const dir = c.isPC ? this.party.indexOf(c) : this.combat.getDir(c);
+    getTargetPossibilities(c, a) {
+      const { dir, distance } = this.combat.getPosition(c);
       switch (a.targets) {
         case "Self":
-          return [c];
-        case "Opponent":
-          if (c.isPC)
-            return [this.combat.enemies[dir][0]];
-          return [this.party[dir]];
-        case "AllParty":
-          return this.party;
+          return { amount: 1, possibilities: [c] };
+        case "Opponent": {
+          const opponent = c.isPC ? this.combat.enemies[dir][0] : distance === 0 ? this.party[dir] : void 0;
+          return { amount: 1, possibilities: opponent ? [opponent] : [] };
+        }
+        case "OneAlly":
+          return {
+            amount: 1,
+            possibilities: c.isPC ? this.party : this.combat.allEnemies
+          };
+        case "AllAlly":
+          return {
+            amount: Infinity,
+            possibilities: c.isPC ? this.party : this.combat.allEnemies
+          };
+        case "OneEnemy":
+          return {
+            amount: 1,
+            possibilities: c.isPC ? this.combat.allEnemies : this.party
+          };
         case "AllEnemy":
-          return this.combat.allEnemies;
-        default:
-          throw new Error(`Cannot resolve target type ${a.targets} yet`);
+          return {
+            amount: Infinity,
+            possibilities: c.isPC ? this.combat.allEnemies : this.party
+          };
       }
     }
     addToLog(message) {
@@ -2595,6 +2696,7 @@
     }
     act(me, a, targets) {
       me.sp -= a.sp;
+      this.addToLog(`${me.name} uses ${a.name}!`);
       a.act({ g: this, targets, me });
       me.lastAction = a.name;
       if (a.name === "Attack") {
@@ -2602,6 +2704,9 @@
       } else
         me.attacksInARow = 0;
       this.draw();
+    }
+    endTurn() {
+      this.combat.endTurn();
     }
     addEffect(effect) {
       this.combat.effects.push(effect);
@@ -2638,8 +2743,15 @@
           this.draw();
           const message = type === "hp" ? `${target.name} takes ${deal} damage.` : `${target.name} loses ${deal} ${type}.`;
           this.addToLog(message);
+          if (target.hp < 1)
+            this.kill(target, attacker);
         }
       }
+    }
+    kill(who, attacker) {
+      who.hp = 0;
+      this.addToLog(`${who.name} dies!`);
+      this.fire("onKilled", { who, attacker });
     }
     partyRotate(dir) {
       if (this.combat.inCombat) {

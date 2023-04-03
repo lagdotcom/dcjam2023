@@ -12,5 +12,7 @@ type GameInput =
   | "SwapBehind"
   | "ToggleLog"
   | "Interact"
+  | "MenuUp"
+  | "MenuDown"
   | "MenuChoose";
 export default GameInput;

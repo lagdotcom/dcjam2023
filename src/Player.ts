@@ -62,6 +62,15 @@ export default class Player implements Combatant {
   }
 
   get actions() {
-    return Array.from(this.equipment.values()).map((i) => i.action);
+    return Array.from(this.equipment.values())
+      .map((i) => i.action)
+      .concat({
+        name: "End Turn",
+        sp: 0,
+        targets: "AllAlly",
+        act({ g }) {
+          g.endTurn();
+        },
+      });
   }
 }

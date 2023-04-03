@@ -32,10 +32,10 @@ import getCanvasContext from "./tools/getCanvasContext";
 import { getResourceURL } from "./resources";
 import parse from "./DScript/parser";
 import withTextStyle from "./tools/withTextStyle";
-import isDefined from "./tools/isDefined";
-import random from "./tools/random";
+import { pickN, random } from "./tools/rng";
 import getKeyNames from "./tools/getKeyNames";
 import { contains } from "./tools/aabb";
+import { wrap } from "./tools/numbers";
 
 type WallType = { canSeeDoor: boolean; isSolid: boolean; canSeeWall: boolean };
 
@@ -71,6 +71,12 @@ export default class Engine implements Game {
   constructor(public canvas: HTMLCanvasElement) {
     this.ctx = getCanvasContext(canvas, "2d");
 
+    this.eventHandlers = {
+      onCalculateDamage: new Set(),
+      onCalculateDR: new Set(),
+      onKilled: new Set(),
+      onRoll: new Set(),
+    };
     this.zoomRatio = 1;
     this.controls = new Map(DefaultControls);
     this.facing = Dir.N;
@@ -92,11 +98,6 @@ export default class Engine implements Game {
       new Player("C", "Knight"),
       new Player("D", "Thief"),
     ];
-    this.eventHandlers = {
-      onCalculateDamage: new Set(),
-      onCalculateDR: new Set(),
-      onRoll: new Set(),
-    };
 
     canvas.addEventListener("keyup", (e) => {
       const keys = getKeyNames(e.code, e.shiftKey, e.altKey, e.ctrlKey);
@@ -159,6 +160,10 @@ export default class Engine implements Game {
         return this.toggleLog();
       case "Interact":
         return this.interact();
+      case "MenuDown":
+        return this.menuMove(1);
+      case "MenuUp":
+        return this.menuMove(-1);
       case "MenuChoose":
         return this.menuChoose();
       case "RotateLeft":
@@ -323,7 +328,6 @@ export default class Engine implements Game {
     const cell = this.getCell(destination.x, destination.y);
     if (!cell) return false;
 
-    // TODO etc. etc.
     return true;
   }
 
@@ -438,6 +442,17 @@ export default class Engine implements Game {
     return true;
   }
 
+  menuMove(mod: number) {
+    if (!this.combat.inCombat) return false;
+    if (this.combat.side === "enemy") return false;
+
+    const actions = this.party[this.facing].actions;
+    const index = wrap(this.combat.index + mod, actions.length);
+    this.combat.index = index;
+    this.draw();
+    return true;
+  }
+
   menuChoose() {
     if (!this.combat.inCombat) return false;
     if (this.combat.side === "enemy") return false;
@@ -449,34 +464,59 @@ export default class Engine implements Game {
     if (!action) return false;
     if (action.sp > pc.sp) return false;
 
-    const targets = this.getActionTargets(pc, action)
-      .filter(isDefined)
-      .filter((c) => c.alive); // TODO resurrection?
-    if (!targets.length) return false;
+    const { possibilities, amount } = this.getTargetPossibilities(pc, action);
+    if (!possibilities.length) return false;
+
+    // TODO give ability to pick targets...
+    const targets = pickN(
+      possibilities.filter((c) => c.alive),
+      amount
+    );
 
     this.act(pc, action, targets);
     return true;
   }
 
-  getActionTargets(c: Combatant, a: CombatAction): Combatant[] {
-    const dir = c.isPC
-      ? (this.party.indexOf(c as Player) as Dir)
-      : this.combat.getDir(c);
+  getTargetPossibilities(
+    c: Combatant,
+    a: CombatAction
+  ): { amount: number; possibilities: Combatant[] } {
+    const { dir, distance } = this.combat.getPosition(c);
 
     switch (a.targets) {
       case "Self":
-        return [c];
-      case "Opponent":
-        if (c.isPC) return [this.combat.enemies[dir][0]];
-        return [this.party[dir]];
+        return { amount: 1, possibilities: [c] };
+      case "Opponent": {
+        const opponent = c.isPC
+          ? this.combat.enemies[dir][0]
+          : distance === 0
+          ? this.party[dir]
+          : undefined;
+        return { amount: 1, possibilities: opponent ? [opponent] : [] };
+      }
 
-      case "AllParty":
-        return this.party;
+      case "OneAlly":
+        return {
+          amount: 1,
+          possibilities: c.isPC ? this.party : this.combat.allEnemies,
+        };
+      case "AllAlly":
+        return {
+          amount: Infinity,
+          possibilities: c.isPC ? this.party : this.combat.allEnemies,
+        };
+
+      case "OneEnemy":
+        return {
+          amount: 1,
+          possibilities: c.isPC ? this.combat.allEnemies : this.party,
+        };
+      // TODO should this only hit front row?
       case "AllEnemy":
-        return this.combat.allEnemies;
-
-      default:
-        throw new Error(`Cannot resolve target type ${a.targets} yet`);
+        return {
+          amount: Infinity,
+          possibilities: c.isPC ? this.combat.allEnemies : this.party,
+        };
     }
   }
 
@@ -494,6 +534,8 @@ export default class Engine implements Game {
 
   act(me: Combatant, a: CombatAction, targets: Combatant[]) {
     me.sp -= a.sp;
+    this.addToLog(`${me.name} uses ${a.name}!`);
+
     a.act({ g: this, targets, me });
 
     me.lastAction = a.name;
@@ -502,6 +544,10 @@ export default class Engine implements Game {
     } else me.attacksInARow = 0;
 
     this.draw();
+  }
+
+  endTurn() {
+    this.combat.endTurn();
   }
 
   addEffect(effect: GameEffect) {
@@ -559,9 +605,15 @@ export default class Engine implements Game {
             : `${target.name} loses ${deal} ${type}.`;
         this.addToLog(message);
 
-        // TODO dying etc.
+        if (target.hp < 1) this.kill(target, attacker);
       }
     }
+  }
+
+  kill(who: Combatant, attacker: Combatant) {
+    who.hp = 0;
+    this.addToLog(`${who.name} dies!`);
+    this.fire("onKilled", { who, attacker });
   }
 
   partyRotate(dir: -1 | 1) {
@@ -571,9 +623,11 @@ export default class Engine implements Game {
     }
 
     if (dir === -1) {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const north = this.party.shift()!;
       this.party.push(north);
     } else {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const west = this.party.pop()!;
       this.party.unshift(west);
     }

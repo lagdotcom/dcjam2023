@@ -1,4 +1,4 @@
-import random from "./tools/random";
+import { random } from "./tools/rng";
 import CombatAction from "./types/CombatAction";
 
 export const generateAttack = (

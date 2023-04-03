@@ -14,7 +14,7 @@ import Engine from "./Engine";
 import { Program } from "./DScript/ast";
 import XY from "./types/XY";
 import isStat from "./tools/combatants";
-import random from "./tools/random";
+import { random } from "./tools/rng";
 
 export default class EngineScripting extends DScriptHost {
   onTagEnter: Map<string, RuntimeFunction>;

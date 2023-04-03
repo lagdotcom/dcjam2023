@@ -2,7 +2,7 @@ import Item, { ItemSlot } from "./types/Item";
 import CombatAction from "./types/CombatAction";
 
 import Combatant from "./types/Combatant";
-import random from "./tools/random";
+import { random } from "./tools/rng";
 import { generateAttack } from "./actions";
 
 type EnemyTemplate = Pick<
@@ -30,8 +30,8 @@ const enemies = {
       generateAttack(2, 5),
       {
         name: "Zap",
-        sp: 2,
-        targets: "AllParty",
+        sp: 3,
+        targets: "AllEnemy",
         act({ g, targets, me }) {
           g.applyDamage(me, targets, 3, "hp");
         },
@@ -64,8 +64,8 @@ const enemies = {
       generateAttack(4, 9),
       {
         name: "Arrow",
-        sp: 0,
-        targets: "OneParty",
+        sp: 3,
+        targets: "OneEnemy",
         act({ g, targets, me }) {
           g.applyDamage(me, targets, random(14) + 1, "hp");
         },

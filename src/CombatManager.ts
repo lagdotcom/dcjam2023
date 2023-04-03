@@ -4,7 +4,9 @@ import Combatant from "./types/Combatant";
 import Dir from "./types/Dir";
 import Engine from "./Engine";
 import { GameEffect } from "./types/Game";
-import random from "./tools/random";
+import { oneOf, pickN, random } from "./tools/rng";
+import Player from "./Player";
+import isDefined from "./tools/isDefined";
 
 export default class CombatManager {
   effects: GameEffect[];
@@ -12,13 +14,20 @@ export default class CombatManager {
   inCombat: boolean;
   index: number;
   side: "player" | "enemy";
+  timeout?: ReturnType<typeof setTimeout>;
 
-  constructor(public g: Engine) {
+  constructor(
+    public g: Engine,
+    public enemyInitialDelay = 3000,
+    public enemyTurnDelay = 1000
+  ) {
     this.effects = [];
     this.resetEnemies();
     this.inCombat = false;
     this.index = 0;
     this.side = "player";
+
+    g.eventHandlers.onKilled.add(({ who }) => this.onKilled(who));
   }
 
   resetEnemies() {
@@ -72,26 +81,71 @@ export default class CombatManager {
     return this.enemies[dir][offset - 1];
   }
 
-  getDir(c: Combatant): Dir {
+  getPosition(c: Combatant) {
+    if (c.isPC)
+      return { dir: this.g.party.indexOf(c as Player) as Dir, distance: NaN };
+
     for (let dir = 0; dir < 4; dir++) {
-      if (this.enemies[dir as Dir].includes(c as Enemy)) return dir;
+      const distance = this.enemies[dir as Dir].indexOf(c as Enemy);
+      if (distance >= 0) return { dir: dir as Dir, distance };
     }
 
     throw new Error(`${c.name} not found in combat`);
   }
 
   endTurn() {
-    for (const c of this.aliveCombatants) {
+    this.side = this.side === "player" ? "enemy" : "player";
+
+    const combatants = this.side === "player" ? this.g.party : this.allEnemies;
+    for (const c of combatants) {
+      if (!c.alive) continue;
+
       const newSp = c.sp < c.spirit ? c.spirit : c.sp + 1;
       c.sp = Math.min(newSp, c.maxSp);
     }
 
-    const removing: GameEffect[] = [];
-    for (const e of this.effects) {
-      if (--e.duration < 1) removing.push(e);
+    for (const e of this.effects.slice()) {
+      if (--e.duration < 1) this.g.removeEffect(e);
     }
-    for (const e of removing) this.g.removeEffect(e);
 
+    if (this.side === "enemy")
+      this.timeout = setTimeout(this.enemyTick, this.enemyInitialDelay);
     this.g.draw();
   }
+
+  enemyTick = () => {
+    const moves = this.allEnemies.flatMap((enemy) =>
+      enemy.actions
+        .map((action) => {
+          if (action.sp > enemy.sp) return;
+
+          const { amount, possibilities } = this.g.getTargetPossibilities(
+            enemy,
+            action
+          );
+
+          if (possibilities.length)
+            return { enemy, action, amount, possibilities };
+        })
+        .filter(isDefined)
+    );
+    if (!moves.length) {
+      this.timeout = undefined;
+      return this.endTurn();
+    }
+
+    const { enemy, action, amount, possibilities } = oneOf(moves);
+    const targets = pickN(possibilities, amount);
+    this.g.act(enemy, action, targets);
+
+    this.timeout = setTimeout(this.enemyTick, this.enemyTurnDelay);
+  };
+
+  onKilled = (c: Combatant) => {
+    if (!c.isPC) {
+      const { dir, distance } = this.getPosition(c);
+      this.enemies[dir].splice(distance, 1);
+      this.g.draw();
+    }
+  };
 }

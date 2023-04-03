@@ -9,7 +9,7 @@ export default interface CombatAction {
     | "Opponent"
     | "OneEnemy"
     | "AllEnemy"
-    | "OneParty"
-    | "AllParty";
+    | "OneAlly"
+    | "AllAlly";
   act(e: { g: Game; targets: Combatant[]; me: Combatant }): void;
 }

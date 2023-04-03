@@ -48,11 +48,11 @@ export const BannerOfHaringlee: Item = {
   action: {
     name: "Reassurance",
     sp: 0,
-    targets: "AllParty",
+    targets: "AllAlly",
     act({ g, targets }) {
       g.addEffect({
         name: "Reassurance",
-        duration: 1,
+        duration: 2,
         affects: targets,
         onCalculateDamage(e) {
           if (
@@ -80,7 +80,7 @@ export const IronGorget: Item = {
     act({ g, targets }) {
       g.addEffect({
         name: "Steel Yourself",
-        duration: 1,
+        duration: 2,
         affects: targets,
         onCalculateDR(e) {
           if (targets.includes(e.who)) e.dr *= 2;

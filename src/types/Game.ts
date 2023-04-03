@@ -18,5 +18,7 @@ export default interface Game {
     type: AttackableStat
   ): void;
 
+  endTurn(): void;
+
   roll(size: number): number;
 }

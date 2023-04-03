@@ -1,14 +1,14 @@
 import GameInput from "./types/GameInput";
 
 const DefaultControls: [string, GameInput[]][] = [
-  ["ArrowUp", ["Forward"]],
-  ["KeyW", ["Forward"]],
+  ["ArrowUp", ["Forward", "MenuUp"]],
+  ["KeyW", ["Forward", "MenuUp"]],
 
   ["ArrowRight", ["TurnRight"]],
   ["KeyE", ["TurnRight"]],
 
-  ["ArrowDown", ["Back"]],
-  ["KeyS", ["Back"]],
+  ["ArrowDown", ["Back", "MenuDown"]],
+  ["KeyS", ["Back", "MenuDown"]],
 
   ["ArrowLeft", ["TurnLeft"]],
   ["KeyQ", ["TurnLeft"]],

@@ -3,6 +3,7 @@ import Combatant, { AttackableStat } from "./Combatant";
 export const GameEventNames = [
   "onCalculateDamage",
   "onCalculateDR",
+  "onKilled",
   "onRoll",
 ] as const;
 export type GameEventName = (typeof GameEventNames)[number];
@@ -16,6 +17,8 @@ export type GameEvents = {
   };
 
   onCalculateDR: { who: Combatant; dr: number };
+
+  onKilled: { who: Combatant; attacker: Combatant };
 
   onRoll: { size: number; value: number };
 };
