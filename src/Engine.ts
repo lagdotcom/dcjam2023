@@ -477,7 +477,12 @@ export default class Engine implements Game {
     return true;
   }
 
-  getTargetPossibilities(
+  getTargetPossibilities(c: Combatant, a: CombatAction) {
+    const { amount, possibilities } = this._getTargetPossibilities(c, a);
+    return { amount, possibilities: possibilities.filter((x) => x.alive) };
+  }
+
+  private _getTargetPossibilities(
     c: Combatant,
     a: CombatAction
   ): { amount: number; possibilities: Combatant[] } {

@@ -2653,6 +2653,10 @@
       return true;
     }
     getTargetPossibilities(c, a) {
+      const { amount, possibilities } = this._getTargetPossibilities(c, a);
+      return { amount, possibilities: possibilities.filter((x) => x.alive) };
+    }
+    _getTargetPossibilities(c, a) {
       const { dir, distance } = this.combat.getPosition(c);
       switch (a.targets) {
         case "Self":
