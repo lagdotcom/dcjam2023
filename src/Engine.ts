@@ -1,6 +1,11 @@
 import Combatant, { AttackableStat } from "./types/Combatant";
 import Game, { GameEffect } from "./types/Game";
-import { GameEventListener, GameEventName, GameEvents } from "./types/events";
+import {
+  GameEventListeners,
+  GameEventName,
+  GameEventNames,
+  GameEvents,
+} from "./types/events";
 import { WallTag, wallToTag } from "./tools/wallTags";
 import { XYTag, xyToTag } from "./tools/xyTags";
 import { getCardinalOffset, move, rotate, xy } from "./tools/geometry";
@@ -28,6 +33,7 @@ import { getResourceURL } from "./resources";
 import parse from "./DScript/parser";
 import withTextStyle from "./tools/withTextStyle";
 import isDefined from "./tools/isDefined";
+import random from "./tools/random";
 
 type WallType = { canSeeDoor: boolean; isSolid: boolean; canSeeWall: boolean };
 
@@ -43,6 +49,7 @@ export default class Engine implements Game {
   controls: Map<string, GameInput[]>;
   ctx: CanvasRenderingContext2D;
   drawSoon: Soon;
+  eventHandlers: GameEventListeners;
   facing: Dir;
   log: string[];
   party: Player[];
@@ -81,6 +88,11 @@ export default class Engine implements Game {
       new Player("C", "Knight"),
       new Player("D", "Thief"),
     ];
+    this.eventHandlers = {
+      onCalculateDamage: new Set(),
+      onCalculateDR: new Set(),
+      onRoll: new Set(),
+    };
 
     canvas.addEventListener("keyup", (e) => {
       let key = e.code;
@@ -234,7 +246,11 @@ export default class Engine implements Game {
     ctx.fillRect(0, 0, width, height);
 
     if (!renderSetup) {
-      const { draw } = withTextStyle(ctx, "center", "middle", "white");
+      const { draw } = withTextStyle(ctx, {
+        textAlign: "center",
+        textBaseline: "middle",
+        fillStyle: "white",
+      });
       draw(
         `Loading: ${this.res.loaded}/${this.res.loading}`,
         width / 2,
@@ -400,7 +416,9 @@ export default class Engine implements Game {
   }
 
   getActionTargets(c: Combatant, a: ItemAction): Combatant[] {
-    const dir = c.isPC ? (this.party.indexOf(c) as Dir) : this.combat.getDir(c);
+    const dir = c.isPC
+      ? (this.party.indexOf(c as Player) as Dir)
+      : this.combat.getDir(c);
 
     switch (a.targets) {
       case "Self":
@@ -425,19 +443,8 @@ export default class Engine implements Game {
     this.draw();
   }
 
-  getHandlers<T extends GameEventName>(name: T) {
-    const handlers: GameEventListener[T][] = [];
-
-    for (const effect of this.combat.effects) {
-      const handler = effect[name];
-      if (handler) handlers.push(handler as GameEventListener[T]);
-    }
-
-    return handlers;
-  }
-
   fire<T extends GameEventName>(name: T, e: GameEvents[T]) {
-    const handlers = this.getHandlers(name);
+    const handlers = this.eventHandlers[name];
     for (const handler of handlers) handler(e);
     return e;
   }
@@ -456,6 +463,23 @@ export default class Engine implements Game {
 
   addEffect(effect: GameEffect) {
     this.combat.effects.push(effect);
+    for (const name of GameEventNames) {
+      const handler = effect[name];
+      if (handler) this.eventHandlers[name].add(handler);
+    }
+  }
+
+  removeEffect(effect: GameEffect) {
+    for (const name of GameEventNames) {
+      const handler = effect[name];
+      if (handler) this.eventHandlers[name].delete(handler);
+    }
+  }
+
+  roll(size: number) {
+    const value = random(size) + 1;
+    this.fire("onRoll", { size, value });
+    return value;
   }
 
   applyDamage(

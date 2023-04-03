@@ -11,7 +11,7 @@ export const generateAttack = (
   targets: "Opponent",
   act({ g, targets, me }) {
     const bonus = me.attacksInARow;
-    const amount = random(maxDamage + bonus, minDamage);
+    const amount = random(maxDamage - minDamage + bonus) + minDamage;
     g.applyDamage(me, targets, amount, "hp");
   },
 });

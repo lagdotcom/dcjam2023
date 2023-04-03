@@ -1,4 +1,3 @@
-export default function random(max: number, min = 0) {
-  const diff = max - min;
-  return min + Math.floor(Math.random() * diff);
+export default function random(max: number) {
+  return Math.floor(Math.random() * max);
 }

@@ -23,12 +23,11 @@ export default class LogRenderer {
     const textX = position.x + padding.x;
     let textY = position.y + size.y - padding.y;
 
-    const { lineHeight, measure, draw } = withTextStyle(
-      ctx,
-      "left",
-      "bottom",
-      "white"
-    );
+    const { lineHeight, measure, draw } = withTextStyle(ctx, {
+      textAlign: "left",
+      textBaseline: "bottom",
+      fillStyle: "white",
+    });
     for (let i = log.length - 1; i >= 0; i--) {
       const { lines } = textWrap(log[i], width, measure);
 

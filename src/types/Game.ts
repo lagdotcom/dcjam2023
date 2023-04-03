@@ -1,8 +1,8 @@
 import Combatant, { AttackableStat } from "./Combatant";
 
-import { GameEventListener } from "./events";
+import { GameEventHandler } from "./events";
 
-export interface GameEffect extends Partial<GameEventListener> {
+export interface GameEffect extends Partial<GameEventHandler> {
   name: string;
   affects: Combatant[];
   duration: number;
@@ -17,4 +17,6 @@ export default interface Game {
     amount: number,
     type: AttackableStat
   ): void;
+
+  roll(size: number): number;
 }

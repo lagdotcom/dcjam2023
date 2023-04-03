@@ -114,7 +114,7 @@ export default class EngineScripting extends DScriptHost {
         const index = this.g.party.indexOf(pc);
         this.env.set("pcIndex", num(index, true));
 
-        const roll = random(10, 1) + pc[stat];
+        const roll = this.g.roll(10) + pc[stat];
         return roll >= dc;
       }
     );

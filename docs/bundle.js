@@ -53,6 +53,13 @@
     }
   });
 
+  // src/types/events.ts
+  var GameEventNames = [
+    "onCalculateDamage",
+    "onCalculateDR",
+    "onRoll"
+  ];
+
   // src/tools/wallTags.ts
   function wallToTag(pos, dir) {
     return `${pos.x},${pos.y},${dir}`;
@@ -118,9 +125,8 @@
   }
 
   // src/tools/random.ts
-  function random(max, min = 0) {
-    const diff = max - min;
-    return min + Math.floor(Math.random() * diff);
+  function random(max) {
+    return Math.floor(Math.random() * max);
   }
 
   // src/actions.ts
@@ -130,7 +136,7 @@
     targets: "Opponent",
     act({ g, targets, me }) {
       const bonus = me.attacksInARow;
-      const amount = random(maxDamage + bonus, minDamage);
+      const amount = random(maxDamage - minDamage + bonus) + minDamage;
       g.applyDamage(me, targets, amount, "hp");
     }
   });
@@ -190,7 +196,7 @@
           sp: 0,
           targets: "OneParty",
           act({ g, targets, me }) {
-            g.applyDamage(me, targets, random(14, 1), "hp");
+            g.applyDamage(me, targets, random(14) + 1, "hp");
           }
         }
       ]
@@ -258,6 +264,9 @@
         const dir = random(4);
         this.enemies[dir].push(enemy);
       }
+      for (const c of this.aliveCombatants) {
+        c.sp = Math.min(c.spirit, c.maxSp);
+      }
       this.inCombat = true;
       this.side = "player";
       this.g.draw();
@@ -282,11 +291,13 @@
         const newSp = c.sp < c.spirit ? c.spirit : c.sp + 1;
         c.sp = Math.min(newSp, c.maxSp);
       }
-      for (let i = this.effects.length - 1; i >= 0; i--) {
-        const e = this.effects[i];
+      const removing = [];
+      for (const e of this.effects) {
         if (--e.duration < 1)
-          this.effects.splice(i, 1);
+          removing.push(e);
       }
+      for (const e of removing)
+        this.g.removeEffect(e);
       this.g.draw();
     }
   };
@@ -303,11 +314,19 @@
   var Colours_default = Colours;
 
   // src/tools/withTextStyle.ts
-  function withTextStyle(ctx, textAlign, textBaseline, fillStyle, fontSize = 10, fontFace = "sans-serif") {
+  function withTextStyle(ctx, {
+    textAlign,
+    textBaseline,
+    fillStyle,
+    fontSize = 10,
+    fontFace = "sans-serif",
+    globalAlpha = 1
+  }) {
     ctx.textAlign = textAlign;
     ctx.textBaseline = textBaseline;
     ctx.fillStyle = fillStyle;
     ctx.font = `${fontSize}px ${fontFace}`;
+    ctx.globalAlpha = globalAlpha;
     return {
       lineHeight: fontSize + 4,
       measure: (text) => ctx.measureText(text),
@@ -331,12 +350,11 @@
       if (active) {
         ctx.fillStyle = Colours_default.logShadow;
         ctx.fillRect(position.x, position.y, size.x, size.y);
-        const { draw, lineHeight } = withTextStyle(
-          ctx,
-          "left",
-          "middle",
-          "white"
-        );
+        const { draw, lineHeight } = withTextStyle(ctx, {
+          textAlign: "left",
+          textBaseline: "middle",
+          fillStyle: "white"
+        });
         const x = position.x;
         let y = position.y + padding.y + lineHeight / 2;
         draw(`${active.name} has ${active.sp}SP:`, x + padding.x, y);
@@ -991,7 +1009,7 @@
           const pc = oneOf(this.g.party.filter((pc2) => pc2.alive));
           const index = this.g.party.indexOf(pc);
           this.env.set("pcIndex", num(index, true));
-          const roll = random(10, 1) + pc[stat];
+          const roll = this.g.roll(10) + pc[stat];
           return roll >= dc;
         }
       );
@@ -1118,8 +1136,12 @@
       this.renderBar(x + hp.x, y + hp.y, pc.hp, pc.maxHp, Colours_default.hp);
       this.renderBar(x + sp.x, y + sp.y, pc.sp, pc.maxSp, Colours_default.sp);
       ctx.drawImage(bg, x, y);
-      const fg = index === this.g.facing ? "yellow" : "white";
-      const { draw } = withTextStyle(ctx, "left", "middle", fg);
+      const fillStyle = index === this.g.facing ? "yellow" : "white";
+      const { draw } = withTextStyle(ctx, {
+        textAlign: "left",
+        textBaseline: "middle",
+        fillStyle
+      });
       draw(pc.name, x + text.x, y + text.y, barWidth);
     }
     renderBar(x, y, current, max, colour) {
@@ -1195,7 +1217,11 @@
         }
         dy += tileSize;
       }
-      const { draw } = withTextStyle(ctx, "center", "middle", "white");
+      const { draw } = withTextStyle(ctx, {
+        textAlign: "center",
+        textBaseline: "middle",
+        fillStyle: "white"
+      });
       draw(
         facingChars[facing],
         startX + tileSize * (size.x + 0.5),
@@ -1207,6 +1233,50 @@
   // src/HUDRenderer.ts
   var empty = document.createElement("img");
   var zero = xyi(0, 0);
+  var RollListener = class {
+    constructor(g, position = xyi(g.canvas.width / 2, 212), initialDelay = 2e3, fadeDelay = 500) {
+      this.g = g;
+      this.position = position;
+      this.initialDelay = initialDelay;
+      this.fadeDelay = fadeDelay;
+      this.tick = () => {
+        this.opacity = this.opacity > 0.1 ? this.opacity /= 2 : 0;
+        this.g.draw();
+        this.timer = this.opacity ? setTimeout(this.tick, this.fadeDelay) : void 0;
+      };
+      this.value = 0;
+      this.colour = "white";
+      this.opacity = 0;
+      this.g.eventHandlers.onRoll.add(
+        ({ value, size }) => this.rolled(
+          value,
+          value === 1 ? "red" : value === size ? "lime" : "white"
+        )
+      );
+    }
+    rolled(value, colour) {
+      this.value = value;
+      this.colour = colour;
+      this.opacity = 1;
+      if (this.timer)
+        clearTimeout(this.timer);
+      this.timer = setTimeout(this.tick, this.initialDelay);
+      this.g.draw();
+    }
+    render() {
+      if (this.opacity) {
+        const { draw } = withTextStyle(this.g.ctx, {
+          textAlign: "center",
+          textBaseline: "middle",
+          fillStyle: this.colour,
+          fontSize: 16,
+          globalAlpha: this.opacity
+        });
+        draw(this.value.toString(), this.position.x, this.position.y);
+        this.g.ctx.globalAlpha = 1;
+      }
+    }
+  };
   var HUDRenderer = class {
     constructor(g) {
       this.g = g;
@@ -1226,6 +1296,7 @@
       };
       this.stats = new StatsRenderer(g);
       this.minimap = new MinimapRenderer(g);
+      this.roll = new RollListener(g);
     }
     acquireImages() {
       return __async(this, null, function* () {
@@ -1238,14 +1309,13 @@
         ]);
         const { width, height } = this.g.canvas;
         this.images = { base, buttons, mapBorder, marble, ring };
-        const ringPos = xyi((width - ring.width) / 2, height - ring.height);
         this.positions = {
-          base: xyi(0, 0),
+          base: zero,
           buttons: xyi(32, height - buttons.height),
           mapBorder: xyi(width - mapBorder.width, height - mapBorder.height),
           marble: zero,
           // not used
-          ring: ringPos
+          ring: xyi((width - ring.width) / 2 - 2, height - ring.height)
         };
         return this.images;
       });
@@ -1257,6 +1327,7 @@
     render() {
       this.paste("base");
       this.paste("ring");
+      this.roll.render();
       this.stats.render(this.images.marble);
       this.minimap.render();
       this.paste("mapBorder");
@@ -1306,12 +1377,11 @@
       const width = size.x - padding.x * 2;
       const textX = position.x + padding.x;
       let textY = position.y + size.y - padding.y;
-      const { lineHeight, measure, draw } = withTextStyle(
-        ctx,
-        "left",
-        "bottom",
-        "white"
-      );
+      const { lineHeight, measure, draw } = withTextStyle(ctx, {
+        textAlign: "left",
+        textBaseline: "bottom",
+        fillStyle: "white"
+      });
       for (let i = log.length - 1; i >= 0; i--) {
         const { lines } = textWrap(log[i], width, measure);
         for (const line of lines.reverse()) {
@@ -2133,7 +2203,11 @@
         ctx.fillStyle = "black";
         ctx.fillRect(0, 0, width, height);
         if (!renderSetup) {
-          const { draw } = withTextStyle(ctx, "center", "middle", "white");
+          const { draw } = withTextStyle(ctx, {
+            textAlign: "center",
+            textBaseline: "middle",
+            fillStyle: "white"
+          });
           draw(
             `Loading: ${this.res.loaded}/${this.res.loading}`,
             width / 2,
@@ -2170,6 +2244,11 @@
         new Player("C", "Knight"),
         new Player("D", "Thief")
       ];
+      this.eventHandlers = {
+        onCalculateDamage: /* @__PURE__ */ new Set(),
+        onCalculateDR: /* @__PURE__ */ new Set(),
+        onRoll: /* @__PURE__ */ new Set()
+      };
       canvas.addEventListener("keyup", (e) => {
         let key = e.code;
         if (e.shiftKey)
@@ -2447,17 +2526,8 @@
       this.showLog = true;
       this.draw();
     }
-    getHandlers(name) {
-      const handlers = [];
-      for (const effect of this.combat.effects) {
-        const handler = effect[name];
-        if (handler)
-          handlers.push(handler);
-      }
-      return handlers;
-    }
     fire(name, e) {
-      const handlers = this.getHandlers(name);
+      const handlers = this.eventHandlers[name];
       for (const handler of handlers)
         handler(e);
       return e;
@@ -2474,6 +2544,23 @@
     }
     addEffect(effect) {
       this.combat.effects.push(effect);
+      for (const name of GameEventNames) {
+        const handler = effect[name];
+        if (handler)
+          this.eventHandlers[name].add(handler);
+      }
+    }
+    removeEffect(effect) {
+      for (const name of GameEventNames) {
+        const handler = effect[name];
+        if (handler)
+          this.eventHandlers[name].delete(handler);
+      }
+    }
+    roll(size) {
+      const value = random(size) + 1;
+      this.fire("onRoll", { size, value });
+      return value;
     }
     applyDamage(attacker, targets, amount, type) {
       for (const target of targets) {

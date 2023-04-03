@@ -1,15 +1,26 @@
 export default function withTextStyle(
   ctx: CanvasRenderingContext2D,
-  textAlign: CanvasRenderingContext2D["textAlign"],
-  textBaseline: CanvasRenderingContext2D["textBaseline"],
-  fillStyle: CanvasRenderingContext2D["fillStyle"],
-  fontSize = 10,
-  fontFace = "sans-serif"
+  {
+    textAlign,
+    textBaseline,
+    fillStyle,
+    fontSize = 10,
+    fontFace = "sans-serif",
+    globalAlpha = 1,
+  }: {
+    textAlign: CanvasRenderingContext2D["textAlign"];
+    textBaseline: CanvasRenderingContext2D["textBaseline"];
+    fillStyle: CanvasRenderingContext2D["fillStyle"];
+    fontSize?: number;
+    fontFace?: string;
+    globalAlpha?: number;
+  }
 ) {
   ctx.textAlign = textAlign;
   ctx.textBaseline = textBaseline;
   ctx.fillStyle = fillStyle;
   ctx.font = `${fontSize}px ${fontFace}`;
+  ctx.globalAlpha = globalAlpha;
 
   return {
     lineHeight: fontSize + 4,

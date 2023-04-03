@@ -53,6 +53,10 @@ export default class CombatManager {
       this.enemies[dir].push(enemy);
     }
 
+    for (const c of this.aliveCombatants) {
+      c.sp = Math.min(c.spirit, c.maxSp);
+    }
+
     this.inCombat = true;
     this.side = "player";
     this.g.draw();
@@ -70,7 +74,7 @@ export default class CombatManager {
 
   getDir(c: Combatant): Dir {
     for (let dir = 0; dir < 4; dir++) {
-      if (this.enemies[dir as Dir].includes(c)) return dir;
+      if (this.enemies[dir as Dir].includes(c as Enemy)) return dir;
     }
 
     throw new Error(`${c.name} not found in combat`);
@@ -82,10 +86,11 @@ export default class CombatManager {
       c.sp = Math.min(newSp, c.maxSp);
     }
 
-    for (let i = this.effects.length - 1; i >= 0; i--) {
-      const e = this.effects[i];
-      if (--e.duration < 1) this.effects.splice(i, 1);
+    const removing: GameEffect[] = [];
+    for (const e of this.effects) {
+      if (--e.duration < 1) removing.push(e);
     }
+    for (const e of removing) this.g.removeEffect(e);
 
     this.g.draw();
   }

@@ -66,7 +66,7 @@ const enemies = {
         sp: 0,
         targets: "OneParty",
         act({ g, targets, me }) {
-          g.applyDamage(me, targets, random(14, 1), "hp");
+          g.applyDamage(me, targets, random(14) + 1, "hp");
         },
       },
     ],

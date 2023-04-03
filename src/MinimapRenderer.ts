@@ -84,7 +84,11 @@ export default class MinimapRenderer {
       dy += tileSize;
     }
 
-    const { draw } = withTextStyle(ctx, "center", "middle", "white");
+    const { draw } = withTextStyle(ctx, {
+      textAlign: "center",
+      textBaseline: "middle",
+      fillStyle: "white",
+    });
     draw(
       facingChars[facing],
       startX + tileSize * (size.x + 0.5),

@@ -38,8 +38,12 @@ export default class StatsRenderer {
     ctx.drawImage(bg, x, y);
 
     // TODO find a better way to highlight this
-    const fg = index === this.g.facing ? "yellow" : "white";
-    const { draw } = withTextStyle(ctx, "left", "middle", fg);
+    const fillStyle = index === this.g.facing ? "yellow" : "white";
+    const { draw } = withTextStyle(ctx, {
+      textAlign: "left",
+      textBaseline: "middle",
+      fillStyle,
+    });
     draw(pc.name, x + text.x, y + text.y, barWidth);
   }
 

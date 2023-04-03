@@ -22,12 +22,11 @@ export default class CombatRenderer {
       ctx.fillStyle = Colours.logShadow;
       ctx.fillRect(position.x, position.y, size.x, size.y);
 
-      const { draw, lineHeight } = withTextStyle(
-        ctx,
-        "left",
-        "middle",
-        "white"
-      );
+      const { draw, lineHeight } = withTextStyle(ctx, {
+        textAlign: "left",
+        textBaseline: "middle",
+        fillStyle: "white",
+      });
       const x = position.x;
       let y = position.y + padding.y + lineHeight / 2;
 

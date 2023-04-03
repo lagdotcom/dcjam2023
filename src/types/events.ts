@@ -1,5 +1,12 @@
 import Combatant, { AttackableStat } from "./Combatant";
 
+export const GameEventNames = [
+  "onCalculateDamage",
+  "onCalculateDR",
+  "onRoll",
+] as const;
+export type GameEventName = (typeof GameEventNames)[number];
+
 export type GameEvents = {
   onCalculateDamage: {
     attacker: Combatant;
@@ -9,9 +16,15 @@ export type GameEvents = {
   };
 
   onCalculateDR: { who: Combatant; dr: number };
-};
-export type GameEventName = keyof GameEvents;
 
-export type GameEventListener = {
-  [K in GameEventName]: (e: GameEvents[K]) => void;
+  onRoll: { size: number; value: number };
+};
+export type EventHandler<K extends GameEventName> = (e: GameEvents[K]) => void;
+
+export type GameEventHandler = {
+  [K in GameEventName]: EventHandler<K>;
+};
+
+export type GameEventListeners = {
+  [K in GameEventName]: Set<EventHandler<K>>;
 };
