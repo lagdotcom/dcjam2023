@@ -38,16 +38,15 @@ export default class MinimapRenderer {
     public tileSize = 16,
     public wallSize = 2,
     public size = xy(2, 2),
-    public offset = xy(112, 94)
+    public position = xy(375, 170)
   ) {}
 
   render() {
-    const { tileSize, size, offset, wallSize } = this;
-    const { ctx, facing, position } = this.g;
-    const { width, height } = this.g.canvas;
+    const { tileSize, size, position, wallSize } = this;
+    const { ctx, facing, position: partyPos } = this.g;
 
-    const startX = width - offset.x;
-    const startY = height - offset.y;
+    const startX = position.x;
+    const startY = position.y;
     let dx = 0;
     let dy = startY;
 
@@ -60,10 +59,10 @@ export default class MinimapRenderer {
     );
 
     for (let y = -size.y; y <= size.y; y++) {
-      const ty = y + position.y;
+      const ty = y + partyPos.y;
       dx = startX - tileSize;
       for (let x = -size.x; x <= size.x; x++) {
-        const tx = x + position.x;
+        const tx = x + partyPos.x;
         dx += tileSize;
 
         const { cell, north, east, south, west } = this.g.getMinimapData(

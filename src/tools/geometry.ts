@@ -2,6 +2,10 @@ import Dir from "../types/Dir";
 import XY from "../types/XY";
 
 export const xy = (x: number, y: number): XY => ({ x, y });
+export const xyi = (x: number, y: number): XY => ({
+  x: Math.floor(x),
+  y: Math.floor(y),
+});
 
 export function addXY(a: XY, b: XY): XY {
   return { x: a.x + b.x, y: a.y + b.y };

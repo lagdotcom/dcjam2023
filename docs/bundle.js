@@ -75,6 +75,10 @@
 
   // src/tools/geometry.ts
   var xy = (x, y) => ({ x, y });
+  var xyi = (x, y) => ({
+    x: Math.floor(x),
+    y: Math.floor(y)
+  });
   function addXY(a, b) {
     return { x: a.x + b.x, y: a.y + b.y };
   }
@@ -1071,14 +1075,192 @@
     }
   };
 
-  // src/HUDRenderer.ts
-  var HUDRenderer = class {
-    constructor(g, img) {
+  // res/hud/base.png
+  var base_default = "./base-CLJU2TVL.png";
+
+  // res/hud/buttons.png
+  var buttons_default = "./buttons-KWE5CIYP.png";
+
+  // res/hud/map-border.png
+  var map_border_default = "./map-border-OU5SS5IH.png";
+
+  // res/hud/marble.png
+  var marble_default = "./marble-ZLZROWLU.png";
+
+  // res/hud/ring.png
+  var ring_default = "./ring-H2TENGRF.png";
+
+  // src/StatsRenderer.ts
+  var barWidth = 42;
+  var coordinates = [
+    xy(200, 124),
+    xy(260, 166),
+    xy(200, 210),
+    xy(140, 166)
+  ];
+  var StatsRenderer = class {
+    constructor(g, text = xy(21, 36), hp = xy(20, 43), sp = xy(20, 49)) {
       this.g = g;
-      this.img = img;
+      this.text = text;
+      this.hp = hp;
+      this.sp = sp;
+    }
+    render(bg) {
+      for (let i = 0; i < 4; i++) {
+        const xy2 = coordinates[i];
+        const pc = this.g.party[i];
+        this.renderPC(xy2, pc, bg, i);
+      }
+    }
+    renderPC({ x, y }, pc, bg, index) {
+      const { text, hp, sp } = this;
+      const { ctx } = this.g;
+      this.renderBar(x + hp.x, y + hp.y, pc.hp, pc.maxHp, Colours_default.hp);
+      this.renderBar(x + sp.x, y + sp.y, pc.sp, pc.maxSp, Colours_default.sp);
+      ctx.drawImage(bg, x, y);
+      const fg = index === this.g.facing ? "yellow" : "white";
+      const { draw } = withTextStyle(ctx, "left", "middle", fg);
+      draw(pc.name, x + text.x, y + text.y, barWidth);
+    }
+    renderBar(x, y, current, max, colour) {
+      const width = Math.floor(
+        barWidth * Math.max(0, Math.min(1, current / max))
+      );
+      this.g.ctx.fillStyle = colour;
+      this.g.ctx.fillRect(x, y, width, 3);
+    }
+  };
+
+  // src/MinimapRenderer.ts
+  var facingChars = ["^", ">", "v", "<"];
+  var sideColours = {
+    "": "black",
+    d: "silver",
+    s: "grey",
+    w: "orange",
+    ds: "silver",
+    dw: "red",
+    sw: "white",
+    dsw: "silver"
+  };
+  function rect(ctx, x, y, ox, oy, w, h, tag) {
+    ctx.fillStyle = sideColours[tag];
+    ctx.fillRect(x + ox, y + oy, w, h);
+  }
+  var MinimapRenderer = class {
+    constructor(g, tileSize = 16, wallSize = 2, size = xy(2, 2), position = xy(375, 170)) {
+      this.g = g;
+      this.tileSize = tileSize;
+      this.wallSize = wallSize;
+      this.size = size;
+      this.position = position;
     }
     render() {
-      this.g.ctx.drawImage(this.img, 0, 0);
+      const { tileSize, size, position, wallSize } = this;
+      const { ctx, facing, position: partyPos } = this.g;
+      const startX = position.x;
+      const startY = position.y;
+      let dx = 0;
+      let dy = startY;
+      ctx.fillStyle = Colours_default.background;
+      ctx.fillRect(
+        startX,
+        startY,
+        tileSize * (size.x * 2 + 1),
+        tileSize * (size.y * 2 + 1)
+      );
+      for (let y = -size.y; y <= size.y; y++) {
+        const ty = y + partyPos.y;
+        dx = startX - tileSize;
+        for (let x = -size.x; x <= size.x; x++) {
+          const tx = x + partyPos.x;
+          dx += tileSize;
+          const { cell, north, east, south, west } = this.g.getMinimapData(
+            tx,
+            ty
+          );
+          if (cell) {
+            ctx.fillStyle = Colours_default.mapVisited;
+            ctx.fillRect(dx, dy, tileSize, tileSize);
+          }
+          const edge = tileSize - wallSize;
+          if (north)
+            rect(ctx, dx, dy, 0, 0, tileSize, wallSize, north);
+          if (east)
+            rect(ctx, dx, dy, edge, 0, wallSize, tileSize, east);
+          if (south)
+            rect(ctx, dx, dy, 0, edge, tileSize, wallSize, south);
+          if (west)
+            rect(ctx, dx, dy, 0, 0, wallSize, tileSize, west);
+        }
+        dy += tileSize;
+      }
+      const { draw } = withTextStyle(ctx, "center", "middle", "white");
+      draw(
+        facingChars[facing],
+        startX + tileSize * (size.x + 0.5),
+        startY + tileSize * (size.y + 0.5)
+      );
+    }
+  };
+
+  // src/HUDRenderer.ts
+  var empty = document.createElement("img");
+  var zero = xyi(0, 0);
+  var HUDRenderer = class {
+    constructor(g) {
+      this.g = g;
+      this.images = {
+        base: empty,
+        buttons: empty,
+        mapBorder: empty,
+        marble: empty,
+        ring: empty
+      };
+      this.positions = {
+        base: zero,
+        buttons: zero,
+        mapBorder: zero,
+        marble: zero,
+        ring: zero
+      };
+      this.stats = new StatsRenderer(g);
+      this.minimap = new MinimapRenderer(g);
+    }
+    acquireImages() {
+      return __async(this, null, function* () {
+        const [base, buttons, mapBorder, marble, ring] = yield Promise.all([
+          this.g.res.loadImage(base_default),
+          this.g.res.loadImage(buttons_default),
+          this.g.res.loadImage(map_border_default),
+          this.g.res.loadImage(marble_default),
+          this.g.res.loadImage(ring_default)
+        ]);
+        const { width, height } = this.g.canvas;
+        this.images = { base, buttons, mapBorder, marble, ring };
+        const ringPos = xyi((width - ring.width) / 2, height - ring.height);
+        this.positions = {
+          base: xyi(0, 0),
+          buttons: xyi(32, height - buttons.height),
+          mapBorder: xyi(width - mapBorder.width, height - mapBorder.height),
+          marble: zero,
+          // not used
+          ring: ringPos
+        };
+        return this.images;
+      });
+    }
+    paste(image) {
+      const pos = this.positions[image];
+      this.g.ctx.drawImage(this.images[image], pos.x, pos.y);
+    }
+    render() {
+      this.paste("base");
+      this.paste("ring");
+      this.stats.render(this.images.marble);
+      this.minimap.render();
+      this.paste("mapBorder");
+      this.paste("buttons");
     }
   };
 
@@ -1139,80 +1321,6 @@
             return;
         }
       }
-    }
-  };
-
-  // src/MinimapRenderer.ts
-  var facingChars = ["^", ">", "v", "<"];
-  var sideColours = {
-    "": "black",
-    d: "silver",
-    s: "grey",
-    w: "orange",
-    ds: "silver",
-    dw: "red",
-    sw: "white",
-    dsw: "silver"
-  };
-  function rect(ctx, x, y, ox, oy, w, h, tag) {
-    ctx.fillStyle = sideColours[tag];
-    ctx.fillRect(x + ox, y + oy, w, h);
-  }
-  var MinimapRenderer = class {
-    constructor(g, tileSize = 16, wallSize = 2, size = xy(2, 2), offset = xy(112, 94)) {
-      this.g = g;
-      this.tileSize = tileSize;
-      this.wallSize = wallSize;
-      this.size = size;
-      this.offset = offset;
-    }
-    render() {
-      const { tileSize, size, offset, wallSize } = this;
-      const { ctx, facing, position } = this.g;
-      const { width, height } = this.g.canvas;
-      const startX = width - offset.x;
-      const startY = height - offset.y;
-      let dx = 0;
-      let dy = startY;
-      ctx.fillStyle = Colours_default.background;
-      ctx.fillRect(
-        startX,
-        startY,
-        tileSize * (size.x * 2 + 1),
-        tileSize * (size.y * 2 + 1)
-      );
-      for (let y = -size.y; y <= size.y; y++) {
-        const ty = y + position.y;
-        dx = startX - tileSize;
-        for (let x = -size.x; x <= size.x; x++) {
-          const tx = x + position.x;
-          dx += tileSize;
-          const { cell, north, east, south, west } = this.g.getMinimapData(
-            tx,
-            ty
-          );
-          if (cell) {
-            ctx.fillStyle = Colours_default.mapVisited;
-            ctx.fillRect(dx, dy, tileSize, tileSize);
-          }
-          const edge = tileSize - wallSize;
-          if (north)
-            rect(ctx, dx, dy, 0, 0, tileSize, wallSize, north);
-          if (east)
-            rect(ctx, dx, dy, edge, 0, wallSize, tileSize, east);
-          if (south)
-            rect(ctx, dx, dy, 0, edge, tileSize, wallSize, south);
-          if (west)
-            rect(ctx, dx, dy, 0, 0, wallSize, tileSize, west);
-        }
-        dy += tileSize;
-      }
-      const { draw } = withTextStyle(ctx, "center", "middle", "white");
-      draw(
-        facingChars[facing],
-        startX + tileSize * (size.x + 0.5),
-        startY + tileSize * (size.y + 0.5)
-      );
     }
   };
 
@@ -1398,49 +1506,6 @@
     schedule() {
       if (!this.timeout)
         this.timeout = requestAnimationFrame(this.call);
-    }
-  };
-
-  // src/StatsRenderer.ts
-  var boxWidth = 62;
-  var boxHeight = 30;
-  var coordinates = [
-    xy(180, 162),
-    xy(220, 194),
-    xy(180, 226),
-    xy(140, 194)
-  ];
-  var StatsRenderer = class {
-    constructor(g) {
-      this.g = g;
-    }
-    render() {
-      for (let i = 0; i < 4; i++) {
-        const xy2 = coordinates[i];
-        const pc = this.g.party[i];
-        this.renderPC(xy2, pc, i);
-      }
-    }
-    renderPC({ x, y }, pc, index) {
-      const { ctx } = this.g;
-      const bg = index === this.g.facing ? Colours_default.currentPC : Colours_default.background;
-      ctx.fillStyle = bg;
-      ctx.fillRect(x, y, boxWidth, boxHeight);
-      const { draw } = withTextStyle(ctx, "left", "middle", "white");
-      draw(pc.name, x + 3, y + 10, boxWidth - 6);
-      this.renderBar(x + 3, y + 18, pc.hp, pc.maxHp, Colours_default.hp, bg);
-      this.renderBar(x + 3, y + 24, pc.sp, pc.maxSp, Colours_default.sp, bg);
-    }
-    renderBar(x, y, current, max, colour, bgColour) {
-      const maxWidth = boxWidth - 6;
-      const width = maxWidth * Math.max(0, Math.min(1, current / max));
-      this.g.ctx.fillStyle = colour;
-      this.g.ctx.fillRect(x, y, width, 3);
-      this.g.ctx.fillStyle = bgColour;
-      this.g.ctx.fillRect(x, y, 1, 1);
-      this.g.ctx.fillRect(x, y + 2, 1, 1);
-      this.g.ctx.fillRect(x + width - 1, y, 1, 1);
-      this.g.ctx.fillRect(x + width - 1, y + 2, 1, 1);
     }
   };
 
@@ -1708,9 +1773,6 @@
     const converter = new GCMapConverter(env);
     return converter.convert(j, region, floor);
   }
-
-  // res/hud.png
-  var hud_default = "./hud-CLJU2TVL.png";
 
   // src/DScript/parser.ts
   var import_nearley = __toESM(require_nearley());
@@ -2082,8 +2144,6 @@
         }
         renderSetup.dungeon.render();
         renderSetup.hud.render();
-        renderSetup.stats.render();
-        renderSetup.minimap.render();
         if (this.showLog)
           renderSetup.log.render();
         if (this.combat.inCombat)
@@ -2153,19 +2213,17 @@
         this.worldSize = xy(this.world.cells[0].length, this.world.cells.length);
         this.position = position != null ? position : w.start;
         this.facing = w.facing;
-        const [hudImage, atlas, image, enemyAtlas, enemyImage] = yield Promise.all([
-          this.res.loadImage(hud_default),
+        const combat = new CombatRenderer(this);
+        const hud = new HUDRenderer(this);
+        const log = new LogRenderer(this);
+        const [atlas, image, enemyAtlas, enemyImage] = yield Promise.all([
           this.res.loadAtlas(w.atlas.json),
           this.res.loadImage(w.atlas.image),
           this.res.loadAtlas(getResourceURL("enemies.json")),
-          this.res.loadImage(getResourceURL("enemies.png"))
+          this.res.loadImage(getResourceURL("enemies.png")),
+          hud.acquireImages()
         ]);
-        const combat = new CombatRenderer(this);
         const dungeon = new DungeonRenderer(this, atlas, image);
-        const hud = new HUDRenderer(this, hudImage);
-        const minimap = new MinimapRenderer(this);
-        const stats = new StatsRenderer(this);
-        const log = new LogRenderer(this);
         yield dungeon.addAtlas(atlas.layers, image);
         yield dungeon.addAtlas(enemyAtlas.layers, enemyImage);
         dungeon.dungeon.layers.push(...enemyAtlas.layers);
@@ -2184,7 +2242,7 @@
           this.walls.set(w.name, this.worldWalls);
         }
         this.markVisited();
-        this.renderSetup = { combat, dungeon, hud, log, minimap, stats };
+        this.renderSetup = { combat, dungeon, hud, log };
         return this.draw();
       });
     }

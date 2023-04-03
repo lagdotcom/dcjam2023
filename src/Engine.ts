@@ -16,18 +16,15 @@ import GameInput from "./types/GameInput";
 import HUDRenderer from "./HUDRenderer";
 import { ItemAction } from "./types/Item";
 import LogRenderer from "./LogRenderer";
-import MinimapRenderer from "./MinimapRenderer";
 import Player from "./Player";
 import ResourceManager from "./ResourceManager";
 import Soon from "./Soon";
-import StatsRenderer from "./StatsRenderer";
 import World from "./types/World";
 import XY from "./types/XY";
 import clone from "nanoclone";
 import convertGridCartographerMap from "./convertGridCartographerMap";
 import getCanvasContext from "./tools/getCanvasContext";
 import { getResourceURL } from "./resources";
-import hudUrl from "../res/hud.png";
 import parse from "./DScript/parser";
 import withTextStyle from "./tools/withTextStyle";
 import isDefined from "./tools/isDefined";
@@ -38,8 +35,6 @@ interface RenderSetup {
   dungeon: DungeonRenderer;
   hud: HUDRenderer;
   log: LogRenderer;
-  minimap: MinimapRenderer;
-  stats: StatsRenderer;
   combat: CombatRenderer;
 }
 
@@ -133,19 +128,18 @@ export default class Engine implements Game {
     this.position = position ?? w.start;
     this.facing = w.facing;
 
-    const [hudImage, atlas, image, enemyAtlas, enemyImage] = await Promise.all([
-      this.res.loadImage(hudUrl),
+    const combat = new CombatRenderer(this);
+    const hud = new HUDRenderer(this);
+    const log = new LogRenderer(this);
+
+    const [atlas, image, enemyAtlas, enemyImage] = await Promise.all([
       this.res.loadAtlas(w.atlas.json),
       this.res.loadImage(w.atlas.image),
       this.res.loadAtlas(getResourceURL("enemies.json")),
       this.res.loadImage(getResourceURL("enemies.png")),
+      hud.acquireImages(),
     ]);
-    const combat = new CombatRenderer(this);
     const dungeon = new DungeonRenderer(this, atlas, image);
-    const hud = new HUDRenderer(this, hudImage);
-    const minimap = new MinimapRenderer(this);
-    const stats = new StatsRenderer(this);
-    const log = new LogRenderer(this);
 
     await dungeon.addAtlas(atlas.layers, image);
     await dungeon.addAtlas(enemyAtlas.layers, enemyImage);
@@ -167,7 +161,7 @@ export default class Engine implements Game {
 
     this.markVisited();
 
-    this.renderSetup = { combat, dungeon, hud, log, minimap, stats };
+    this.renderSetup = { combat, dungeon, hud, log };
     return this.draw();
   }
 
@@ -253,8 +247,6 @@ export default class Engine implements Game {
 
     renderSetup.dungeon.render();
     renderSetup.hud.render();
-    renderSetup.stats.render();
-    renderSetup.minimap.render();
     if (this.showLog) renderSetup.log.render();
     if (this.combat.inCombat) renderSetup.combat.render();
   };
