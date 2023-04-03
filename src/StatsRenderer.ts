@@ -5,7 +5,7 @@ import XY from "./types/XY";
 import withTextStyle from "./tools/withTextStyle";
 import { xy } from "./tools/geometry";
 
-const barWidth = 42;
+const barWidth = 38;
 const coordinates: XY[] = [
   xy(200, 124),
   xy(260, 166),
@@ -17,8 +17,8 @@ export default class StatsRenderer {
   constructor(
     public g: Engine,
     public text = xy(21, 36),
-    public hp = xy(20, 43),
-    public sp = xy(20, 49)
+    public hp = xy(22, 43),
+    public sp = xy(22, 49)
   ) {}
 
   render(bg: HTMLImageElement) {

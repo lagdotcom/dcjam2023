@@ -1109,7 +1109,7 @@
   var ring_default = "./ring-H2TENGRF.png";
 
   // src/StatsRenderer.ts
-  var barWidth = 42;
+  var barWidth = 38;
   var coordinates = [
     xy(200, 124),
     xy(260, 166),
@@ -1117,7 +1117,7 @@
     xy(140, 166)
   ];
   var StatsRenderer = class {
-    constructor(g, text = xy(21, 36), hp = xy(20, 43), sp = xy(20, 49)) {
+    constructor(g, text = xy(21, 36), hp = xy(22, 43), sp = xy(22, 49)) {
       this.g = g;
       this.text = text;
       this.hp = hp;
