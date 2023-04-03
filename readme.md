@@ -10,7 +10,7 @@ Assuming you're starting from literally nothing, here's the steps to getting it 
 
 There's a few options for this:
 
-- Install `Git for Windows` and use `git clone https://github.com/lagdotcom/dcjam2023.git`. To update, go into that directory and type `git pull`.
+- Install [Git for Windows](https://gitforwindows.org) and use `git clone https://github.com/lagdotcom/dcjam2023.git`. To update, go into that directory and type `git pull`.
 - Install [GitHub CLI](https://cli.github.com) and use `gh repo clone lagdotcom/dcjam2023`. To update, same as above.
 - Use the `<> Code` link above to download the code directly and put it somewhere. To update, you just download it again.
 
