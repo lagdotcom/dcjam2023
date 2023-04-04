@@ -67,4 +67,12 @@ export default class Player implements Combatant {
       .map((i) => i.action)
       .concat(endTurnAction);
   }
+
+  get canMove() {
+    return !this.alive || this.sp > 0;
+  }
+
+  move() {
+    if (this.alive) this.sp--;
+  }
 }

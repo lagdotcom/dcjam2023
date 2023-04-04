@@ -629,8 +629,10 @@ export default class Engine implements Game {
 
   partyRotate(dir: -1 | 1) {
     if (this.combat.inCombat) {
-      // TODO make it cost SP...
-      return false;
+      const immobile = this.party.find((pc) => !pc.canMove);
+      if (immobile) return false;
+
+      for (const pc of this.party) pc.move();
     }
 
     if (dir === -1) {
@@ -649,15 +651,17 @@ export default class Engine implements Game {
   }
 
   partySwap(side: number) {
-    if (this.combat.inCombat) {
-      // TODO make it cost SP...
-      return false;
-    }
-
     const dir = rotate(this.facing, side);
 
     const me = this.party[this.facing];
     const them = this.party[dir];
+
+    if (this.combat.inCombat) {
+      if (!me.canMove || !them.canMove) return false;
+
+      me.move();
+      them.move();
+    }
 
     this.party[this.facing] = them;
     this.party[dir] = me;

@@ -1559,6 +1559,13 @@
     get actions() {
       return Array.from(this.equipment.values()).map((i) => i.action).concat(endTurnAction);
     }
+    get canMove() {
+      return !this.alive || this.sp > 0;
+    }
+    move() {
+      if (this.alive)
+        this.sp--;
+    }
   };
 
   // src/ResourceManager.ts
@@ -2768,7 +2775,11 @@
     }
     partyRotate(dir) {
       if (this.combat.inCombat) {
-        return false;
+        const immobile = this.party.find((pc) => !pc.canMove);
+        if (immobile)
+          return false;
+        for (const pc of this.party)
+          pc.move();
       }
       if (dir === -1) {
         const north = this.party.shift();
@@ -2781,12 +2792,15 @@
       return true;
     }
     partySwap(side) {
-      if (this.combat.inCombat) {
-        return false;
-      }
       const dir = rotate(this.facing, side);
       const me = this.party[this.facing];
       const them = this.party[dir];
+      if (this.combat.inCombat) {
+        if (!me.canMove || !them.canMove)
+          return false;
+        me.move();
+        them.move();
+      }
       this.party[this.facing] = them;
       this.party[dir] = me;
       this.draw();
