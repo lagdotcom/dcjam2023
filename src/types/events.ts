@@ -8,6 +8,7 @@ export const GameEventNames = [
   "onCalculateDetermination",
   "onCalculateDR",
   "onCanAct",
+  "onCombatOver",
   "onKilled",
   "onRoll",
 ] as const;
@@ -39,6 +40,8 @@ export type GameEvents = {
   onCalculateDR: { who: Combatant; value: number };
 
   onCanAct: { who: Combatant; action: CombatAction; cancel: boolean };
+
+  onCombatOver: { winners: "party" | "enemies" };
 
   onKilled: { who: Combatant; attacker: Combatant };
 

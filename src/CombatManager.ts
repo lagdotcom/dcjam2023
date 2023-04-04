@@ -28,6 +28,7 @@ export default class CombatManager {
     this.side = "player";
 
     g.eventHandlers.onKilled.add(({ who }) => this.onKilled(who));
+    g.eventHandlers.onCombatOver.add(this.end);
   }
 
   resetEnemies() {
@@ -54,6 +55,9 @@ export default class CombatManager {
   }
 
   begin(enemies: EnemyName[]) {
+    // TODO more permanent things... penance?
+    for (const e of this.effects.slice()) this.g.removeEffect(e);
+
     // TODO arrange them more sensibly
     this.resetEnemies();
     for (const name of enemies) {
@@ -72,11 +76,11 @@ export default class CombatManager {
     this.g.draw();
   }
 
-  end() {
+  end = () => {
     this.resetEnemies();
     this.inCombat = false;
     this.g.draw();
-  }
+  };
 
   getFromOffset(dir: Dir, offset: number): Enemy | undefined {
     return this.enemies[dir][offset - 1];
@@ -116,6 +120,11 @@ export default class CombatManager {
   }
 
   enemyTick = () => {
+    if (!this.inCombat) {
+      this.timeout = undefined;
+      return;
+    }
+
     const moves = this.allEnemies.flatMap((enemy) =>
       enemy.actions
         .map((action) => {

@@ -15,7 +15,7 @@ import CombatRenderer from "./CombatRenderer";
 import DefaultControls from "./DefaultControls";
 import Dir from "./types/Dir";
 import DungeonRenderer from "./DungeonRenderer";
-import { EnemyObjects } from "./enemies";
+import { EnemyName, EnemyObjects } from "./enemies";
 import EngineScripting from "./EngineScripting";
 import GameInput from "./types/GameInput";
 import HUDRenderer from "./HUDRenderer";
@@ -57,6 +57,7 @@ export default class Engine implements Game {
   inventory: Item[];
   log: string[];
   party: Player[];
+  pendingEnemies: EnemyName[];
   position: XY;
   renderSetup?: RenderSetup;
   res: ResourceManager;
@@ -94,6 +95,7 @@ export default class Engine implements Game {
     this.worldVisited = new Set();
     this.worldWalls = new Map();
     this.inventory = [];
+    this.pendingEnemies = [];
     this.party = [
       new Player(this, "A", "Martialist"),
       new Player(this, "B", "Cleavesman"),
@@ -686,6 +688,21 @@ export default class Engine implements Game {
     who.hp = 0;
     this.addToLog(`${who.name} dies!`);
     this.fire("onKilled", { who, attacker });
+
+    const alive = this.party.find((pc) => pc.alive);
+    const winners = alive
+      ? this.combat.allEnemies.length === 0
+        ? "party"
+        : undefined
+      : "enemies";
+
+    if (winners) {
+      if (alive) this.addToLog(`You have vanquished your foes.`);
+      else this.addToLog(`You have failed.`);
+
+      this.fire("onCombatOver", { winners });
+      // TODO item drops
+    }
   }
 
   partyRotate(dir: -1 | 1) {

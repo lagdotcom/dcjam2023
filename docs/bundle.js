@@ -61,6 +61,7 @@
     "onCalculateDetermination",
     "onCalculateDR",
     "onCanAct",
+    "onCombatOver",
     "onKilled",
     "onRoll"
   ];
@@ -235,6 +236,10 @@
       ]
     }
   };
+  var EnemyNames = Object.keys(enemies);
+  function isEnemyName(name) {
+    return EnemyNames.includes(name);
+  }
   var Enemy = class {
     constructor(template) {
       this.template = template;
@@ -272,7 +277,16 @@
       this.g = g;
       this.enemyInitialDelay = enemyInitialDelay;
       this.enemyTurnDelay = enemyTurnDelay;
+      this.end = () => {
+        this.resetEnemies();
+        this.inCombat = false;
+        this.g.draw();
+      };
       this.enemyTick = () => {
+        if (!this.inCombat) {
+          this.timeout = void 0;
+          return;
+        }
         const moves = this.allEnemies.flatMap(
           (enemy2) => enemy2.actions.map((action2) => {
             if (!this.g.canAct(enemy2, action2))
@@ -307,6 +321,7 @@
       this.index = 0;
       this.side = "player";
       g.eventHandlers.onKilled.add(({ who }) => this.onKilled(who));
+      g.eventHandlers.onCombatOver.add(this.end);
     }
     resetEnemies() {
       this.enemies = { 0: [], 1: [], 2: [], 3: [] };
@@ -329,6 +344,8 @@
       ];
     }
     begin(enemies2) {
+      for (const e of this.effects.slice())
+        this.g.removeEffect(e);
       this.resetEnemies();
       for (const name of enemies2) {
         const enemy = spawn(name);
@@ -341,11 +358,6 @@
       }
       this.inCombat = true;
       this.side = "player";
-      this.g.draw();
-    }
-    end() {
-      this.resetEnemies();
-      this.inCombat = false;
       this.g.draw();
     }
     getFromOffset(dir, offset) {
@@ -1013,7 +1025,7 @@
       this.onTagEnter = /* @__PURE__ */ new Map();
       this.onTagInteract = /* @__PURE__ */ new Map();
       const getCell = (x, y) => {
-        const cell = this.g.getCell(x, y);
+        const cell = g.getCell(x, y);
         if (!cell)
           throw new Error(`Invalid cell: ${x},${y}`);
         return cell;
@@ -1026,13 +1038,22 @@
       const getPC = (index) => {
         if (index < 0 || index > 4)
           throw new Error(`Tried to get PC ${index}`);
-        return this.g.party[index];
+        return g.party[index];
       };
       const getStat = (stat) => {
         if (!isStat(stat))
           throw new Error(`Invalid stat: ${stat}`);
         return stat;
       };
+      const getEnemy = (name) => {
+        if (!isEnemyName(name))
+          throw new Error(`Invalid enemy: ${name}`);
+        return name;
+      };
+      this.addNative("addEnemy", ["string"], void 0, (name) => {
+        const enemy = getEnemy(name);
+        g.pendingEnemies.push(enemy);
+      });
       this.addNative(
         "damagePC",
         ["number", "string", "number"],
@@ -1040,7 +1061,7 @@
         (index, type, amount) => {
           const pc = getPC(index);
           const stat = getStat(type);
-          this.g.applyDamage(pc, [pc], amount, stat);
+          g.applyDamage(pc, [pc], amount, stat);
         }
       );
       this.addNative(
@@ -1068,21 +1089,21 @@
       );
       this.addNative("makePartyFace", ["number"], void 0, (d) => {
         const dir = getDir(d);
-        this.g.facing = dir;
-        this.g.draw();
+        g.facing = dir;
+        g.draw();
       });
       this.addNative(
         "message",
         ["string"],
         void 0,
-        (msg) => this.g.addToLog(msg)
+        (msg) => g.addToLog(msg)
       );
       this.addNative("movePartyToTag", ["string"], void 0, (tag) => {
-        const position = this.g.findCellWithTag(tag);
+        const position = g.findCellWithTag(tag);
         if (position) {
-          this.g.position = position;
-          this.g.markVisited();
-          this.g.draw();
+          g.position = position;
+          g.markVisited();
+          g.draw();
         }
       });
       this.addNative(
@@ -1091,12 +1112,20 @@
         "bool",
         (type, dc) => {
           const stat = getStat(type);
-          this.env.set("pcIndex", num(this.g.facing, true));
-          const pc = this.g.party[this.g.facing];
-          const roll = this.g.roll(10) + pc[stat];
+          this.env.set("pcIndex", num(g.facing, true));
+          const pc = g.party[g.facing];
+          const roll = g.roll(10) + pc[stat];
           return roll >= dc;
         }
       );
+      this.addNative("startArenaFight", [], "bool", () => {
+        const count = g.pendingEnemies.length;
+        if (!count)
+          return false;
+        const enemies2 = g.pendingEnemies.splice(0, count);
+        g.combat.begin(enemies2);
+        return true;
+      });
       this.addNative(
         "onTagInteract",
         ["string", "function"],
@@ -1114,6 +1143,21 @@
         }
       );
       this.addNative("random", ["number"], "number", random);
+      this.addNative(
+        "removeTag",
+        ["number", "number", "string"],
+        void 0,
+        (x, y, tag) => {
+          const cell = getCell(x, y);
+          const index = cell.tags.indexOf(tag);
+          if (index >= 0)
+            cell.tags.splice(index, 1);
+          else
+            console.warn(
+              `script tried to remove tag ${tag} at ${x},${y} -- not present`
+            );
+        }
+      );
       this.addNative(
         "tileHasTag",
         ["number", "number", "string"],
@@ -1307,6 +1351,15 @@
             rect(ctx, dx, dy, 0, edge, tileSize, wallSize, south);
           if (west)
             rect(ctx, dx, dy, 0, 0, wallSize, tileSize, west);
+          if (cell == null ? void 0 : cell.object) {
+            const { draw: draw2 } = withTextStyle(ctx, {
+              textAlign: "center",
+              textBaseline: "middle",
+              fillStyle: "white",
+              fontSize: tileSize
+            });
+            draw2("\u25CF", dx + tileSize / 2, dy + tileSize / 2);
+          }
         }
         dy += tileSize;
       }
@@ -1940,7 +1993,7 @@
   var enemies_default2 = "./enemies-TKYHHQDG.json";
 
   // res/map.dscript
-  var map_default = "./map-77UIRMZF.dscript";
+  var map_default = "./map-ZABSODQV.dscript";
 
   // res/atlas/test1.png
   var test1_default = "./test1-MYU5F6VR.png";
@@ -2532,6 +2585,7 @@
       this.worldVisited = /* @__PURE__ */ new Set();
       this.worldWalls = /* @__PURE__ */ new Map();
       this.inventory = [];
+      this.pendingEnemies = [];
       this.party = [
         new Player(this, "A", "Martialist"),
         new Player(this, "B", "Cleavesman"),
@@ -3009,6 +3063,15 @@
       who.hp = 0;
       this.addToLog(`${who.name} dies!`);
       this.fire("onKilled", { who, attacker });
+      const alive = this.party.find((pc) => pc.alive);
+      const winners = alive ? this.combat.allEnemies.length === 0 ? "party" : void 0 : "enemies";
+      if (winners) {
+        if (alive)
+          this.addToLog(`You have vanquished your foes.`);
+        else
+          this.addToLog(`You have failed.`);
+        this.fire("onCombatOver", { winners });
+      }
     }
     partyRotate(dir) {
       if (this.combat.inCombat) {
@@ -3046,7 +3109,7 @@
   };
 
   // res/map.json
-  var map_default2 = "./map-245TL46A.json";
+  var map_default2 = "./map-FGDVPJZZ.json";
 
   // src/index.ts
   function loadEngine(parent) {

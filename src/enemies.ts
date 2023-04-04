@@ -76,6 +76,11 @@ const enemies = {
   },
 } satisfies Record<string, EnemyTemplate>;
 export type EnemyName = keyof typeof enemies;
+const EnemyNames = Object.keys(enemies);
+
+export function isEnemyName(name: string): name is EnemyName {
+  return EnemyNames.includes(name);
+}
 
 export class Enemy implements Combatant {
   isPC: false;

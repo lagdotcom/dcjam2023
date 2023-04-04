@@ -15,6 +15,7 @@ import { Program } from "./DScript/ast";
 import XY from "./types/XY";
 import isStat from "./tools/combatants";
 import { random } from "./tools/rng";
+import { EnemyName, isEnemyName } from "./enemies";
 
 export default class EngineScripting extends DScriptHost {
   onTagEnter: Map<string, RuntimeFunction>;
@@ -32,7 +33,7 @@ export default class EngineScripting extends DScriptHost {
     this.onTagInteract = new Map();
 
     const getCell = (x: number, y: number) => {
-      const cell = this.g.getCell(x, y);
+      const cell = g.getCell(x, y);
       if (!cell) throw new Error(`Invalid cell: ${x},${y}`);
       return cell;
     };
@@ -42,12 +43,21 @@ export default class EngineScripting extends DScriptHost {
     };
     const getPC = (index: number) => {
       if (index < 0 || index > 4) throw new Error(`Tried to get PC ${index}`);
-      return this.g.party[index];
+      return g.party[index];
     };
     const getStat = (stat: string): AttackableStat => {
       if (!isStat(stat)) throw new Error(`Invalid stat: ${stat}`);
       return stat;
     };
+    const getEnemy = (name: string): EnemyName => {
+      if (!isEnemyName(name)) throw new Error(`Invalid enemy: ${name}`);
+      return name;
+    };
+
+    this.addNative("addEnemy", ["string"], undefined, (name: string) => {
+      const enemy = getEnemy(name);
+      g.pendingEnemies.push(enemy);
+    });
 
     this.addNative(
       "damagePC",
@@ -56,7 +66,7 @@ export default class EngineScripting extends DScriptHost {
       (index: number, type: string, amount: number) => {
         const pc = getPC(index);
         const stat = getStat(type);
-        this.g.applyDamage(pc, [pc], amount, stat);
+        g.applyDamage(pc, [pc], amount, stat);
       }
     );
 
@@ -85,20 +95,20 @@ export default class EngineScripting extends DScriptHost {
 
     this.addNative("makePartyFace", ["number"], undefined, (d: number) => {
       const dir = getDir(d);
-      this.g.facing = dir;
-      this.g.draw();
+      g.facing = dir;
+      g.draw();
     });
 
     this.addNative("message", ["string"], undefined, (msg: string) =>
-      this.g.addToLog(msg)
+      g.addToLog(msg)
     );
 
     this.addNative("movePartyToTag", ["string"], undefined, (tag: string) => {
-      const position = this.g.findCellWithTag(tag);
+      const position = g.findCellWithTag(tag);
       if (position) {
-        this.g.position = position;
-        this.g.markVisited();
-        this.g.draw();
+        g.position = position;
+        g.markVisited();
+        g.draw();
       }
     });
 
@@ -109,13 +119,22 @@ export default class EngineScripting extends DScriptHost {
       (type: string, dc: number) => {
         const stat = getStat(type);
 
-        this.env.set("pcIndex", num(this.g.facing, true));
-        const pc = this.g.party[this.g.facing];
+        this.env.set("pcIndex", num(g.facing, true));
+        const pc = g.party[g.facing];
 
-        const roll = this.g.roll(10) + pc[stat];
+        const roll = g.roll(10) + pc[stat];
         return roll >= dc;
       }
     );
+
+    this.addNative("startArenaFight", [], "bool", () => {
+      const count = g.pendingEnemies.length;
+      if (!count) return false;
+
+      const enemies = g.pendingEnemies.splice(0, count);
+      g.combat.begin(enemies);
+      return true;
+    });
 
     this.addNative(
       "onTagInteract",
@@ -136,6 +155,21 @@ export default class EngineScripting extends DScriptHost {
     );
 
     this.addNative("random", ["number"], "number", random);
+
+    this.addNative(
+      "removeTag",
+      ["number", "number", "string"],
+      undefined,
+      (x: number, y: number, tag: string) => {
+        const cell = getCell(x, y);
+        const index = cell.tags.indexOf(tag);
+        if (index >= 0) cell.tags.splice(index, 1);
+        else
+          console.warn(
+            `script tried to remove tag ${tag} at ${x},${y} -- not present`
+          );
+      }
+    );
 
     this.addNative(
       "tileHasTag",

@@ -30,6 +30,7 @@ All the boring normal stuff:
 - `NORTH`/`EAST`/`SOUTH`/`WEST` symbolic constants for directions
 - `partyX`/`partyY`/`partyDir` constants for party position/facing
 - `pcIndex` the PC who did something recently, some calls set it
+- `addEnemy(name)` now follows party
 - `damagePC(number, stat, amount)`
 - `debug(any)` prints to console
 - `getPCName(number): string`
@@ -40,6 +41,8 @@ All the boring normal stuff:
 - `onTagEnter(tag: string, function)` sets up an enter trigger callback
 - `onTagInteract(tag: string, function)` sets up an interact callback
 - `random(max: number): number` generates a random integer below `max`
+- `removeTag(x: number, y:number, tag: string)`
 - `skillCheck(stat, difficulty): bool` makes a PC roll a d10 skill check, also sets `pcIndex`
+- `startArenaFight(): bool` returns false if there's no enemies waiting
 - `tileHasTag(x: number, y: number, tag: string): bool`
 - `unlock(x: number, y: number, dir)` makes a wall not solid

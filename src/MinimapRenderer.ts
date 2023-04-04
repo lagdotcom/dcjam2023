@@ -50,14 +50,6 @@ export default class MinimapRenderer {
     let dx = 0;
     let dy = startY;
 
-    // ctx.fillStyle = Colours.background;
-    // ctx.fillRect(
-    //   startX,
-    //   startY,
-    //   tileSize * (size.x * 2 + 1),
-    //   tileSize * (size.y * 2 + 1)
-    // );
-
     for (let y = -size.y; y <= size.y; y++) {
       const ty = y + partyPos.y;
       dx = startX - tileSize;
@@ -79,6 +71,16 @@ export default class MinimapRenderer {
         if (east) rect(ctx, dx, dy, edge, 0, wallSize, tileSize, east);
         if (south) rect(ctx, dx, dy, 0, edge, tileSize, wallSize, south);
         if (west) rect(ctx, dx, dy, 0, 0, wallSize, tileSize, west);
+
+        if (cell?.object) {
+          const { draw } = withTextStyle(ctx, {
+            textAlign: "center",
+            textBaseline: "middle",
+            fillStyle: "white",
+            fontSize: tileSize,
+          });
+          draw("●", dx + tileSize / 2, dy + tileSize / 2);
+        }
       }
 
       dy += tileSize;
