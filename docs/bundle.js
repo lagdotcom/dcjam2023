@@ -156,6 +156,15 @@
       g.applyDamage(me, targets, amount, "hp");
     }
   });
+  var endTurnAction = {
+    name: "End Turn",
+    sp: 0,
+    targets: "AllAlly",
+    useMessage: "",
+    act({ g }) {
+      g.endTurn();
+    }
+  };
 
   // src/enemies.ts
   var EnemyObjects = {
@@ -1434,7 +1443,7 @@
 
   // src/LogRenderer.ts
   var LogRenderer = class {
-    constructor(g, position = xy(274, 0), size = xy(144, 160), padding = xy(2, 2)) {
+    constructor(g, position = xy(276, 0), size = xy(144, 160), padding = xy(2, 2)) {
       this.g = g;
       this.position = position;
       this.size = size;
@@ -1548,14 +1557,7 @@
       return value;
     }
     get actions() {
-      return Array.from(this.equipment.values()).map((i) => i.action).concat({
-        name: "End Turn",
-        sp: 0,
-        targets: "AllAlly",
-        act({ g }) {
-          g.endTurn();
-        }
-      });
+      return Array.from(this.equipment.values()).map((i) => i.action).concat(endTurnAction);
     }
   };
 
@@ -2699,9 +2701,16 @@
       return e;
     }
     act(me, a, targets) {
-      me.sp -= a.sp;
-      this.addToLog(`${me.name} uses ${a.name}!`);
-      a.act({ g: this, targets, me });
+      var _a;
+      const x = a.x ? me.sp : a.sp;
+      me.sp -= x;
+      const msg = ((_a = a.useMessage) != null ? _a : `[NAME] uses ${a.name}!`).replace(
+        "[NAME]",
+        me.name
+      );
+      if (msg)
+        this.addToLog(msg);
+      a.act({ g: this, targets, me, x });
       me.lastAction = a.name;
       if (a.name === "Attack") {
         me.attacksInARow++;

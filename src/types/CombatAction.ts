@@ -4,6 +4,8 @@ import Game from "./Game";
 export default interface CombatAction {
   name: string;
   sp: number;
+  x?: boolean;
+  useMessage?: string;
   targets:
     | "Self"
     | "Opponent"
@@ -11,5 +13,5 @@ export default interface CombatAction {
     | "AllEnemy"
     | "OneAlly"
     | "AllAlly";
-  act(e: { g: Game; targets: Combatant[]; me: Combatant }): void;
+  act(e: { g: Game; targets: Combatant[]; me: Combatant; x: number }): void;
 }

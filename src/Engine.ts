@@ -538,10 +538,16 @@ export default class Engine implements Game {
   }
 
   act(me: Combatant, a: CombatAction, targets: Combatant[]) {
-    me.sp -= a.sp;
-    this.addToLog(`${me.name} uses ${a.name}!`);
+    const x = a.x ? me.sp : a.sp;
+    me.sp -= x;
 
-    a.act({ g: this, targets, me });
+    const msg = (a.useMessage ?? `[NAME] uses ${a.name}!`).replace(
+      "[NAME]",
+      me.name
+    );
+    if (msg) this.addToLog(msg);
+
+    a.act({ g: this, targets, me, x });
 
     me.lastAction = a.name;
     if (a.name === "Attack") {

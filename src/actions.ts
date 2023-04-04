@@ -15,3 +15,13 @@ export const generateAttack = (
     g.applyDamage(me, targets, amount, "hp");
   },
 });
+
+export const endTurnAction: CombatAction = {
+  name: "End Turn",
+  sp: 0,
+  targets: "AllAlly",
+  useMessage: "",
+  act({ g }) {
+    g.endTurn();
+  },
+};

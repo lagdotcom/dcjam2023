@@ -7,7 +7,7 @@ import { xy } from "./tools/geometry";
 export default class LogRenderer {
   constructor(
     public g: Engine,
-    public position = xy(274, 0),
+    public position = xy(276, 0),
     public size = xy(144, 160),
     public padding = xy(2, 2)
   ) {}

@@ -3,6 +3,7 @@ import Item, { ItemSlot } from "./types/Item";
 
 import { ClassName } from "./types/ClassName";
 import { Axe, Club, Dagger, Mace, Staff, Sword } from "./items";
+import { endTurnAction } from "./actions";
 
 // TODO
 const defaultStats: Record<ClassName, Pick<Combatant, AttackableStat>> = {
@@ -64,13 +65,6 @@ export default class Player implements Combatant {
   get actions() {
     return Array.from(this.equipment.values())
       .map((i) => i.action)
-      .concat({
-        name: "End Turn",
-        sp: 0,
-        targets: "AllAlly",
-        act({ g }) {
-          g.endTurn();
-        },
-      });
+      .concat(endTurnAction);
   }
 }
