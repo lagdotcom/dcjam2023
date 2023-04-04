@@ -1,91 +1,208 @@
 import Item from "./types/Item";
-import { generateAttack } from "./actions";
+import Game from "./types/Game";
 
-// TODO STARTING ITEMS
-export const Dagger: Item = {
-  name: "Dagger",
-  slot: "Weapon",
-  action: generateAttack(1, 4),
-};
-export const Axe: Item = {
-  name: "Axe",
-  slot: "Weapon",
-  action: generateAttack(1, 10),
-};
-export const Sword: Item = {
-  name: "Sword",
-  slot: "Weapon",
-  action: generateAttack(1, 8),
-};
-export const Staff: Item = {
-  name: "Staff",
-  slot: "Weapon",
-  action: generateAttack(1, 4),
-};
-export const Mace: Item = {
-  name: "Mace",
-  slot: "Weapon",
-  action: generateAttack(1, 8),
-};
-export const Club: Item = {
-  name: "Club",
-  slot: "Weapon",
-  action: generateAttack(1, 6),
-};
+const mild = (g: Game) => g.roll(6) + 2;
+const medium = (g: Game) => g.roll(8) + 3;
 
-export const MartialHammer: Item = {
-  name: "Martial Hammer",
-  restrict: ["Paladin"],
-  slot: "Weapon",
-  action: generateAttack(9, 16),
-};
-
-export const BannerOfHaringlee: Item = {
-  name: "The Banner of Haringlee",
-  restrict: ["Bard"],
-  slot: "Special",
-  dr: 1,
+export const Penduchaimmer: Item = {
+  name: "Penduchaimmer",
+  restrict: ["Martialist"],
+  slot: "Hand",
+  type: "Weapon",
   action: {
-    name: "Reassurance",
-    sp: 0,
-    targets: "AllAlly",
-    act({ g, targets }) {
-      g.addEffect({
-        name: "Reassurance",
-        duration: 2,
-        affects: targets,
-        onCalculateDamage(e) {
-          if (
-            targets.includes(e.target) &&
-            ["camaraderie", "determination"].includes(e.type)
-          ) {
-            // TODO feedback?
-            e.amount /= 2;
-          }
-        },
-      });
+    name: "DuoStab",
+    tags: ["attack"],
+    sp: 3,
+    targets: "Opponent",
+    act({ g, me, targets }) {
+      const amount = mild(g);
+      g.applyDamage(me, targets, amount, "hp");
+
+      const opposite = g.getOpponent(me, 2);
+      if (opposite) g.applyDamage(me, [opposite], amount / 2, "hp");
     },
   },
 };
 
-export const IronGorget: Item = {
-  name: "Iron Gorget",
-  restrict: ["Knight"],
-  slot: "Armour",
-  dr: 2,
+export const HaringleeKasaya: Item = {
+  name: "Haringlee Kasaya",
+  restrict: ["Martialist"],
+  slot: "Body",
+  type: "Armour",
   action: {
-    name: "Steel Yourself",
+    name: "Parry",
+    tags: ["counter", "defence"],
+    sp: 3,
+    targets: "Self",
+    act({ g, me }) {
+      g.addEffect((destroy) => ({
+        name: "Parry",
+        duration: Infinity,
+        affects: [me],
+        onBeforeAction(e) {
+          if (e.targets.includes(me) && e.action.tags.includes("attack")) {
+            g.addToLog(`${me.name} counters!`);
+
+            const amount = mild(g);
+            g.applyDamage(me, [e.attacker], amount, "hp");
+            destroy();
+            e.cancel = true;
+            return;
+          }
+        },
+      }));
+    },
+  },
+};
+
+export const GorgothilSword: Item = {
+  name: "Gorgothil Sword",
+  restrict: ["Cleavesman"],
+  slot: "Hand",
+  type: "Weapon",
+  action: {
+    name: "Bash",
+    tags: ["attack"],
+    sp: 1,
+    targets: "Opponent",
+    act({ g, me, targets }) {
+      const amount = medium(g);
+      g.applyDamage(me, targets, amount, "hp");
+    },
+  },
+};
+
+export const Haringplate: Item = {
+  name: "Haringplate",
+  restrict: ["Cleavesman"],
+  slot: "Body",
+  type: "Armour",
+  action: {
+    name: "Brace",
+    tags: ["defence"],
+    sp: 3,
+    targets: "Self",
+    act({ g, me }) {
+      g.addEffect((destroy) => ({
+        name: "Brace",
+        duration: Infinity,
+        affects: [me],
+        onCalculateDamage(e) {
+          if (e.target === me) {
+            e.amount /= 2;
+            destroy();
+          }
+        },
+      }));
+    },
+  },
+};
+
+export const OwlSkull: Item = {
+  name: "Owl's Skull",
+  restrict: ["War Caller"],
+  slot: "Hand",
+  type: "Catalyst",
+  action: {
+    name: "Defy",
+    tags: ["defence"],
+    sp: 3,
+    targets: "Self",
+    act({ g, me }) {
+      g.addEffect(() => ({
+        name: "Defy",
+        duration: 2,
+        affects: [me],
+        onAfterDamage({ target, attacker }) {
+          g.addToLog(`${me.name} stuns ${attacker.name} with their defiance!`);
+
+          if (target === me)
+            g.addEffect(() => ({
+              name: "Defied",
+              duration: 1,
+              affects: [attacker],
+              onCanAct(e) {
+                if (e.who === attacker) e.cancel = true;
+              },
+            }));
+        },
+      }));
+    },
+  },
+};
+
+export const IronFullcase: Item = {
+  name: "Iron Fullcase",
+  restrict: ["War Caller"],
+  slot: "Body",
+  type: "Armour",
+  action: {
+    name: "Endure",
+    tags: ["defence"],
     sp: 2,
     targets: "Self",
-    act({ g, targets }) {
-      g.addEffect({
-        name: "Steel Yourself",
+    act({ g, me }) {
+      g.addEffect(() => ({
+        name: "Endure",
         duration: 2,
-        affects: targets,
+        affects: [me],
         onCalculateDR(e) {
-          if (targets.includes(e.who)) e.dr *= 2;
+          if (e.who === me) e.value += 2;
         },
-      });
+      }));
+
+      const opposite = g.getOpponent(me);
+      if (opposite) {
+        g.addToLog(
+          `${opposite.name} withers in the face of ${me.name}'s endurance!`
+        );
+        g.addEffect(() => ({
+          name: "Endured",
+          duration: 2,
+          affects: [opposite],
+          onCalculateDetermination(e) {
+            if (e.who === opposite) e.value -= 2;
+          },
+        }));
+      }
+    },
+  },
+};
+
+export const Cornucopia: Item = {
+  name: "Cornucopia",
+  restrict: ["Loam Seer"],
+  slot: "Hand",
+  type: "Catalyst",
+  action: {
+    name: "Bless",
+    tags: ["heal"],
+    sp: 1,
+    targets: "OneAlly",
+    act({ g, me, targets }) {
+      const amount = mild(g);
+      g.heal(me, targets, amount);
+    },
+  },
+};
+
+export const JacketAndRucksack: Item = {
+  name: "Jacket and Rucksack",
+  restrict: ["Loam Seer"],
+  slot: "Body",
+  type: "Armour",
+  action: {
+    name: "Search",
+    tags: [],
+    sp: 4,
+    targets: "Opponent",
+    act({ g, targets }) {
+      g.addEffect(() => ({
+        name: "Search",
+        duration: Infinity,
+        affects: targets,
+        // TODO: enemy is more likely to drop items
+      }));
     },
   },
 };

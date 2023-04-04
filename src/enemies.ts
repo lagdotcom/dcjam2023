@@ -30,6 +30,7 @@ const enemies = {
       generateAttack(2, 5),
       {
         name: "Zap",
+        tags: ["attack"],
         sp: 3,
         targets: "AllEnemy",
         act({ g, targets, me }) {
@@ -64,6 +65,7 @@ const enemies = {
       generateAttack(4, 9),
       {
         name: "Arrow",
+        tags: ["attack"],
         sp: 3,
         targets: "OneEnemy",
         act({ g, targets, me }) {
@@ -90,6 +92,7 @@ export class Enemy implements Combatant {
   actions: CombatAction[];
   equipment: Map<ItemSlot, Item>;
   attacksInARow: number;
+  usedThisTurn: Set<string>;
   lastAction?: string;
 
   constructor(public template: EnemyTemplate) {
@@ -106,6 +109,7 @@ export class Enemy implements Combatant {
     this.actions = template.actions;
     this.equipment = new Map();
     this.attacksInARow = 0;
+    this.usedThisTurn = new Set();
   }
 
   get alive() {

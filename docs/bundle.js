@@ -55,8 +55,12 @@
 
   // src/types/events.ts
   var GameEventNames = [
+    "onAfterDamage",
+    "onBeforeAction",
     "onCalculateDamage",
+    "onCalculateDetermination",
     "onCalculateDR",
+    "onCanAct",
     "onKilled",
     "onRoll"
   ];
@@ -148,6 +152,7 @@
   // src/actions.ts
   var generateAttack = (minDamage, maxDamage, sp = 2) => ({
     name: "Attack",
+    tags: ["attack"],
     sp,
     targets: "Opponent",
     act({ g, targets, me }) {
@@ -158,6 +163,7 @@
   });
   var endTurnAction = {
     name: "End Turn",
+    tags: [],
     sp: 0,
     targets: "AllAlly",
     useMessage: "",
@@ -186,6 +192,7 @@
         generateAttack(2, 5),
         {
           name: "Zap",
+          tags: ["attack"],
           sp: 3,
           targets: "AllEnemy",
           act({ g, targets, me }) {
@@ -218,6 +225,7 @@
         generateAttack(4, 9),
         {
           name: "Arrow",
+          tags: ["attack"],
           sp: 3,
           targets: "OneEnemy",
           act({ g, targets, me }) {
@@ -243,6 +251,7 @@
       this.actions = template.actions;
       this.equipment = /* @__PURE__ */ new Map();
       this.attacksInARow = 0;
+      this.usedThisTurn = /* @__PURE__ */ new Set();
     }
     get alive() {
       return this.hp > 0;
@@ -266,7 +275,7 @@
       this.enemyTick = () => {
         const moves = this.allEnemies.flatMap(
           (enemy2) => enemy2.actions.map((action2) => {
-            if (action2.sp > enemy2.sp)
+            if (!this.g.canAct(enemy2, action2))
               return;
             const { amount: amount2, possibilities: possibilities2 } = this.g.getTargetPossibilities(
               enemy2,
@@ -327,6 +336,7 @@
         this.enemies[dir].push(enemy);
       }
       for (const c of this.aliveCombatants) {
+        c.usedThisTurn.clear();
         c.sp = Math.min(c.spirit, c.maxSp);
       }
       this.inCombat = true;
@@ -355,6 +365,7 @@
       this.side = this.side === "player" ? "enemy" : "player";
       const combatants = this.side === "player" ? this.g.party : this.allEnemies;
       for (const c of combatants) {
+        c.usedThisTurn.clear();
         if (!c.alive)
           continue;
         const newSp = c.sp < c.spirit ? c.spirit : c.sp + 1;
@@ -374,7 +385,8 @@
   var Colours = {
     background: "rgb(32,32,32)",
     logShadow: "rgba(0,0,0,0.4)",
-    currentPC: "rgb(92,92,64)",
+    majorHighlight: "rgb(96,96,64)",
+    minorHighlight: "rgb(48,48,32)",
     mapVisited: "rgb(64,64,64)",
     hp: "rgb(223,113,38)",
     sp: "rgb(99,155,255)"
@@ -415,7 +427,7 @@
       const { padding, position, rowPadding, size } = this;
       const { combat, ctx, facing, party } = this.g;
       const active = combat.side === "player" ? party[facing] : void 0;
-      if (active) {
+      if (active == null ? void 0 : active.alive) {
         ctx.fillStyle = Colours_default.logShadow;
         ctx.fillRect(position.x, position.y, size.x, size.y);
         const { draw, lineHeight } = withTextStyle(ctx, {
@@ -431,11 +443,12 @@
         const actions = active.actions;
         for (let i = 0; i < actions.length; i++) {
           const action = actions[i];
+          const possible = this.g.canAct(active, action);
           if (i === combat.index) {
-            ctx.fillStyle = Colours_default.currentPC;
+            ctx.fillStyle = possible ? Colours_default.majorHighlight : Colours_default.minorHighlight;
             ctx.fillRect(x, y, size.x, rowHeight);
-            ctx.fillStyle = "white";
           }
+          ctx.fillStyle = possible ? "white" : "silver";
           draw(
             `${action.name} (${action.sp})`,
             x + padding.x,
@@ -1475,60 +1488,223 @@
   };
 
   // src/items.ts
-  var Dagger = {
-    name: "Dagger",
-    slot: "Weapon",
-    action: generateAttack(1, 4)
+  var mild = (g) => g.roll(6) + 2;
+  var medium = (g) => g.roll(8) + 3;
+  var Penduchaimmer = {
+    name: "Penduchaimmer",
+    restrict: ["Martialist"],
+    slot: "Hand",
+    type: "Weapon",
+    action: {
+      name: "DuoStab",
+      tags: ["attack"],
+      sp: 3,
+      targets: "Opponent",
+      act({ g, me, targets }) {
+        const amount = mild(g);
+        g.applyDamage(me, targets, amount, "hp");
+        const opposite = g.getOpponent(me, 2);
+        if (opposite)
+          g.applyDamage(me, [opposite], amount / 2, "hp");
+      }
+    }
   };
-  var Axe = {
-    name: "Axe",
-    slot: "Weapon",
-    action: generateAttack(1, 10)
+  var HaringleeKasaya = {
+    name: "Haringlee Kasaya",
+    restrict: ["Martialist"],
+    slot: "Body",
+    type: "Armour",
+    action: {
+      name: "Parry",
+      tags: ["counter", "defence"],
+      sp: 3,
+      targets: "Self",
+      act({ g, me }) {
+        g.addEffect((destroy) => ({
+          name: "Parry",
+          duration: Infinity,
+          affects: [me],
+          onBeforeAction(e) {
+            if (e.targets.includes(me) && e.action.tags.includes("attack")) {
+              g.addToLog(`${me.name} counters!`);
+              const amount = mild(g);
+              g.applyDamage(me, [e.attacker], amount, "hp");
+              destroy();
+              e.cancel = true;
+              return;
+            }
+          }
+        }));
+      }
+    }
   };
-  var Sword = {
-    name: "Sword",
-    slot: "Weapon",
-    action: generateAttack(1, 8)
+  var GorgothilSword = {
+    name: "Gorgothil Sword",
+    restrict: ["Cleavesman"],
+    slot: "Hand",
+    type: "Weapon",
+    action: {
+      name: "Bash",
+      tags: ["attack"],
+      sp: 1,
+      targets: "Opponent",
+      act({ g, me, targets }) {
+        const amount = medium(g);
+        g.applyDamage(me, targets, amount, "hp");
+      }
+    }
   };
-  var Staff = {
-    name: "Staff",
-    slot: "Weapon",
-    action: generateAttack(1, 4)
+  var Haringplate = {
+    name: "Haringplate",
+    restrict: ["Cleavesman"],
+    slot: "Body",
+    type: "Armour",
+    action: {
+      name: "Brace",
+      tags: ["defence"],
+      sp: 3,
+      targets: "Self",
+      act({ g, me }) {
+        g.addEffect((destroy) => ({
+          name: "Brace",
+          duration: Infinity,
+          affects: [me],
+          onCalculateDamage(e) {
+            if (e.target === me) {
+              e.amount /= 2;
+              destroy();
+            }
+          }
+        }));
+      }
+    }
   };
-  var Mace = {
-    name: "Mace",
-    slot: "Weapon",
-    action: generateAttack(1, 8)
+  var OwlSkull = {
+    name: "Owl's Skull",
+    restrict: ["War Caller"],
+    slot: "Hand",
+    type: "Catalyst",
+    action: {
+      name: "Defy",
+      tags: ["defence"],
+      sp: 3,
+      targets: "Self",
+      act({ g, me }) {
+        g.addEffect(() => ({
+          name: "Defy",
+          duration: 2,
+          affects: [me],
+          onAfterDamage({ target, attacker }) {
+            g.addToLog(`${me.name} stuns ${attacker.name} with their defiance!`);
+            if (target === me)
+              g.addEffect(() => ({
+                name: "Defied",
+                duration: 1,
+                affects: [attacker],
+                onCanAct(e) {
+                  if (e.who === attacker)
+                    e.cancel = true;
+                }
+              }));
+          }
+        }));
+      }
+    }
   };
-  var Club = {
-    name: "Club",
-    slot: "Weapon",
-    action: generateAttack(1, 6)
+  var IronFullcase = {
+    name: "Iron Fullcase",
+    restrict: ["War Caller"],
+    slot: "Body",
+    type: "Armour",
+    action: {
+      name: "Endure",
+      tags: ["defence"],
+      sp: 2,
+      targets: "Self",
+      act({ g, me }) {
+        g.addEffect(() => ({
+          name: "Endure",
+          duration: 2,
+          affects: [me],
+          onCalculateDR(e) {
+            if (e.who === me)
+              e.value += 2;
+          }
+        }));
+        const opposite = g.getOpponent(me);
+        if (opposite) {
+          g.addToLog(
+            `${opposite.name} withers in the face of ${me.name}'s endurance!`
+          );
+          g.addEffect(() => ({
+            name: "Endured",
+            duration: 2,
+            affects: [opposite],
+            onCalculateDetermination(e) {
+              if (e.who === opposite)
+                e.value -= 2;
+            }
+          }));
+        }
+      }
+    }
   };
-  var MartialHammer = {
-    name: "Martial Hammer",
-    restrict: ["Paladin"],
-    slot: "Weapon",
-    action: generateAttack(9, 16)
+  var Cornucopia = {
+    name: "Cornucopia",
+    restrict: ["Loam Seer"],
+    slot: "Hand",
+    type: "Catalyst",
+    action: {
+      name: "Bless",
+      tags: ["heal"],
+      sp: 1,
+      targets: "OneAlly",
+      act({ g, me, targets }) {
+        const amount = mild(g);
+        g.heal(me, targets, amount);
+      }
+    }
+  };
+  var JacketAndRucksack = {
+    name: "Jacket and Rucksack",
+    restrict: ["Loam Seer"],
+    slot: "Body",
+    type: "Armour",
+    action: {
+      name: "Search",
+      tags: [],
+      sp: 4,
+      targets: "Opponent",
+      act({ g, targets }) {
+        g.addEffect(() => ({
+          name: "Search",
+          duration: Infinity,
+          affects: targets
+          // TODO: enemy is more likely to drop items
+        }));
+      }
+    }
+  };
+
+  // src/classes.ts
+  var defaultStats = {
+    Martialist: { hp: 21, sp: 7, determination: 6, camaraderie: 2, spirit: 3 },
+    Cleavesman: { hp: 25, sp: 6, determination: 4, camaraderie: 4, spirit: 3 },
+    "Far Scout": { hp: 18, sp: 7, determination: 3, camaraderie: 3, spirit: 5 },
+    "War Caller": { hp: 30, sp: 5, determination: 5, camaraderie: 2, spirit: 4 },
+    "Flag Singer": { hp: 21, sp: 6, determination: 2, camaraderie: 6, spirit: 3 },
+    "Loam Seer": { hp: 18, sp: 5, determination: 2, camaraderie: 5, spirit: 4 }
+  };
+  var startingItems = {
+    Martialist: [Penduchaimmer, HaringleeKasaya],
+    Cleavesman: [GorgothilSword, Haringplate],
+    "Far Scout": [],
+    "War Caller": [OwlSkull, IronFullcase],
+    "Flag Singer": [],
+    "Loam Seer": [Cornucopia, JacketAndRucksack]
   };
 
   // src/Player.ts
-  var defaultStats = {
-    Bard: { hp: 10, sp: 10, determination: 5, camaraderie: 5, spirit: 5 },
-    Brawler: { hp: 10, sp: 10, determination: 5, camaraderie: 5, spirit: 5 },
-    Knight: { hp: 10, sp: 10, determination: 5, camaraderie: 5, spirit: 5 },
-    Mage: { hp: 10, sp: 10, determination: 5, camaraderie: 5, spirit: 5 },
-    Paladin: { hp: 10, sp: 10, determination: 5, camaraderie: 5, spirit: 5 },
-    Thief: { hp: 10, sp: 10, determination: 5, camaraderie: 5, spirit: 5 }
-  };
-  var startingItems = {
-    Bard: [Dagger],
-    Brawler: [Axe],
-    Knight: [Sword],
-    Mage: [Staff],
-    Paladin: [Mace],
-    Thief: [Club]
-  };
   var Player = class {
     constructor(name, className, maxHp = defaultStats[className].hp, maxSp = defaultStats[className].sp, determination = defaultStats[className].determination, camaraderie = defaultStats[className].camaraderie, spirit = defaultStats[className].spirit, items = startingItems[className]) {
       this.name = name;
@@ -1538,13 +1714,15 @@
       this.determination = determination;
       this.camaraderie = camaraderie;
       this.spirit = spirit;
+      this.items = items;
       this.isPC = true;
       this.hp = this.maxHp;
       this.sp = Math.min(maxSp, spirit);
       this.attacksInARow = 0;
       this.equipment = /* @__PURE__ */ new Map();
+      this.usedThisTurn = /* @__PURE__ */ new Set();
       for (const item of items)
-        this.equipment.set(item.slot, item);
+        this.equip(item);
     }
     get alive() {
       return this.hp > 0;
@@ -1565,6 +1743,9 @@
     move() {
       if (this.alive)
         this.sp--;
+    }
+    equip(item) {
+      this.equipment.set(item.slot, item);
     }
   };
 
@@ -2323,12 +2504,9 @@
           renderSetup.combat.render();
       };
       this.ctx = getCanvasContext(canvas, "2d");
-      this.eventHandlers = {
-        onCalculateDamage: /* @__PURE__ */ new Set(),
-        onCalculateDR: /* @__PURE__ */ new Set(),
-        onKilled: /* @__PURE__ */ new Set(),
-        onRoll: /* @__PURE__ */ new Set()
-      };
+      this.eventHandlers = Object.fromEntries(
+        GameEventNames.map((name) => [name, /* @__PURE__ */ new Set()])
+      );
       this.zoomRatio = 1;
       this.controls = new Map(DefaultControls_default);
       this.facing = Dir_default.N;
@@ -2345,10 +2523,10 @@
       this.worldVisited = /* @__PURE__ */ new Set();
       this.worldWalls = /* @__PURE__ */ new Map();
       this.party = [
-        new Player("A", "Brawler"),
-        new Player("B", "Bard"),
-        new Player("C", "Knight"),
-        new Player("D", "Thief")
+        new Player("A", "Martialist"),
+        new Player("B", "Cleavesman"),
+        new Player("C", "War Caller"),
+        new Player("D", "Loam Seer")
       ];
       canvas.addEventListener("keyup", (e) => {
         const keys = getKeyNames(e.code, e.shiftKey, e.altKey, e.ctrlKey);
@@ -2638,18 +2816,28 @@
       this.draw();
       return true;
     }
+    canAct(who, action) {
+      if (!who.alive)
+        return false;
+      if (who.usedThisTurn.has(action.name))
+        return false;
+      const e = this.fire("onCanAct", { who, action, cancel: false });
+      if (e.cancel)
+        return false;
+      if (action.sp > who.sp)
+        return false;
+      return true;
+    }
     menuChoose() {
       if (!this.combat.inCombat)
         return false;
       if (this.combat.side === "enemy")
         return false;
       const pc = this.party[this.facing];
-      if (!pc.alive)
-        return false;
       const action = pc.actions[this.combat.index];
       if (!action)
         return false;
-      if (action.sp > pc.sp)
+      if (!this.canAct(pc, action))
         return false;
       const { possibilities, amount } = this.getTargetPossibilities(pc, action);
       if (!possibilities.length)
@@ -2664,6 +2852,11 @@
     getTargetPossibilities(c, a) {
       const { amount, possibilities } = this._getTargetPossibilities(c, a);
       return { amount, possibilities: possibilities.filter((x) => x.alive) };
+    }
+    getOpponent(me, turn = 0) {
+      const { dir: myDir, distance } = this.combat.getPosition(me);
+      const dir = rotate(myDir, turn);
+      return me.isPC ? this.combat.enemies[dir][0] : distance === 0 ? this.party[dir] : void 0;
     }
     _getTargetPossibilities(c, a) {
       const { dir, distance } = this.combat.getPosition(c);
@@ -2707,28 +2900,39 @@
         handler(e);
       return e;
     }
-    act(me, a, targets) {
+    act(me, action, targets) {
       var _a;
-      const x = a.x ? me.sp : a.sp;
+      const x = action.x ? me.sp : action.sp;
       me.sp -= x;
-      const msg = ((_a = a.useMessage) != null ? _a : `[NAME] uses ${a.name}!`).replace(
+      me.usedThisTurn.add(action.name);
+      const msg = ((_a = action.useMessage) != null ? _a : `[NAME] uses ${action.name}!`).replace(
         "[NAME]",
         me.name
       );
       if (msg)
         this.addToLog(msg);
-      a.act({ g: this, targets, me, x });
-      me.lastAction = a.name;
-      if (a.name === "Attack") {
+      else
+        this.draw();
+      const e = this.fire("onBeforeAction", {
+        attacker: me,
+        action,
+        targets,
+        cancel: false
+      });
+      if (e.cancel)
+        return;
+      action.act({ g: this, targets, me, x });
+      me.lastAction = action.name;
+      if (action.name === "Attack") {
         me.attacksInARow++;
       } else
         me.attacksInARow = 0;
-      this.draw();
     }
     endTurn() {
       this.combat.endTurn();
     }
-    addEffect(effect) {
+    addEffect(makeEffect) {
+      const effect = makeEffect(() => this.removeEffect(effect));
       this.combat.effects.push(effect);
       for (const name of GameEventNames) {
         const handler = effect[name];
@@ -2737,6 +2941,9 @@
       }
     }
     removeEffect(effect) {
+      const index = this.combat.effects.indexOf(effect);
+      if (index >= 0)
+        this.combat.effects.splice(index, 1);
       for (const name of GameEventNames) {
         const handler = effect[name];
         if (handler)
@@ -2748,6 +2955,13 @@
       this.fire("onRoll", { size, value });
       return value;
     }
+    getStat(who, stat) {
+      if (stat === "dr")
+        return this.fire("onCalculateDR", { who, value: who.dr }).value;
+      if (stat === "determination")
+        return this.fire("onCalculateDetermination", { who, value: who.dr }).value;
+      return who[stat];
+    }
     applyDamage(attacker, targets, amount, type) {
       for (const target of targets) {
         const damage = this.fire("onCalculateDamage", {
@@ -2756,7 +2970,7 @@
           amount,
           type
         });
-        const resist = type === "hp" ? this.fire("onCalculateDR", { who: target, dr: target.dr }).dr : 0;
+        const resist = type === "hp" ? this.getStat(target, "dr") : 0;
         const deal = Math.floor(damage.amount - resist);
         if (deal > 0) {
           target[type] -= deal;
@@ -2765,6 +2979,19 @@
           this.addToLog(message);
           if (target.hp < 1)
             this.kill(target, attacker);
+          this.fire("onAfterDamage", { attacker, target, amount, type });
+        }
+      }
+    }
+    heal(healer, targets, amount) {
+      for (const target of targets) {
+        const newHP = Math.min(target.hp + amount, target.maxHp);
+        const gain = newHP - target.hp;
+        if (gain) {
+          target.hp = newHP;
+          this.draw();
+          const message = `${target.name} heals for ${gain}.`;
+          this.addToLog(message);
         }
       }
     }

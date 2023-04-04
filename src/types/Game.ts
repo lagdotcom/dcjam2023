@@ -9,7 +9,9 @@ export interface GameEffect extends Partial<GameEventHandler> {
 }
 
 export default interface Game {
-  addEffect(effect: GameEffect): void;
+  addEffect(makeEffect: (destroy: () => void) => GameEffect): void;
+
+  addToLog(message: string): void;
 
   applyDamage(
     attacker: Combatant,
@@ -19,6 +21,10 @@ export default interface Game {
   ): void;
 
   endTurn(): void;
+
+  getOpponent(me: Combatant, rotate?: number): Combatant | undefined;
+
+  heal(healer: Combatant, targets: Combatant[], amount: number): void;
 
   roll(size: number): number;
 }

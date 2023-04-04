@@ -7,6 +7,7 @@ export const generateAttack = (
   sp = 2
 ): CombatAction => ({
   name: "Attack",
+  tags: ["attack"],
   sp,
   targets: "Opponent",
   act({ g, targets, me }) {
@@ -18,6 +19,7 @@ export const generateAttack = (
 
 export const endTurnAction: CombatAction = {
   name: "End Turn",
+  tags: [],
   sp: 0,
   targets: "AllAlly",
   useMessage: "",

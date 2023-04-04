@@ -18,7 +18,7 @@ export default class CombatRenderer {
 
     const active = combat.side === "player" ? party[facing] : undefined;
 
-    if (active) {
+    if (active?.alive) {
       ctx.fillStyle = Colours.logShadow;
       ctx.fillRect(position.x, position.y, size.x, size.y);
 
@@ -37,13 +37,16 @@ export default class CombatRenderer {
       const actions = active.actions;
       for (let i = 0; i < actions.length; i++) {
         const action = actions[i];
+        const possible = this.g.canAct(active, action);
 
         if (i === combat.index) {
-          ctx.fillStyle = Colours.currentPC;
+          ctx.fillStyle = possible
+            ? Colours.majorHighlight
+            : Colours.minorHighlight;
           ctx.fillRect(x, y, size.x, rowHeight);
-          ctx.fillStyle = "white";
         }
 
+        ctx.fillStyle = possible ? "white" : "silver";
         draw(
           `${action.name} (${action.sp})`,
           x + padding.x,

@@ -26,5 +26,6 @@ export default interface Combatant {
   actions: CombatAction[];
   equipment: Map<ItemSlot, Item>;
   attacksInARow: number;
+  usedThisTurn: Set<string>;
   lastAction?: string;
 }

@@ -1,11 +1,14 @@
 import Combatant from "./Combatant";
 import Game from "./Game";
 
+export type ActionTag = "attack" | "counter" | "defence" | "heal";
+
 export default interface CombatAction {
   name: string;
   sp: number;
   x?: boolean;
   useMessage?: string;
+  tags: ActionTag[];
   targets:
     | "Self"
     | "Opponent"

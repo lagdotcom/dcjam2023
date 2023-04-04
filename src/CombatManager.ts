@@ -63,6 +63,7 @@ export default class CombatManager {
     }
 
     for (const c of this.aliveCombatants) {
+      c.usedThisTurn.clear();
       c.sp = Math.min(c.spirit, c.maxSp);
     }
 
@@ -98,6 +99,7 @@ export default class CombatManager {
 
     const combatants = this.side === "player" ? this.g.party : this.allEnemies;
     for (const c of combatants) {
+      c.usedThisTurn.clear();
       if (!c.alive) continue;
 
       const newSp = c.sp < c.spirit ? c.spirit : c.sp + 1;
@@ -117,7 +119,7 @@ export default class CombatManager {
     const moves = this.allEnemies.flatMap((enemy) =>
       enemy.actions
         .map((action) => {
-          if (action.sp > enemy.sp) return;
+          if (!this.g.canAct(enemy, action)) return;
 
           const { amount, possibilities } = this.g.getTargetPossibilities(
             enemy,

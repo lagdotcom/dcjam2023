@@ -71,12 +71,11 @@ export default class Engine implements Game {
   constructor(public canvas: HTMLCanvasElement) {
     this.ctx = getCanvasContext(canvas, "2d");
 
-    this.eventHandlers = {
-      onCalculateDamage: new Set(),
-      onCalculateDR: new Set(),
-      onKilled: new Set(),
-      onRoll: new Set(),
-    };
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-expect-error
+    this.eventHandlers = Object.fromEntries(
+      GameEventNames.map((name) => [name, new Set()])
+    );
     this.zoomRatio = 1;
     this.controls = new Map(DefaultControls);
     this.facing = Dir.N;
@@ -93,10 +92,10 @@ export default class Engine implements Game {
     this.worldVisited = new Set();
     this.worldWalls = new Map();
     this.party = [
-      new Player("A", "Brawler"),
-      new Player("B", "Bard"),
-      new Player("C", "Knight"),
-      new Player("D", "Thief"),
+      new Player("A", "Martialist"),
+      new Player("B", "Cleavesman"),
+      new Player("C", "War Caller"),
+      new Player("D", "Loam Seer"),
     ];
 
     canvas.addEventListener("keyup", (e) => {
@@ -453,16 +452,27 @@ export default class Engine implements Game {
     return true;
   }
 
+  canAct(who: Combatant, action: CombatAction) {
+    if (!who.alive) return false;
+    if (who.usedThisTurn.has(action.name)) return false;
+
+    const e = this.fire("onCanAct", { who, action, cancel: false });
+    if (e.cancel) return false;
+
+    if (action.sp > who.sp) return false;
+
+    return true;
+  }
+
   menuChoose() {
     if (!this.combat.inCombat) return false;
     if (this.combat.side === "enemy") return false;
 
     const pc = this.party[this.facing];
-    if (!pc.alive) return false;
-
     const action = pc.actions[this.combat.index];
     if (!action) return false;
-    if (action.sp > pc.sp) return false;
+
+    if (!this.canAct(pc, action)) return false;
 
     const { possibilities, amount } = this.getTargetPossibilities(pc, action);
     if (!possibilities.length) return false;
@@ -480,6 +490,17 @@ export default class Engine implements Game {
   getTargetPossibilities(c: Combatant, a: CombatAction) {
     const { amount, possibilities } = this._getTargetPossibilities(c, a);
     return { amount, possibilities: possibilities.filter((x) => x.alive) };
+  }
+
+  getOpponent(me: Combatant, turn = 0) {
+    const { dir: myDir, distance } = this.combat.getPosition(me);
+    const dir = rotate(myDir, turn);
+
+    return me.isPC
+      ? this.combat.enemies[dir][0]
+      : distance === 0
+      ? this.party[dir]
+      : undefined;
   }
 
   private _getTargetPossibilities(
@@ -537,31 +558,41 @@ export default class Engine implements Game {
     return e;
   }
 
-  act(me: Combatant, a: CombatAction, targets: Combatant[]) {
-    const x = a.x ? me.sp : a.sp;
+  act(me: Combatant, action: CombatAction, targets: Combatant[]) {
+    const x = action.x ? me.sp : action.sp;
     me.sp -= x;
+    me.usedThisTurn.add(action.name);
 
-    const msg = (a.useMessage ?? `[NAME] uses ${a.name}!`).replace(
+    const msg = (action.useMessage ?? `[NAME] uses ${action.name}!`).replace(
       "[NAME]",
       me.name
     );
     if (msg) this.addToLog(msg);
+    else this.draw();
 
-    a.act({ g: this, targets, me, x });
+    const e = this.fire("onBeforeAction", {
+      attacker: me,
+      action,
+      targets,
+      cancel: false,
+    });
+    if (e.cancel) return;
 
-    me.lastAction = a.name;
-    if (a.name === "Attack") {
+    action.act({ g: this, targets, me, x });
+
+    me.lastAction = action.name;
+    if (action.name === "Attack") {
       me.attacksInARow++;
     } else me.attacksInARow = 0;
-
-    this.draw();
   }
 
   endTurn() {
     this.combat.endTurn();
   }
 
-  addEffect(effect: GameEffect) {
+  addEffect(makeEffect: (destroy: () => void) => GameEffect) {
+    const effect = makeEffect(() => this.removeEffect(effect));
+
     this.combat.effects.push(effect);
     for (const name of GameEventNames) {
       const handler = effect[name];
@@ -572,6 +603,9 @@ export default class Engine implements Game {
   }
 
   removeEffect(effect: GameEffect) {
+    const index = this.combat.effects.indexOf(effect);
+    if (index >= 0) this.combat.effects.splice(index, 1);
+
     for (const name of GameEventNames) {
       const handler = effect[name];
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -584,6 +618,17 @@ export default class Engine implements Game {
     const value = random(size) + 1;
     this.fire("onRoll", { size, value });
     return value;
+  }
+
+  getStat(who: Combatant, stat: AttackableStat | "dr") {
+    if (stat === "dr")
+      return this.fire("onCalculateDR", { who, value: who.dr }).value;
+
+    if (stat === "determination")
+      return this.fire("onCalculateDetermination", { who, value: who.dr })
+        .value;
+
+    return who[stat];
   }
 
   applyDamage(
@@ -600,10 +645,7 @@ export default class Engine implements Game {
         type,
       });
 
-      const resist =
-        type === "hp"
-          ? this.fire("onCalculateDR", { who: target, dr: target.dr }).dr
-          : 0;
+      const resist = type === "hp" ? this.getStat(target, "dr") : 0;
 
       const deal = Math.floor(damage.amount - resist);
       if (deal > 0) {
@@ -617,6 +659,22 @@ export default class Engine implements Game {
         this.addToLog(message);
 
         if (target.hp < 1) this.kill(target, attacker);
+
+        this.fire("onAfterDamage", { attacker, target, amount, type });
+      }
+    }
+  }
+
+  heal(healer: Combatant, targets: Combatant[], amount: number) {
+    for (const target of targets) {
+      const newHP = Math.min(target.hp + amount, target.maxHp);
+      const gain = newHP - target.hp;
+      if (gain) {
+        target.hp = newHP;
+        this.draw();
+
+        const message = `${target.name} heals for ${gain}.`;
+        this.addToLog(message);
       }
     }
   }

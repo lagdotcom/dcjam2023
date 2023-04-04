@@ -1,29 +1,9 @@
-import Combatant, { AttackableStat } from "./types/Combatant";
+import Combatant from "./types/Combatant";
 import Item, { ItemSlot } from "./types/Item";
 
 import { ClassName } from "./types/ClassName";
-import { Axe, Club, Dagger, Mace, Staff, Sword } from "./items";
 import { endTurnAction } from "./actions";
-
-// TODO
-const defaultStats: Record<ClassName, Pick<Combatant, AttackableStat>> = {
-  Bard: { hp: 10, sp: 10, determination: 5, camaraderie: 5, spirit: 5 },
-  Brawler: { hp: 10, sp: 10, determination: 5, camaraderie: 5, spirit: 5 },
-  Knight: { hp: 10, sp: 10, determination: 5, camaraderie: 5, spirit: 5 },
-  Mage: { hp: 10, sp: 10, determination: 5, camaraderie: 5, spirit: 5 },
-  Paladin: { hp: 10, sp: 10, determination: 5, camaraderie: 5, spirit: 5 },
-  Thief: { hp: 10, sp: 10, determination: 5, camaraderie: 5, spirit: 5 },
-};
-
-// TODO
-const startingItems: Record<ClassName, Item[]> = {
-  Bard: [Dagger],
-  Brawler: [Axe],
-  Knight: [Sword],
-  Mage: [Staff],
-  Paladin: [Mace],
-  Thief: [Club],
-};
+import { defaultStats, startingItems } from "./classes";
 
 export default class Player implements Combatant {
   isPC: true;
@@ -31,6 +11,7 @@ export default class Player implements Combatant {
   sp: number;
   equipment: Map<ItemSlot, Item>;
   attacksInARow: number;
+  usedThisTurn: Set<string>;
 
   constructor(
     public name: string,
@@ -40,15 +21,16 @@ export default class Player implements Combatant {
     public determination = defaultStats[className].determination,
     public camaraderie = defaultStats[className].camaraderie,
     public spirit = defaultStats[className].spirit,
-    items = startingItems[className]
+    public items = startingItems[className]
   ) {
     this.isPC = true;
     this.hp = this.maxHp;
     this.sp = Math.min(maxSp, spirit);
     this.attacksInARow = 0;
     this.equipment = new Map();
+    this.usedThisTurn = new Set();
 
-    for (const item of items) this.equipment.set(item.slot, item);
+    for (const item of items) this.equip(item);
   }
 
   get alive() {
@@ -74,5 +56,10 @@ export default class Player implements Combatant {
 
   move() {
     if (this.alive) this.sp--;
+  }
+
+  equip(item: Item) {
+    // TODO
+    this.equipment.set(item.slot, item);
   }
 }
