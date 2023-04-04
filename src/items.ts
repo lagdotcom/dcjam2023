@@ -1,6 +1,7 @@
 import Item from "./types/Item";
 import Game from "./types/Game";
 
+// damage/heal amounts
 const mild = (g: Game) => g.roll(6) + 2;
 const medium = (g: Game) => g.roll(8) + 3;
 
@@ -114,17 +115,17 @@ export const OwlSkull: Item = {
         duration: 2,
         affects: [me],
         onAfterDamage({ target, attacker }) {
-          g.addToLog(`${me.name} stuns ${attacker.name} with their defiance!`);
+          if (target !== me) return;
 
-          if (target === me)
-            g.addEffect(() => ({
-              name: "Defied",
-              duration: 1,
-              affects: [attacker],
-              onCanAct(e) {
-                if (e.who === attacker) e.cancel = true;
-              },
-            }));
+          g.addToLog(`${me.name} stuns ${attacker.name} with their defiance!`);
+          g.addEffect(() => ({
+            name: "Defied",
+            duration: 1,
+            affects: [attacker],
+            onCanAct(e) {
+              if (e.who === attacker) e.cancel = true;
+            },
+          }));
         },
       }));
     },

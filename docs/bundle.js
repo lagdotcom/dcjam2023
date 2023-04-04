@@ -1595,17 +1595,18 @@
           duration: 2,
           affects: [me],
           onAfterDamage({ target, attacker }) {
+            if (target !== me)
+              return;
             g.addToLog(`${me.name} stuns ${attacker.name} with their defiance!`);
-            if (target === me)
-              g.addEffect(() => ({
-                name: "Defied",
-                duration: 1,
-                affects: [attacker],
-                onCanAct(e) {
-                  if (e.who === attacker)
-                    e.cancel = true;
-                }
-              }));
+            g.addEffect(() => ({
+              name: "Defied",
+              duration: 1,
+              affects: [attacker],
+              onCanAct(e) {
+                if (e.who === attacker)
+                  e.cancel = true;
+              }
+            }));
           }
         }));
       }
@@ -1687,7 +1688,7 @@
   };
 
   // src/classes.ts
-  var defaultStats = {
+  var baseStats = {
     Martialist: { hp: 21, sp: 7, determination: 6, camaraderie: 2, spirit: 3 },
     Cleavesman: { hp: 25, sp: 6, determination: 4, camaraderie: 4, spirit: 3 },
     "Far Scout": { hp: 18, sp: 7, determination: 3, camaraderie: 3, spirit: 5 },
@@ -1705,24 +1706,31 @@
   };
 
   // src/Player.ts
+  function getBaseStat(className, stat, bonusStat, bonusIfTrue = 1) {
+    return baseStats[className][stat] + (bonusStat === stat ? bonusIfTrue : 0);
+  }
   var Player = class {
-    constructor(name, className, maxHp = defaultStats[className].hp, maxSp = defaultStats[className].sp, determination = defaultStats[className].determination, camaraderie = defaultStats[className].camaraderie, spirit = defaultStats[className].spirit, items = startingItems[className]) {
+    constructor(g, name, className, bonus, items = startingItems[className]) {
+      this.g = g;
       this.name = name;
       this.className = className;
-      this.maxHp = maxHp;
-      this.maxSp = maxSp;
-      this.determination = determination;
-      this.camaraderie = camaraderie;
-      this.spirit = spirit;
-      this.items = items;
       this.isPC = true;
+      this.maxHp = getBaseStat(className, "hp", bonus, 5);
       this.hp = this.maxHp;
-      this.sp = Math.min(maxSp, spirit);
+      this.maxSp = getBaseStat(className, "sp", bonus);
+      this.determination = getBaseStat(className, "determination", bonus);
+      this.camaraderie = getBaseStat(className, "camaraderie", bonus);
+      this.spirit = getBaseStat(className, "spirit", bonus);
+      this.sp = Math.min(this.maxSp, this.spirit);
       this.attacksInARow = 0;
       this.equipment = /* @__PURE__ */ new Map();
       this.usedThisTurn = /* @__PURE__ */ new Set();
-      for (const item of items)
-        this.equip(item);
+      for (const item of items) {
+        if (item.slot)
+          this.equip(item);
+        else
+          g.inventory.push(item);
+      }
     }
     get alive() {
       return this.hp > 0;
@@ -1745,7 +1753,8 @@
         this.sp--;
     }
     equip(item) {
-      this.equipment.set(item.slot, item);
+      if (item.slot)
+        this.equipment.set(item.slot, item);
     }
   };
 
@@ -2522,11 +2531,12 @@
       this.walls = /* @__PURE__ */ new Map();
       this.worldVisited = /* @__PURE__ */ new Set();
       this.worldWalls = /* @__PURE__ */ new Map();
+      this.inventory = [];
       this.party = [
-        new Player("A", "Martialist"),
-        new Player("B", "Cleavesman"),
-        new Player("C", "War Caller"),
-        new Player("D", "Loam Seer")
+        new Player(this, "A", "Martialist"),
+        new Player(this, "B", "Cleavesman"),
+        new Player(this, "C", "War Caller"),
+        new Player(this, "D", "Loam Seer")
       ];
       canvas.addEventListener("keyup", (e) => {
         const keys = getKeyNames(e.code, e.shiftKey, e.altKey, e.ctrlKey);

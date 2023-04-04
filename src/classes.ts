@@ -12,10 +12,7 @@ import { ClassName } from "./types/ClassName";
 import Combatant, { AttackableStat } from "./types/Combatant";
 import Item from "./types/Item";
 
-export const defaultStats: Record<
-  ClassName,
-  Pick<Combatant, AttackableStat>
-> = {
+export const baseStats: Record<ClassName, Pick<Combatant, AttackableStat>> = {
   Martialist: { hp: 21, sp: 7, determination: 6, camaraderie: 2, spirit: 3 },
   Cleavesman: { hp: 25, sp: 6, determination: 4, camaraderie: 4, spirit: 3 },
   "Far Scout": { hp: 18, sp: 7, determination: 3, camaraderie: 3, spirit: 5 },

@@ -36,6 +36,7 @@ import { pickN, random } from "./tools/rng";
 import getKeyNames from "./tools/getKeyNames";
 import { contains } from "./tools/aabb";
 import { wrap } from "./tools/numbers";
+import Item from "./types/Item";
 
 type WallType = { canSeeDoor: boolean; isSolid: boolean; canSeeWall: boolean };
 
@@ -53,6 +54,7 @@ export default class Engine implements Game {
   drawSoon: Soon;
   eventHandlers: GameEventListeners;
   facing: Dir;
+  inventory: Item[];
   log: string[];
   party: Player[];
   position: XY;
@@ -91,11 +93,12 @@ export default class Engine implements Game {
     this.walls = new Map();
     this.worldVisited = new Set();
     this.worldWalls = new Map();
+    this.inventory = [];
     this.party = [
-      new Player("A", "Martialist"),
-      new Player("B", "Cleavesman"),
-      new Player("C", "War Caller"),
-      new Player("D", "Loam Seer"),
+      new Player(this, "A", "Martialist"),
+      new Player(this, "B", "Cleavesman"),
+      new Player(this, "C", "War Caller"),
+      new Player(this, "D", "Loam Seer"),
     ];
 
     canvas.addEventListener("keyup", (e) => {

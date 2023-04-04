@@ -7,7 +7,7 @@ export type ItemSlot = (typeof ItemSlots)[number];
 export default interface Item {
   name: string;
   restrict?: ClassName[];
-  slot: ItemSlot;
+  slot?: ItemSlot;
   type: string;
   action: CombatAction;
   dr?: number;
