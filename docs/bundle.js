@@ -129,6 +129,15 @@
     if (dx < 0)
       return { dir: Dir_default.W, offset: -dx };
   }
+  var dirOffsets = {
+    [Dir_default.N]: { [Dir_default.N]: 0, [Dir_default.E]: 1, [Dir_default.S]: 2, [Dir_default.W]: 3 },
+    [Dir_default.E]: { [Dir_default.N]: 3, [Dir_default.E]: 0, [Dir_default.S]: 1, [Dir_default.W]: 2 },
+    [Dir_default.S]: { [Dir_default.N]: 2, [Dir_default.E]: 3, [Dir_default.S]: 0, [Dir_default.W]: 1 },
+    [Dir_default.W]: { [Dir_default.N]: 1, [Dir_default.E]: 2, [Dir_default.S]: 3, [Dir_default.W]: 0 }
+  };
+  function getDirOffset(start, end) {
+    return dirOffsets[start][end];
+  }
 
   // src/tools/rng.ts
   function random(max) {
@@ -151,11 +160,29 @@
   }
 
   // src/actions.ts
+  var mild = (g) => g.roll(6) + 2;
+  var medium = (g) => g.roll(8) + 3;
+  var onlyMe = { type: "self" };
+  var ally = (count) => ({ type: "ally", count });
+  var allAllies = { type: "ally" };
+  var oneOpponent = {
+    type: "enemy",
+    distance: 1,
+    count: 1,
+    offsets: [0]
+  };
+  var opponents = (count, offsets) => ({
+    type: "enemy",
+    distance: 1,
+    count,
+    offsets
+  });
+  var oneEnemy = { type: "enemy", count: 1 };
   var generateAttack = (minDamage, maxDamage, sp = 2) => ({
     name: "Attack",
     tags: ["attack"],
     sp,
-    targets: "Opponent",
+    targets: oneOpponent,
     act({ g, targets, me }) {
       const bonus = me.attacksInARow;
       const amount = random(maxDamage - minDamage + bonus) + minDamage;
@@ -166,7 +193,7 @@
     name: "End Turn",
     tags: [],
     sp: 0,
-    targets: "AllAlly",
+    targets: allAllies,
     useMessage: "",
     act({ g }) {
       g.endTurn();
@@ -195,7 +222,7 @@
           name: "Zap",
           tags: ["attack"],
           sp: 3,
-          targets: "AllEnemy",
+          targets: opponents(),
           act({ g, targets, me }) {
             g.applyDamage(me, targets, 3, "hp");
           }
@@ -228,7 +255,7 @@
           name: "Arrow",
           tags: ["attack"],
           sp: 3,
-          targets: "OneEnemy",
+          targets: oneEnemy,
           act({ g, targets, me }) {
             g.applyDamage(me, targets, random(14) + 1, "hp");
           }
@@ -365,7 +392,7 @@
     }
     getPosition(c) {
       if (c.isPC)
-        return { dir: this.g.party.indexOf(c), distance: NaN };
+        return { dir: this.g.party.indexOf(c), distance: -1 };
       for (let dir = 0; dir < 4; dir++) {
         const distance = this.enemies[dir].indexOf(c);
         if (distance >= 0)
@@ -1541,8 +1568,6 @@
   };
 
   // src/items.ts
-  var mild = (g) => g.roll(6) + 2;
-  var medium = (g) => g.roll(8) + 3;
   var Penduchaimmer = {
     name: "Penduchaimmer",
     restrict: ["Martialist"],
@@ -1552,10 +1577,12 @@
       name: "DuoStab",
       tags: ["attack"],
       sp: 3,
-      targets: "Opponent",
-      act({ g, me, targets }) {
+      targets: opponents(Infinity, [0, 2]),
+      act({ g, me }) {
         const amount = mild(g);
-        g.applyDamage(me, targets, amount, "hp");
+        const front = g.getOpponent(me);
+        if (front)
+          g.applyDamage(me, [front], amount, "hp");
         const opposite = g.getOpponent(me, 2);
         if (opposite)
           g.applyDamage(me, [opposite], amount / 2, "hp");
@@ -1571,7 +1598,7 @@
       name: "Parry",
       tags: ["counter", "defence"],
       sp: 3,
-      targets: "Self",
+      targets: onlyMe,
       act({ g, me }) {
         g.addEffect((destroy) => ({
           name: "Parry",
@@ -1600,7 +1627,7 @@
       name: "Bash",
       tags: ["attack"],
       sp: 1,
-      targets: "Opponent",
+      targets: oneOpponent,
       act({ g, me, targets }) {
         const amount = medium(g);
         g.applyDamage(me, targets, amount, "hp");
@@ -1616,7 +1643,7 @@
       name: "Brace",
       tags: ["defence"],
       sp: 3,
-      targets: "Self",
+      targets: onlyMe,
       act({ g, me }) {
         g.addEffect((destroy) => ({
           name: "Brace",
@@ -1641,7 +1668,7 @@
       name: "Defy",
       tags: ["defence"],
       sp: 3,
-      targets: "Self",
+      targets: onlyMe,
       act({ g, me }) {
         g.addEffect(() => ({
           name: "Defy",
@@ -1674,7 +1701,7 @@
       name: "Endure",
       tags: ["defence"],
       sp: 2,
-      targets: "Self",
+      targets: onlyMe,
       act({ g, me }) {
         g.addEffect(() => ({
           name: "Endure",
@@ -1712,7 +1739,8 @@
       name: "Bless",
       tags: ["heal"],
       sp: 1,
-      targets: "OneAlly",
+      targets: ally(1),
+      targetFilter: (c) => c.hp < c.maxHp,
       act({ g, me, targets }) {
         const amount = mild(g);
         g.heal(me, targets, amount);
@@ -1728,7 +1756,7 @@
       name: "Search",
       tags: [],
       sp: 4,
-      targets: "Opponent",
+      targets: oneOpponent,
       act({ g, targets }) {
         g.addEffect(() => ({
           name: "Search",
@@ -2535,6 +2563,15 @@
     return m < 0 ? m + max : m;
   }
 
+  // src/types/logic.ts
+  var matchAll = (predicates) => (item) => {
+    for (const p of predicates) {
+      if (!p(item))
+        return false;
+    }
+    return true;
+  };
+
   // src/Engine.ts
   var Engine = class {
     constructor(canvas) {
@@ -2913,45 +2950,38 @@
       this.act(pc, action, targets);
       return true;
     }
-    getTargetPossibilities(c, a) {
-      const { amount, possibilities } = this._getTargetPossibilities(c, a);
-      return { amount, possibilities: possibilities.filter((x) => x.alive) };
-    }
     getOpponent(me, turn = 0) {
       const { dir: myDir, distance } = this.combat.getPosition(me);
       const dir = rotate(myDir, turn);
       return me.isPC ? this.combat.enemies[dir][0] : distance === 0 ? this.party[dir] : void 0;
     }
-    _getTargetPossibilities(c, a) {
-      const { dir, distance } = this.combat.getPosition(c);
-      switch (a.targets) {
-        case "Self":
-          return { amount: 1, possibilities: [c] };
-        case "Opponent": {
-          const opponent = c.isPC ? this.combat.enemies[dir][0] : distance === 0 ? this.party[dir] : void 0;
-          return { amount: 1, possibilities: opponent ? [opponent] : [] };
-        }
-        case "OneAlly":
-          return {
-            amount: 1,
-            possibilities: c.isPC ? this.party : this.combat.allEnemies
-          };
-        case "AllAlly":
-          return {
-            amount: Infinity,
-            possibilities: c.isPC ? this.party : this.combat.allEnemies
-          };
-        case "OneEnemy":
-          return {
-            amount: 1,
-            possibilities: c.isPC ? this.combat.allEnemies : this.party
-          };
-        case "AllEnemy":
-          return {
-            amount: Infinity,
-            possibilities: c.isPC ? this.combat.allEnemies : this.party
-          };
-      }
+    getTargetPossibilities(c, a) {
+      var _a;
+      if (a.targets.type === "self")
+        return { amount: 1, possibilities: [c] };
+      const amount = (_a = a.targets.count) != null ? _a : Infinity;
+      const filters = [
+        a.targets.type === "ally" ? (o) => o.isPC === c.isPC : (o) => o.isPC !== c.isPC
+      ];
+      if (a.targetFilter)
+        filters.push(a.targetFilter);
+      const { distance, offsets } = a.targets;
+      const me = this.combat.getPosition(c);
+      if (offsets)
+        filters.push((o) => {
+          const them = this.combat.getPosition(o);
+          return offsets.includes(getDirOffset(me.dir, them.dir));
+        });
+      if (typeof distance === "number")
+        filters.push((o) => {
+          const them = this.combat.getPosition(o);
+          const diff = Math.abs(them.distance - me.distance);
+          return diff <= distance;
+        });
+      return {
+        amount,
+        possibilities: this.combat.aliveCombatants.filter(matchAll(filters))
+      };
     }
     addToLog(message) {
       this.log.push(message);

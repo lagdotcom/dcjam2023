@@ -3,7 +3,7 @@ import CombatAction from "./types/CombatAction";
 
 import Combatant from "./types/Combatant";
 import { random } from "./tools/rng";
-import { generateAttack } from "./actions";
+import { oneEnemy, generateAttack, opponents } from "./actions";
 
 type EnemyTemplate = Pick<
   Combatant,
@@ -32,7 +32,7 @@ const enemies = {
         name: "Zap",
         tags: ["attack"],
         sp: 3,
-        targets: "AllEnemy",
+        targets: opponents(),
         act({ g, targets, me }) {
           g.applyDamage(me, targets, 3, "hp");
         },
@@ -67,7 +67,7 @@ const enemies = {
         name: "Arrow",
         tags: ["attack"],
         sp: 3,
-        targets: "OneEnemy",
+        targets: oneEnemy,
         act({ g, targets, me }) {
           g.applyDamage(me, targets, random(14) + 1, "hp");
         },

@@ -1,7 +1,17 @@
 import Combatant from "./Combatant";
 import Game from "./Game";
+import { Predicate } from "./logic";
 
 export type ActionTag = "attack" | "counter" | "defence" | "heal";
+
+export type ActionTarget =
+  | { type: "self" }
+  | {
+      type: "ally" | "enemy";
+      count?: number;
+      distance?: number;
+      offsets?: (0 | 1 | 2 | 3)[];
+    };
 
 export default interface CombatAction {
   name: string;
@@ -9,12 +19,7 @@ export default interface CombatAction {
   x?: boolean;
   useMessage?: string;
   tags: ActionTag[];
-  targets:
-    | "Self"
-    | "Opponent"
-    | "OneEnemy"
-    | "AllEnemy"
-    | "OneAlly"
-    | "AllAlly";
+  targets: ActionTarget;
+  targetFilter?: Predicate<Combatant>;
   act(e: { g: Game; targets: Combatant[]; me: Combatant; x: number }): void;
 }

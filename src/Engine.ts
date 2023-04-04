@@ -8,7 +8,13 @@ import {
 } from "./types/events";
 import { WallTag, wallToTag } from "./tools/wallTags";
 import { XYTag, xyToTag } from "./tools/xyTags";
-import { getCardinalOffset, move, rotate, xyi } from "./tools/geometry";
+import {
+  getCardinalOffset,
+  getDirOffset,
+  move,
+  rotate,
+  xyi,
+} from "./tools/geometry";
 
 import CombatManager from "./CombatManager";
 import CombatRenderer from "./CombatRenderer";
@@ -37,6 +43,7 @@ import getKeyNames from "./tools/getKeyNames";
 import { contains } from "./tools/aabb";
 import { wrap } from "./tools/numbers";
 import Item from "./types/Item";
+import { Predicate, matchAll } from "./types/logic";
 
 type WallType = { canSeeDoor: boolean; isSolid: boolean; canSeeWall: boolean };
 
@@ -492,11 +499,6 @@ export default class Engine implements Game {
     return true;
   }
 
-  getTargetPossibilities(c: Combatant, a: CombatAction) {
-    const { amount, possibilities } = this._getTargetPossibilities(c, a);
-    return { amount, possibilities: possibilities.filter((x) => x.alive) };
-  }
-
   getOpponent(me: Combatant, turn = 0) {
     const { dir: myDir, distance } = this.combat.getPosition(me);
     const dir = rotate(myDir, turn);
@@ -508,47 +510,42 @@ export default class Engine implements Game {
       : undefined;
   }
 
-  private _getTargetPossibilities(
+  getTargetPossibilities(
     c: Combatant,
     a: CombatAction
   ): { amount: number; possibilities: Combatant[] } {
-    const { dir, distance } = this.combat.getPosition(c);
+    if (a.targets.type === "self") return { amount: 1, possibilities: [c] };
 
-    switch (a.targets) {
-      case "Self":
-        return { amount: 1, possibilities: [c] };
-      case "Opponent": {
-        const opponent = c.isPC
-          ? this.combat.enemies[dir][0]
-          : distance === 0
-          ? this.party[dir]
-          : undefined;
-        return { amount: 1, possibilities: opponent ? [opponent] : [] };
-      }
+    const amount = a.targets.count ?? Infinity;
 
-      case "OneAlly":
-        return {
-          amount: 1,
-          possibilities: c.isPC ? this.party : this.combat.allEnemies,
-        };
-      case "AllAlly":
-        return {
-          amount: Infinity,
-          possibilities: c.isPC ? this.party : this.combat.allEnemies,
-        };
+    const filters: Predicate<Combatant>[] = [
+      a.targets.type === "ally"
+        ? (o) => o.isPC === c.isPC
+        : (o) => o.isPC !== c.isPC,
+    ];
 
-      case "OneEnemy":
-        return {
-          amount: 1,
-          possibilities: c.isPC ? this.combat.allEnemies : this.party,
-        };
-      // TODO should this only hit front row?
-      case "AllEnemy":
-        return {
-          amount: Infinity,
-          possibilities: c.isPC ? this.combat.allEnemies : this.party,
-        };
-    }
+    if (a.targetFilter) filters.push(a.targetFilter);
+
+    const { distance, offsets } = a.targets;
+    const me = this.combat.getPosition(c);
+
+    if (offsets)
+      filters.push((o) => {
+        const them = this.combat.getPosition(o);
+        return offsets.includes(getDirOffset(me.dir, them.dir));
+      });
+
+    if (typeof distance === "number")
+      filters.push((o) => {
+        const them = this.combat.getPosition(o);
+        const diff = Math.abs(them.distance - me.distance);
+        return diff <= distance;
+      });
+
+    return {
+      amount,
+      possibilities: this.combat.aliveCombatants.filter(matchAll(filters)),
+    };
   }
 
   addToLog(message: string) {

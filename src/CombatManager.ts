@@ -88,7 +88,7 @@ export default class CombatManager {
 
   getPosition(c: Combatant) {
     if (c.isPC)
-      return { dir: this.g.party.indexOf(c as Player) as Dir, distance: NaN };
+      return { dir: this.g.party.indexOf(c as Player) as Dir, distance: -1 };
 
     for (let dir = 0; dir < 4; dir++) {
       const distance = this.enemies[dir as Dir].indexOf(c as Enemy);

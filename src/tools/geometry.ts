@@ -48,3 +48,14 @@ export function getCardinalOffset(start: XY, destination: XY) {
   if (dy > 0) return { dir: Dir.S, offset: dy };
   if (dx < 0) return { dir: Dir.W, offset: -dx };
 }
+
+const dirOffsets = {
+  [Dir.N]: { [Dir.N]: 0, [Dir.E]: 1, [Dir.S]: 2, [Dir.W]: 3 },
+  [Dir.E]: { [Dir.N]: 3, [Dir.E]: 0, [Dir.S]: 1, [Dir.W]: 2 },
+  [Dir.S]: { [Dir.N]: 2, [Dir.E]: 3, [Dir.S]: 0, [Dir.W]: 1 },
+  [Dir.W]: { [Dir.N]: 1, [Dir.E]: 2, [Dir.S]: 3, [Dir.W]: 0 },
+} as const;
+
+export function getDirOffset(start: Dir, end: Dir) {
+  return dirOffsets[start][end];
+}

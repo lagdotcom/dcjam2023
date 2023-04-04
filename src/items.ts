@@ -1,9 +1,5 @@
+import { opponents, mild, oneOpponent, medium, ally, onlyMe } from "./actions";
 import Item from "./types/Item";
-import Game from "./types/Game";
-
-// damage/heal amounts
-const mild = (g: Game) => g.roll(6) + 2;
-const medium = (g: Game) => g.roll(8) + 3;
 
 export const Penduchaimmer: Item = {
   name: "Penduchaimmer",
@@ -14,10 +10,12 @@ export const Penduchaimmer: Item = {
     name: "DuoStab",
     tags: ["attack"],
     sp: 3,
-    targets: "Opponent",
-    act({ g, me, targets }) {
+    targets: opponents(Infinity, [0, 2]),
+    act({ g, me }) {
       const amount = mild(g);
-      g.applyDamage(me, targets, amount, "hp");
+
+      const front = g.getOpponent(me);
+      if (front) g.applyDamage(me, [front], amount, "hp");
 
       const opposite = g.getOpponent(me, 2);
       if (opposite) g.applyDamage(me, [opposite], amount / 2, "hp");
@@ -34,7 +32,7 @@ export const HaringleeKasaya: Item = {
     name: "Parry",
     tags: ["counter", "defence"],
     sp: 3,
-    targets: "Self",
+    targets: onlyMe,
     act({ g, me }) {
       g.addEffect((destroy) => ({
         name: "Parry",
@@ -65,7 +63,7 @@ export const GorgothilSword: Item = {
     name: "Bash",
     tags: ["attack"],
     sp: 1,
-    targets: "Opponent",
+    targets: oneOpponent,
     act({ g, me, targets }) {
       const amount = medium(g);
       g.applyDamage(me, targets, amount, "hp");
@@ -82,7 +80,7 @@ export const Haringplate: Item = {
     name: "Brace",
     tags: ["defence"],
     sp: 3,
-    targets: "Self",
+    targets: onlyMe,
     act({ g, me }) {
       g.addEffect((destroy) => ({
         name: "Brace",
@@ -108,7 +106,7 @@ export const OwlSkull: Item = {
     name: "Defy",
     tags: ["defence"],
     sp: 3,
-    targets: "Self",
+    targets: onlyMe,
     act({ g, me }) {
       g.addEffect(() => ({
         name: "Defy",
@@ -141,7 +139,7 @@ export const IronFullcase: Item = {
     name: "Endure",
     tags: ["defence"],
     sp: 2,
-    targets: "Self",
+    targets: onlyMe,
     act({ g, me }) {
       g.addEffect(() => ({
         name: "Endure",
@@ -179,7 +177,8 @@ export const Cornucopia: Item = {
     name: "Bless",
     tags: ["heal"],
     sp: 1,
-    targets: "OneAlly",
+    targets: ally(1),
+    targetFilter: (c) => c.hp < c.maxHp,
     act({ g, me, targets }) {
       const amount = mild(g);
       g.heal(me, targets, amount);
@@ -196,7 +195,7 @@ export const JacketAndRucksack: Item = {
     name: "Search",
     tags: [],
     sp: 4,
-    targets: "Opponent",
+    targets: oneOpponent,
     act({ g, targets }) {
       g.addEffect(() => ({
         name: "Search",
