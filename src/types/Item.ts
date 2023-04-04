@@ -8,7 +8,8 @@ export default interface Item {
   name: string;
   restrict?: ClassName[];
   slot?: ItemSlot;
-  type: string;
+  type?: string;
   action: CombatAction;
   dr?: number;
+  lore?: string;
 }

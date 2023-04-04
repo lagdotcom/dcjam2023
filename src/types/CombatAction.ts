@@ -2,7 +2,14 @@ import Combatant from "./Combatant";
 import Game from "./Game";
 import { Predicate } from "./logic";
 
-export type ActionTag = "attack" | "counter" | "defence" | "heal";
+export type ActionTag =
+  | "attack"
+  | "counter"
+  | "defence+"
+  | "defence-"
+  | "heal"
+  | "strength+"
+  | "strength-";
 
 export type ActionTarget =
   | { type: "self" }

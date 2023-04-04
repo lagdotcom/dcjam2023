@@ -161,7 +161,8 @@
 
   // src/actions.ts
   var mild = (g) => g.roll(6) + 2;
-  var medium = (g) => g.roll(8) + 3;
+  var medium = (g) => g.roll(8) + 4;
+  var heavy = (g) => g.roll(12) + 6;
   var onlyMe = { type: "self" };
   var ally = (count) => ({ type: "ally", count });
   var allAllies = { type: "ally" };
@@ -197,6 +198,40 @@
     useMessage: "",
     act({ g }) {
       g.endTurn();
+    }
+  };
+  var Brace = {
+    name: "Brace",
+    tags: ["defence+"],
+    sp: 3,
+    targets: onlyMe,
+    act({ g, me }) {
+      g.addEffect((destroy) => ({
+        name: "Brace",
+        duration: Infinity,
+        affects: [me],
+        onCalculateDamage(e) {
+          if (e.target === me) {
+            e.amount /= 2;
+            destroy();
+          }
+        }
+      }));
+    }
+  };
+  var DuoStab = {
+    name: "DuoStab",
+    tags: ["attack"],
+    sp: 3,
+    targets: opponents(Infinity, [0, 2]),
+    act({ g, me }) {
+      const amount = mild(g);
+      const front = g.getOpponent(me);
+      if (front)
+        g.applyDamage(me, [front], amount, "hp");
+      const opposite = g.getOpponent(me, 2);
+      if (opposite)
+        g.applyDamage(me, [opposite], amount / 2, "hp");
     }
   };
 
@@ -1567,57 +1602,7 @@
     }
   };
 
-  // src/items.ts
-  var Penduchaimmer = {
-    name: "Penduchaimmer",
-    restrict: ["Martialist"],
-    slot: "Hand",
-    type: "Weapon",
-    action: {
-      name: "DuoStab",
-      tags: ["attack"],
-      sp: 3,
-      targets: opponents(Infinity, [0, 2]),
-      act({ g, me }) {
-        const amount = mild(g);
-        const front = g.getOpponent(me);
-        if (front)
-          g.applyDamage(me, [front], amount, "hp");
-        const opposite = g.getOpponent(me, 2);
-        if (opposite)
-          g.applyDamage(me, [opposite], amount / 2, "hp");
-      }
-    }
-  };
-  var HaringleeKasaya = {
-    name: "Haringlee Kasaya",
-    restrict: ["Martialist"],
-    slot: "Body",
-    type: "Armour",
-    action: {
-      name: "Parry",
-      tags: ["counter", "defence"],
-      sp: 3,
-      targets: onlyMe,
-      act({ g, me }) {
-        g.addEffect((destroy) => ({
-          name: "Parry",
-          duration: Infinity,
-          affects: [me],
-          onBeforeAction(e) {
-            if (e.targets.includes(me) && e.action.tags.includes("attack")) {
-              g.addToLog(`${me.name} counters!`);
-              const amount = mild(g);
-              g.applyDamage(me, [e.attacker], amount, "hp");
-              destroy();
-              e.cancel = true;
-              return;
-            }
-          }
-        }));
-      }
-    }
-  };
+  // src/items/cleavesman.ts
   var GorgothilSword = {
     name: "Gorgothil Sword",
     restrict: ["Cleavesman"],
@@ -1639,97 +1624,83 @@
     restrict: ["Cleavesman"],
     slot: "Body",
     type: "Armour",
+    action: Brace
+  };
+  var Gullark = {
+    name: "Gullark",
+    restrict: ["Cleavesman"],
+    slot: "Hand",
+    type: "Shield",
     action: {
-      name: "Brace",
-      tags: ["defence"],
-      sp: 3,
+      name: "Deflect",
+      tags: ["defence+"],
+      sp: 2,
       targets: onlyMe,
       act({ g, me }) {
         g.addEffect((destroy) => ({
-          name: "Brace",
+          name: "Deflect",
           duration: Infinity,
           affects: [me],
           onCalculateDamage(e) {
             if (e.target === me) {
-              e.amount /= 2;
+              g.addToLog(`${me.name} deflects the blow.`);
+              e.amount = 0;
               destroy();
+              return;
             }
           }
         }));
       }
     }
   };
-  var OwlSkull = {
-    name: "Owl's Skull",
-    restrict: ["War Caller"],
+  var Jaegerstock = {
+    name: "Jaegerstock",
+    restrict: ["Cleavesman"],
     slot: "Hand",
-    type: "Catalyst",
+    type: "Weapon",
+    action: DuoStab
+  };
+  var Varganglia = {
+    name: "Varganglia",
+    restrict: ["Cleavesman"],
+    slot: "Body",
+    type: "Armour",
     action: {
-      name: "Defy",
-      tags: ["defence"],
+      name: "Barb",
+      tags: ["counter"],
       sp: 3,
       targets: onlyMe,
       act({ g, me }) {
         g.addEffect(() => ({
-          name: "Defy",
+          name: "Barb",
           duration: 2,
           affects: [me],
-          onAfterDamage({ target, attacker }) {
-            if (target !== me)
-              return;
-            g.addToLog(`${me.name} stuns ${attacker.name} with their defiance!`);
-            g.addEffect(() => ({
-              name: "Defied",
-              duration: 1,
-              affects: [attacker],
-              onCanAct(e) {
-                if (e.who === attacker)
-                  e.cancel = true;
+          onAfterDamage(e) {
+            if (e.target === me) {
+              const targets = [
+                g.getOpponent(me, 0),
+                g.getOpponent(me, 1),
+                g.getOpponent(me, 3)
+              ].filter(isDefined);
+              if (targets.length) {
+                const target = oneOf(targets);
+                const amount = mild(g);
+                g.applyDamage(me, [target], amount, "hp");
               }
-            }));
-          }
-        }));
-      }
-    }
-  };
-  var IronFullcase = {
-    name: "Iron Fullcase",
-    restrict: ["War Caller"],
-    slot: "Body",
-    type: "Armour",
-    action: {
-      name: "Endure",
-      tags: ["defence"],
-      sp: 2,
-      targets: onlyMe,
-      act({ g, me }) {
-        g.addEffect(() => ({
-          name: "Endure",
-          duration: 2,
-          affects: [me],
-          onCalculateDR(e) {
-            if (e.who === me)
-              e.value += 2;
-          }
-        }));
-        const opposite = g.getOpponent(me);
-        if (opposite) {
-          g.addToLog(
-            `${opposite.name} withers in the face of ${me.name}'s endurance!`
-          );
-          g.addEffect(() => ({
-            name: "Endured",
-            duration: 2,
-            affects: [opposite],
-            onCalculateDetermination(e) {
-              if (e.who === opposite)
-                e.value -= 2;
             }
-          }));
-        }
+          }
+        }));
       }
     }
   };
+  GorgothilSword.lore = `"""May this steel sing the color of heathen blood.""
+
+This phrase has been uttered ever since Gorgothil was liberated from the thralls of Mullanginan during the Lost War. Gorgothil is now an ever devoted ally, paying their debts by smithing weaponry for all cleavesmen under Cherraphy's wing."`;
+  Gullark.lore = `Dredged from the Furnace of Ogkh, gullarks are formerly the shells belonging to an ancient creature called a Crim; egg shaped quadrupeds with the face of someone screaming in torment. Many believe their extinction is owed to the over-production of gullarks during the Lost War.`;
+  Jaegerstock.lore = `Able to stab in a forward and back motion, then a back to forward motion, and once again in a forward and back motion. Wielders often put one foot forward to brace themselves, and those with transcendental minds? They also stab in a forward and back motion.`;
+  Varganglia.lore = `Armour that's slithered between the creviced wounds that remain after the Long War ended. Varganglia carcasses have become a common attire for cleavesmen, their pelts covered with thick and venomous barbs that erupt from the carcass when struck, making the wearer difficult to strike. `;
+
+  // src/items/loamSeer.ts
   var Cornucopia = {
     name: "Cornucopia",
     restrict: ["Loam Seer"],
@@ -1764,6 +1735,219 @@
           affects: targets
           // TODO: enemy is more likely to drop items
         }));
+      }
+    }
+  };
+
+  // src/items/martialist.ts
+  var Penduchaimmer = {
+    name: "Penduchaimmer",
+    restrict: ["Martialist"],
+    slot: "Hand",
+    type: "Weapon",
+    action: DuoStab
+  };
+  var HaringleeKasaya = {
+    name: "Haringlee Kasaya",
+    restrict: ["Martialist"],
+    slot: "Body",
+    type: "Armour",
+    action: {
+      name: "Parry",
+      tags: ["counter", "defence+"],
+      sp: 3,
+      targets: onlyMe,
+      act({ g, me }) {
+        g.addEffect((destroy) => ({
+          name: "Parry",
+          duration: Infinity,
+          affects: [me],
+          onBeforeAction(e) {
+            if (e.targets.includes(me) && e.action.tags.includes("attack")) {
+              g.addToLog(`${me.name} counters!`);
+              const amount = mild(g);
+              g.applyDamage(me, [e.attacker], amount, "hp");
+              destroy();
+              e.cancel = true;
+              return;
+            }
+          }
+        }));
+      }
+    }
+  };
+  var KhakkharaOfGhanju = {
+    name: "Khakkhara of Ghanju",
+    restrict: ["Martialist"],
+    slot: "Hand",
+    type: "Weapon",
+    action: {
+      name: "Sweep",
+      tags: ["attack"],
+      sp: 1,
+      targets: opponents(3, [0, 1, 3]),
+      act({ g, me, targets }) {
+        const amount = mild(g);
+        g.applyDamage(me, targets, amount, "hp");
+      }
+    }
+  };
+  var Halberdigan = {
+    name: "Halberdigan",
+    restrict: ["Martialist"],
+    slot: "Hand",
+    type: "Weapon",
+    action: {
+      name: "Thrust",
+      tags: ["attack"],
+      sp: 2,
+      targets: opponents(1, [0, 2]),
+      act({ g, me, targets }) {
+        const amount = medium(g);
+        g.applyDamage(me, targets, amount, "hp");
+      }
+    }
+  };
+  var NundarialVestments = {
+    name: "Nundarial Vestments",
+    restrict: ["Martialist"],
+    slot: "Body",
+    type: "Armour",
+    action: Brace
+  };
+  var HalflightCowl = {
+    name: "Halflight Cowl",
+    restrict: ["Martialist"],
+    slot: "Body",
+    action: {
+      name: "Flight",
+      tags: ["attack"],
+      sp: 4,
+      targets: opponents(1, [1, 3]),
+      act({ g, me, targets }) {
+        const amount = heavy(g);
+        g.applyDamage(me, targets, amount, "hp");
+      }
+    }
+  };
+  var YamorolMouth = {
+    name: "Yamorol's Mouth",
+    restrict: ["Martialist"],
+    slot: "Special",
+    action: {
+      name: "Mantra",
+      tags: [],
+      sp: 3,
+      targets: ally(1),
+      act({ g, me, targets }) {
+        me.determination--;
+        for (const target of targets) {
+          target.determination++;
+          g.addToLog(`${me.name} gives everything to inspire ${target.name}.`);
+        }
+      }
+    }
+  };
+  var LoromayHand = {
+    name: "Loromay's Hand",
+    restrict: ["Martialist"],
+    slot: "Special",
+    action: {
+      name: "Mudra",
+      tags: ["defence-", "strength+"],
+      sp: 3,
+      targets: onlyMe,
+      act({ g, me }) {
+        g.addEffect(() => ({
+          name: "Mudra",
+          duration: 2,
+          affects: [me],
+          onCalculateDamage(e) {
+            if (e.attacker === me || e.target === me)
+              e.amount *= 2;
+          }
+        }));
+      }
+    }
+  };
+  Penduchaimmer.lore = `Comprised of two anchors and bound together by threaded fibre plucked from spidokans, these traditional weapons of a martialist are built to stretch and spin much like the hands of a suspended gravity clock. Penduchaimmers are a reminder to all martialists that time will always find it's way back to the living, only in death does it cease.`;
+  HaringleeKasaya.lore = `Traditional garb worn by martialist masters of Haringlee, they are awarded only to those that spend their lives in devotion to the practices of spirituality. The kasaya symbolizes the wholeness and total mastery of one's self, and one who's inner eye sees only their purpose in life.`;
+  KhakkharaOfGhanju.lore = `Ghanju is known simply as the first martialist, and the clanging of his khakkhara began and ended many wars. History has stricken his name from most texts, however, as it's said Ghanju practised neither under Cherraphy or Mullanginan's teachings, nor those of any other God.`;
+  Halberdigan.lore = `In times of peace, halberdigans were simply a tool for picking the fruits of the Ilbombora trees that littered Haringlee's countryside. A devastating fire set by Nightjar's residents and an ensuing drought was punishing enough that farmers began taking up martialism in the name of Cherraphy, in the hope that she'll restore the Ilbombora fields to their former glory.`;
+  NundarialVestments.lore = `On the day of Nundarial's passing, it's said everyone wore these vestments at Cherraphy's order, to "honour a fool's futility". Historians wager this is in reference to Nundarial spending their lifetime weathering attacks behind closed doors, never striking back, forever without purpose, sleeping in the dulcet cradle of war.`;
+  HalflightCowl.lore = `Commonly mistaken as a half light cowl. This cowl instead is named after Halfli's Flight, an ancient martialist technique that requires such speed and precision it gives off the appearance that it's user is flying. Though many martialists don this cowl, few are capable of performing Halfli's Flight to it's full potential.`;
+  YamorolMouth.lore = `In all essence, a beginning. Words spoken aloud, repeated in infinite chanting verse. All words and meanings find a beginning from Yamorol, the primordial birthplace of all things and where even the spirits of Gods are born.`;
+  LoromayHand.lore = `In all essence, an end. Gestures and actions performed, repeated in infinite repeating motion. All motion and form finds an ending from Loromay, the primordial deathbed of all things and where even the actions of Gods become meaningless.`;
+
+  // src/items/warCaller.ts
+  var OwlSkull = {
+    name: "Owl's Skull",
+    restrict: ["War Caller"],
+    slot: "Hand",
+    type: "Catalyst",
+    action: {
+      name: "Defy",
+      tags: ["defence+"],
+      sp: 3,
+      targets: onlyMe,
+      act({ g, me }) {
+        g.addEffect(() => ({
+          name: "Defy",
+          duration: 2,
+          affects: [me],
+          onAfterDamage({ target, attacker }) {
+            if (target !== me)
+              return;
+            g.addToLog(`${me.name} stuns ${attacker.name} with their defiance!`);
+            g.addEffect(() => ({
+              name: "Defied",
+              duration: 1,
+              affects: [attacker],
+              onCanAct(e) {
+                if (e.who === attacker)
+                  e.cancel = true;
+              }
+            }));
+          }
+        }));
+      }
+    }
+  };
+  var IronFullcase = {
+    name: "Iron Fullcase",
+    restrict: ["War Caller"],
+    slot: "Body",
+    type: "Armour",
+    action: {
+      name: "Endure",
+      tags: ["defence+"],
+      sp: 2,
+      targets: onlyMe,
+      act({ g, me }) {
+        g.addEffect(() => ({
+          name: "Endure",
+          duration: 2,
+          affects: [me],
+          onCalculateDR(e) {
+            if (e.who === me)
+              e.value += 2;
+          }
+        }));
+        const opposite = g.getOpponent(me);
+        if (opposite) {
+          g.addToLog(
+            `${opposite.name} withers in the face of ${me.name}'s endurance!`
+          );
+          g.addEffect(() => ({
+            name: "Endured",
+            duration: 2,
+            affects: [opposite],
+            onCalculateDetermination(e) {
+              if (e.who === opposite)
+                e.value -= 2;
+            }
+          }));
+        }
       }
     }
   };

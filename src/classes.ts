@@ -1,13 +1,7 @@
-import {
-  Cornucopia,
-  GorgothilSword,
-  HaringleeKasaya,
-  Haringplate,
-  IronFullcase,
-  JacketAndRucksack,
-  OwlSkull,
-  Penduchaimmer,
-} from "./items";
+import { GorgothilSword, Haringplate } from "./items/cleavesman";
+import { Cornucopia, JacketAndRucksack } from "./items/loamSeer";
+import { Penduchaimmer, HaringleeKasaya } from "./items/martialist";
+import { OwlSkull, IronFullcase } from "./items/warCaller";
 import { ClassName } from "./types/ClassName";
 import Combatant, { AttackableStat } from "./types/Combatant";
 import Item from "./types/Item";
