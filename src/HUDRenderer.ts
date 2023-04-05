@@ -10,6 +10,7 @@ import MinimapRenderer from "./MinimapRenderer";
 import XY from "./types/XY";
 import { xyi } from "./tools/geometry";
 import withTextStyle from "./tools/withTextStyle";
+import SkillRenderer from "./SkillRenderer";
 
 type HUDData<T> = { base: T; buttons: T; mapBorder: T; marble: T; ring: T };
 
@@ -81,6 +82,7 @@ export default class HUDRenderer {
   stats: StatsRenderer;
   minimap: MinimapRenderer;
   roll: RollListener;
+  skills: SkillRenderer;
 
   constructor(public g: Engine) {
     this.images = {
@@ -101,6 +103,7 @@ export default class HUDRenderer {
     this.stats = new StatsRenderer(g);
     this.minimap = new MinimapRenderer(g);
     this.roll = new RollListener(g);
+    this.skills = new SkillRenderer(g);
   }
 
   async acquireImages() {
@@ -124,6 +127,8 @@ export default class HUDRenderer {
       ring: xyi((width - ring.width) / 2 - 2, height - ring.height),
     };
 
+    this.skills.position = this.positions.buttons;
+
     return this.images;
   }
 
@@ -140,5 +145,6 @@ export default class HUDRenderer {
     this.minimap.render();
     this.paste("mapBorder");
     this.paste("buttons");
+    this.skills.render();
   }
 }

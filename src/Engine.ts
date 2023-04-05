@@ -44,6 +44,7 @@ import { contains } from "./tools/aabb";
 import { wrap } from "./tools/numbers";
 import Item from "./types/Item";
 import { Predicate, matchAll } from "./types/logic";
+import HasHotspots from "./types/HasHotspots";
 
 type WallType = { canSeeDoor: boolean; isSolid: boolean; canSeeWall: boolean };
 
@@ -70,6 +71,7 @@ export default class Engine implements Game {
   res: ResourceManager;
   showLog: boolean;
   scripting: EngineScripting;
+  spotElements: HasHotspots[];
   visited: Map<string, Set<XYTag>>;
   walls: Map<string, Map<WallTag, WallType>>;
   world?: World;
@@ -103,6 +105,7 @@ export default class Engine implements Game {
     this.worldWalls = new Map();
     this.inventory = [];
     this.pendingEnemies = [];
+    this.spotElements = [];
     this.party = [
       new Player(this, "A", "Martialist"),
       new Player(this, "B", "Cleavesman"),
@@ -129,11 +132,6 @@ export default class Engine implements Game {
 
     canvas.addEventListener("mousemove", (e) => this.onMouseMove(transform(e)));
     canvas.addEventListener("click", (e) => this.onClick(transform(e)));
-  }
-
-  get spotElements() {
-    if (this.renderSetup) return [this.renderSetup.hud.stats];
-    return [];
   }
 
   getSpot(pos: XY) {
@@ -170,7 +168,7 @@ export default class Engine implements Game {
       case "ToggleLog":
         return this.toggleLog();
       case "Interact":
-        return this.interact();
+        return this.interact(this.facing);
       case "MenuDown":
         return this.menuMove(1);
       case "MenuUp":
@@ -231,6 +229,7 @@ export default class Engine implements Game {
 
     this.markVisited();
 
+    this.spotElements = [hud.skills, hud.stats];
     this.renderSetup = { combat, dungeon, hud, log };
     return this.draw();
   }
@@ -366,11 +365,11 @@ export default class Engine implements Game {
     return true;
   }
 
-  interact() {
-    if (!this.party[this.facing].alive) return false;
+  interact(index: number) {
+    if (!this.party[index].alive) return false;
     if (this.combat.inCombat) return false;
 
-    return this.scripting.onInteract();
+    return this.scripting.onInteract(index);
   }
 
   markVisited() {

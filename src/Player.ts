@@ -3,7 +3,7 @@ import Item, { ItemSlot } from "./types/Item";
 
 import { ClassName } from "./types/ClassName";
 import { endTurnAction } from "./actions";
-import { baseStats, startingItems } from "./classes";
+import classes from "./classes";
 import Engine from "./Engine";
 
 function getBaseStat(
@@ -12,7 +12,7 @@ function getBaseStat(
   bonusStat?: AttackableStat,
   bonusIfTrue = 1
 ) {
-  return baseStats[className][stat] + (bonusStat === stat ? bonusIfTrue : 0);
+  return classes[className][stat] + (bonusStat === stat ? bonusIfTrue : 0);
 }
 
 export default class Player implements Combatant {
@@ -27,13 +27,14 @@ export default class Player implements Combatant {
   determination: number;
   camaraderie: number;
   spirit: number;
+  skill: string;
 
   constructor(
     public g: Engine,
     public name: string,
     public className: ClassName,
     bonus?: AttackableStat,
-    items = startingItems[className]
+    items = classes[className].items
   ) {
     this.isPC = true;
     this.maxHp = getBaseStat(className, "hp", bonus, 5);
@@ -46,6 +47,7 @@ export default class Player implements Combatant {
     this.attacksInARow = 0;
     this.equipment = new Map();
     this.usedThisTurn = new Set();
+    this.skill = classes[className].skill;
 
     for (const item of items) {
       if (item.slot) this.equip(item);

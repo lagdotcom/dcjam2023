@@ -4,6 +4,7 @@ import {
   callFunction,
   num,
   run,
+  str,
 } from "./DScript/logic";
 import { move, rotate } from "./tools/geometry";
 
@@ -11,7 +12,7 @@ import { AttackableStat } from "./types/Combatant";
 import DScriptHost from "./DScript/host";
 import Dir from "./types/Dir";
 import Engine from "./Engine";
-import { Program } from "./DScript/ast";
+import { LiteralNumber, Program } from "./DScript/ast";
 import XY from "./types/XY";
 import isStat from "./tools/combatants";
 import { random } from "./tools/rng";
@@ -118,9 +119,8 @@ export default class EngineScripting extends DScriptHost {
       "bool",
       (type: string, dc: number) => {
         const stat = getStat(type);
-
-        this.env.set("pcIndex", num(g.facing, true));
-        const pc = g.party[g.facing];
+        const pcIndex = (this.env.get("pcIndex") as LiteralNumber).value;
+        const pc = g.party[pcIndex];
 
         const roll = g.roll(10) + pc[stat];
         return roll >= dc;
@@ -194,7 +194,10 @@ export default class EngineScripting extends DScriptHost {
           const opposite = other.sides[rotate(dir, 2)];
 
           if (opposite) opposite.solid = false;
-        }
+        } else
+          console.warn(
+            `script tried to unlock ${x},${y},${d} -- side does not exist`
+          );
       }
     );
   }
@@ -219,11 +222,14 @@ export default class EngineScripting extends DScriptHost {
 
     for (const tag of tile.tags) {
       const cb = this.onTagEnter.get(tag);
-      if (cb) this.runCallback(cb, num(oldPos.x), num(oldPos.y));
+      if (cb) {
+        this.env.set("pcIndex", num(this.g.facing, true));
+        this.runCallback(cb, num(oldPos.x), num(oldPos.y));
+      }
     }
   }
 
-  onInteract() {
+  onInteract(pcIndex: number) {
     const tile = this.g.getCell(this.g.position.x, this.g.position.y);
     if (!tile) return false;
 
@@ -231,7 +237,8 @@ export default class EngineScripting extends DScriptHost {
     for (const tag of tile.tags) {
       const cb = this.onTagInteract.get(tag);
       if (cb) {
-        this.runCallback(cb);
+        this.env.set("pcIndex", num(pcIndex, true));
+        this.runCallback(cb, str(this.g.party[pcIndex].skill));
         result = true;
       }
     }

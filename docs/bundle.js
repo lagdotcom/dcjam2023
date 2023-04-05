@@ -1174,8 +1174,8 @@
         "bool",
         (type, dc) => {
           const stat = getStat(type);
-          this.env.set("pcIndex", num(g.facing, true));
-          const pc = g.party[g.facing];
+          const pcIndex = this.env.get("pcIndex").value;
+          const pc = g.party[pcIndex];
           const roll = g.roll(10) + pc[stat];
           return roll >= dc;
         }
@@ -1241,7 +1241,10 @@
             const opposite = other.sides[rotate(dir, 2)];
             if (opposite)
               opposite.solid = false;
-          }
+          } else
+            console.warn(
+              `script tried to unlock ${x},${y},${d} -- side does not exist`
+            );
         }
       );
     }
@@ -1263,11 +1266,13 @@
         return;
       for (const tag of tile.tags) {
         const cb = this.onTagEnter.get(tag);
-        if (cb)
+        if (cb) {
+          this.env.set("pcIndex", num(this.g.facing, true));
           this.runCallback(cb, num(oldPos.x), num(oldPos.y));
+        }
       }
     }
-    onInteract() {
+    onInteract(pcIndex) {
       const tile = this.g.getCell(this.g.position.x, this.g.position.y);
       if (!tile)
         return false;
@@ -1275,7 +1280,8 @@
       for (const tag of tile.tags) {
         const cb = this.onTagInteract.get(tag);
         if (cb) {
-          this.runCallback(cb);
+          this.env.set("pcIndex", num(pcIndex, true));
+          this.runCallback(cb, str(this.g.party[pcIndex].skill));
           result = true;
         }
       }
@@ -1438,6 +1444,48 @@
     }
   };
 
+  // src/SkillRenderer.ts
+  var SkillRenderer = class {
+    constructor(g, position = xy(0, 0), offset = xy(20, 42), buttonSize = xy(80, 16), rowHeight = 18) {
+      this.g = g;
+      this.position = position;
+      this.offset = offset;
+      this.buttonSize = buttonSize;
+      this.rowHeight = rowHeight;
+      this.spots = [];
+    }
+    render() {
+      const { buttonSize, offset, position, rowHeight } = this;
+      const { draw } = withTextStyle(this.g.ctx, {
+        textAlign: "left",
+        textBaseline: "middle",
+        fillStyle: "white"
+      });
+      const textX = position.x + offset.x;
+      let textY = position.y + offset.y;
+      for (let id2 = 0; id2 < 4; id2++) {
+        const pc = this.g.party[id2];
+        if (pc.alive) {
+          draw(pc.skill, textX, textY);
+          const x = textX - 10;
+          const y = textY - 8;
+          this.spots.push({
+            id: id2,
+            x,
+            y,
+            ex: x + buttonSize.x,
+            ey: y + buttonSize.y,
+            cursor: "pointer"
+          });
+        }
+        textY += rowHeight;
+      }
+    }
+    spotClicked(spot) {
+      this.g.interact(spot.id);
+    }
+  };
+
   // src/HUDRenderer.ts
   var empty = document.createElement("img");
   var zero = xyi(0, 0);
@@ -1505,6 +1553,7 @@
       this.stats = new StatsRenderer(g);
       this.minimap = new MinimapRenderer(g);
       this.roll = new RollListener(g);
+      this.skills = new SkillRenderer(g);
     }
     acquireImages() {
       return __async(this, null, function* () {
@@ -1525,6 +1574,7 @@
           // not used
           ring: xyi((width - ring.width) / 2 - 2, height - ring.height)
         };
+        this.skills.position = this.positions.buttons;
         return this.images;
       });
     }
@@ -1540,6 +1590,7 @@
       this.minimap.render();
       this.paste("mapBorder");
       this.paste("buttons");
+      this.skills.render();
     }
   };
 
@@ -1953,29 +2004,70 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
   };
 
   // src/classes.ts
-  var baseStats = {
-    Martialist: { hp: 21, sp: 7, determination: 6, camaraderie: 2, spirit: 3 },
-    Cleavesman: { hp: 25, sp: 6, determination: 4, camaraderie: 4, spirit: 3 },
-    "Far Scout": { hp: 18, sp: 7, determination: 3, camaraderie: 3, spirit: 5 },
-    "War Caller": { hp: 30, sp: 5, determination: 5, camaraderie: 2, spirit: 4 },
-    "Flag Singer": { hp: 21, sp: 6, determination: 2, camaraderie: 6, spirit: 3 },
-    "Loam Seer": { hp: 18, sp: 5, determination: 2, camaraderie: 5, spirit: 4 }
+  var classes = {
+    Martialist: {
+      hp: 21,
+      sp: 7,
+      determination: 6,
+      camaraderie: 2,
+      spirit: 3,
+      items: [Penduchaimmer, HaringleeKasaya],
+      skill: "Smash"
+    },
+    Cleavesman: {
+      hp: 25,
+      sp: 6,
+      determination: 4,
+      camaraderie: 4,
+      spirit: 3,
+      items: [GorgothilSword, Haringplate],
+      skill: "Cut"
+    },
+    "Far Scout": {
+      hp: 18,
+      sp: 7,
+      determination: 3,
+      camaraderie: 3,
+      spirit: 5,
+      items: [],
+      skill: "Tamper"
+    },
+    "War Caller": {
+      hp: 30,
+      sp: 5,
+      determination: 5,
+      camaraderie: 2,
+      spirit: 4,
+      items: [OwlSkull, IronFullcase],
+      skill: "Prayer"
+    },
+    "Flag Singer": {
+      hp: 21,
+      sp: 6,
+      determination: 2,
+      camaraderie: 6,
+      spirit: 3,
+      items: [],
+      skill: "???"
+    },
+    "Loam Seer": {
+      hp: 18,
+      sp: 5,
+      determination: 2,
+      camaraderie: 5,
+      spirit: 4,
+      items: [Cornucopia, JacketAndRucksack],
+      skill: "Shift"
+    }
   };
-  var startingItems = {
-    Martialist: [Penduchaimmer, HaringleeKasaya],
-    Cleavesman: [GorgothilSword, Haringplate],
-    "Far Scout": [],
-    "War Caller": [OwlSkull, IronFullcase],
-    "Flag Singer": [],
-    "Loam Seer": [Cornucopia, JacketAndRucksack]
-  };
+  var classes_default = classes;
 
   // src/Player.ts
   function getBaseStat(className, stat, bonusStat, bonusIfTrue = 1) {
-    return baseStats[className][stat] + (bonusStat === stat ? bonusIfTrue : 0);
+    return classes_default[className][stat] + (bonusStat === stat ? bonusIfTrue : 0);
   }
   var Player = class {
-    constructor(g, name, className, bonus, items = startingItems[className]) {
+    constructor(g, name, className, bonus, items = classes_default[className].items) {
       this.g = g;
       this.name = name;
       this.className = className;
@@ -1990,6 +2082,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       this.attacksInARow = 0;
       this.equipment = /* @__PURE__ */ new Map();
       this.usedThisTurn = /* @__PURE__ */ new Set();
+      this.skill = classes_default[className].skill;
       for (const item of items) {
         if (item.slot)
           this.equip(item);
@@ -2205,7 +2298,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
   var enemies_default2 = "./enemies-TKYHHQDG.json";
 
   // res/map.dscript
-  var map_default = "./map-ZABSODQV.dscript";
+  var map_default = "./map-EG44LPW2.dscript";
 
   // res/atlas/test1.png
   var test1_default = "./test1-MYU5F6VR.png";
@@ -2807,6 +2900,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       this.worldWalls = /* @__PURE__ */ new Map();
       this.inventory = [];
       this.pendingEnemies = [];
+      this.spotElements = [];
       this.party = [
         new Player(this, "A", "Martialist"),
         new Player(this, "B", "Cleavesman"),
@@ -2829,11 +2923,6 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       const transform = (e) => xyi(e.offsetX / this.zoomRatio, e.offsetY / this.zoomRatio);
       canvas.addEventListener("mousemove", (e) => this.onMouseMove(transform(e)));
       canvas.addEventListener("click", (e) => this.onClick(transform(e)));
-    }
-    get spotElements() {
-      if (this.renderSetup)
-        return [this.renderSetup.hud.stats];
-      return [];
     }
     getSpot(pos) {
       for (const element of this.spotElements) {
@@ -2869,7 +2958,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
         case "ToggleLog":
           return this.toggleLog();
         case "Interact":
-          return this.interact();
+          return this.interact(this.facing);
         case "MenuDown":
           return this.menuMove(1);
         case "MenuUp":
@@ -2924,6 +3013,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
           this.walls.set(w.name, this.worldWalls);
         }
         this.markVisited();
+        this.spotElements = [hud.skills, hud.stats];
         this.renderSetup = { combat, dungeon, hud, log };
         return this.draw();
       });
@@ -3013,12 +3103,12 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       this.draw();
       return true;
     }
-    interact() {
-      if (!this.party[this.facing].alive)
+    interact(index) {
+      if (!this.party[index].alive)
         return false;
       if (this.combat.inCombat)
         return false;
-      return this.scripting.onInteract();
+      return this.scripting.onInteract(index);
     }
     markVisited() {
       const pos = this.position;
