@@ -1,4 +1,4 @@
-import Combatant, { AttackableStat } from "./types/Combatant";
+import Combatant, { AttackableStat, BoostableStat } from "./types/Combatant";
 import Game, { GameEffect } from "./types/Game";
 import {
   GameEventListeners,
@@ -55,6 +55,15 @@ interface RenderSetup {
   combat: CombatRenderer;
 }
 
+const calculateEventName = {
+  dr: "onCalculateDR",
+  maxHP: "onCalculateMaxHP",
+  maxSP: "onCalculateMaxSP",
+  camaraderie: "onCalculateCamaraderie",
+  determination: "onCalculateDetermination",
+  spirit: "onCalculateSpirit",
+} as const satisfies Record<BoostableStat, GameEventName>;
+
 export default class Engine implements Game {
   combat: CombatManager;
   controls: Map<string, GameInput[]>;
@@ -107,10 +116,10 @@ export default class Engine implements Game {
     this.pendingEnemies = [];
     this.spotElements = [];
     this.party = [
-      new Player(this, "A", "Martialist"),
-      new Player(this, "B", "Cleavesman"),
-      new Player(this, "C", "War Caller"),
-      new Player(this, "D", "Loam Seer"),
+      new Player(this, "Martialist"),
+      new Player(this, "Cleavesman"),
+      new Player(this, "War Caller"),
+      new Player(this, "Loam Seer"),
     ];
 
     canvas.addEventListener("keyup", (e) => {
@@ -509,6 +518,11 @@ export default class Engine implements Game {
       : undefined;
   }
 
+  getAllies(me: Combatant, includeMe: boolean) {
+    const allies: Combatant[] = me.isPC ? this.party : this.combat.allEnemies;
+    return includeMe ? allies : allies.filter((c) => c !== me);
+  }
+
   getTargetPossibilities(
     c: Combatant,
     a: CombatAction
@@ -621,15 +635,9 @@ export default class Engine implements Game {
     return value;
   }
 
-  getStat(who: Combatant, stat: AttackableStat | "dr") {
-    if (stat === "dr")
-      return this.fire("onCalculateDR", { who, value: who.dr }).value;
-
-    if (stat === "determination")
-      return this.fire("onCalculateDetermination", { who, value: who.dr })
-        .value;
-
-    return who[stat];
+  applyStatModifiers(who: Combatant, stat: BoostableStat, value: number) {
+    const event = calculateEventName[stat];
+    return this.fire(event, { who, value }).value;
   }
 
   applyDamage(
@@ -638,6 +646,8 @@ export default class Engine implements Game {
     amount: number,
     type: AttackableStat
   ) {
+    let total = 0;
+
     for (const target of targets) {
       const damage = this.fire("onCalculateDamage", {
         attacker,
@@ -646,10 +656,11 @@ export default class Engine implements Game {
         type,
       });
 
-      const resist = type === "hp" ? this.getStat(target, "dr") : 0;
+      const resist = type === "hp" ? target.dr : 0;
 
       const deal = Math.floor(damage.amount - resist);
       if (deal > 0) {
+        total += deal;
         target[type] -= deal;
         this.draw();
 
@@ -664,11 +675,13 @@ export default class Engine implements Game {
         this.fire("onAfterDamage", { attacker, target, amount, type });
       }
     }
+
+    return total;
   }
 
   heal(healer: Combatant, targets: Combatant[], amount: number) {
     for (const target of targets) {
-      const newHP = Math.min(target.hp + amount, target.maxHp);
+      const newHP = Math.min(target.hp + amount, target.maxHP);
       const gain = newHP - target.hp;
       if (gain) {
         target.hp = newHP;

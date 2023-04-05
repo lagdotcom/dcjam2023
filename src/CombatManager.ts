@@ -61,14 +61,14 @@ export default class CombatManager {
     // TODO arrange them more sensibly
     this.resetEnemies();
     for (const name of enemies) {
-      const enemy = spawn(name);
+      const enemy = spawn(this.g, name);
       const dir = random(4) as Dir;
       this.enemies[dir].push(enemy);
     }
 
     for (const c of this.aliveCombatants) {
       c.usedThisTurn.clear();
-      c.sp = Math.min(c.spirit, c.maxSp);
+      c.sp = Math.min(c.spirit, c.maxSP);
     }
 
     this.inCombat = true;
@@ -107,7 +107,7 @@ export default class CombatManager {
       if (!c.alive) continue;
 
       const newSp = c.sp < c.spirit ? c.spirit : c.sp + 1;
-      c.sp = Math.min(newSp, c.maxSp);
+      c.sp = Math.min(newSp, c.maxSP);
     }
 
     for (const e of this.effects.slice()) {

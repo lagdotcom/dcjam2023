@@ -6,6 +6,7 @@ export const OwlSkull: Item = {
   restrict: ["War Caller"],
   slot: "Hand",
   type: "Catalyst",
+  bonus: {},
   action: {
     name: "Defy",
     tags: ["defence+"],
@@ -39,6 +40,7 @@ export const IronFullcase: Item = {
   restrict: ["War Caller"],
   slot: "Body",
   type: "Armour",
+  bonus: {},
   action: {
     name: "Endure",
     tags: ["defence+"],

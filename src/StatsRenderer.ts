@@ -41,19 +41,19 @@ export default class StatsRenderer implements HasHotspots {
     const { text, hp, sp } = this;
     const { ctx } = this.g;
 
-    this.renderBar(x + hp.x, y + hp.y, pc.hp, pc.maxHp, Colours.hp);
-    this.renderBar(x + sp.x, y + sp.y, pc.sp, pc.maxSp, Colours.sp);
+    this.renderBar(x + hp.x, y + hp.y, pc.hp, pc.maxHP, Colours.hp);
+    this.renderBar(x + sp.x, y + sp.y, pc.sp, pc.maxSP, Colours.sp);
 
     ctx.globalAlpha = index === this.g.facing ? 1 : 0.7;
     ctx.drawImage(bg, x, y);
     ctx.globalAlpha = 1;
 
     const { draw } = withTextStyle(ctx, {
-      textAlign: "left",
+      textAlign: "center",
       textBaseline: "middle",
       fillStyle: "white",
     });
-    draw(pc.name, x + text.x, y + text.y, barWidth);
+    draw(pc.name, x + bg.width / 2, y + text.y, barWidth);
 
     this.spots.push({
       id: index,

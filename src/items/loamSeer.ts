@@ -6,12 +6,13 @@ export const Cornucopia: Item = {
   restrict: ["Loam Seer"],
   slot: "Hand",
   type: "Catalyst",
+  bonus: {},
   action: {
     name: "Bless",
     tags: ["heal"],
     sp: 1,
     targets: ally(1),
-    targetFilter: (c) => c.hp < c.maxHp,
+    targetFilter: (c) => c.hp < c.maxHP,
     act({ g, me, targets }) {
       const amount = mild(g);
       g.heal(me, targets, amount);
@@ -24,6 +25,7 @@ export const JacketAndRucksack: Item = {
   restrict: ["Loam Seer"],
   slot: "Body",
   type: "Armour",
+  bonus: {},
   action: {
     name: "Search",
     tags: [],

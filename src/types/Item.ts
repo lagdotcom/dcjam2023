@@ -1,5 +1,6 @@
 import { ClassName } from "./ClassName";
 import CombatAction from "./CombatAction";
+import { BoostableStat } from "./Combatant";
 
 export const ItemSlots = ["Hand", "Body", "Special"] as const;
 export type ItemSlot = (typeof ItemSlots)[number];
@@ -10,6 +11,6 @@ export default interface Item {
   slot?: ItemSlot;
   type?: string;
   action: CombatAction;
-  dr?: number;
+  bonus: Partial<Record<BoostableStat, number>>;
   lore?: string;
 }

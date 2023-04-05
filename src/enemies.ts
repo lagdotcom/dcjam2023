@@ -1,13 +1,20 @@
 import Item, { ItemSlot } from "./types/Item";
 import CombatAction from "./types/CombatAction";
 
-import Combatant from "./types/Combatant";
-import { random } from "./tools/rng";
-import { oneEnemy, generateAttack, opponents } from "./actions";
+import Combatant, { BoostableStat } from "./types/Combatant";
+import {
+  oneEnemy,
+  generateAttack,
+  opponents,
+  weak,
+  medium,
+  mild,
+} from "./actions";
+import Engine from "./Engine";
 
 type EnemyTemplate = Pick<
   Combatant,
-  "name" | "maxHp" | "maxSp" | "determination" | "camaraderie" | "spirit" | "dr"
+  "name" | "maxHP" | "maxSP" | "camaraderie" | "determination" | "spirit" | "dr"
 > & { actions: CombatAction[]; object: number };
 
 export const EnemyObjects = {
@@ -20,14 +27,14 @@ const enemies = {
   Sage: {
     object: EnemyObjects.eSage,
     name: "Sage",
-    maxHp: 20,
-    maxSp: 10,
-    determination: 3,
+    maxHP: 20,
+    maxSP: 10,
     camaraderie: 3,
+    determination: 3,
     spirit: 3,
     dr: 0,
     actions: [
-      generateAttack(2, 5),
+      generateAttack(weak),
       {
         name: "Zap",
         tags: ["attack"],
@@ -43,33 +50,33 @@ const enemies = {
   Monk: {
     object: EnemyObjects.eMonk,
     name: "Monk",
-    maxHp: 20,
-    maxSp: 10,
-    determination: 3,
+    maxHP: 20,
+    maxSP: 10,
     camaraderie: 3,
+    determination: 3,
     spirit: 3,
     dr: 1,
-    actions: [generateAttack(9, 16)],
+    actions: [generateAttack(medium)],
   },
 
   Rogue: {
     object: EnemyObjects.eRogue,
     name: "Rogue",
-    maxHp: 20,
-    maxSp: 10,
-    determination: 3,
+    maxHP: 20,
+    maxSP: 10,
     camaraderie: 3,
+    determination: 3,
     spirit: 3,
     dr: 0,
     actions: [
-      generateAttack(4, 9),
+      generateAttack(mild),
       {
         name: "Arrow",
         tags: ["attack"],
         sp: 3,
         targets: oneEnemy,
         act({ g, targets, me }) {
-          g.applyDamage(me, targets, random(14) + 1, "hp");
+          g.applyDamage(me, targets, medium(g), "hp");
         },
       },
     ],
@@ -87,30 +94,30 @@ export class Enemy implements Combatant {
   name: string;
   hp: number;
   sp: number;
-  maxHp: number;
-  maxSp: number;
-  determination: number;
-  camaraderie: number;
-  spirit: number;
+  baseMaxHP: number;
+  baseMaxSP: number;
+  baseCamaraderie: number;
+  baseDetermination: number;
+  baseSpirit: number;
 
-  dr: number;
+  baseDR: number;
   actions: CombatAction[];
   equipment: Map<ItemSlot, Item>;
   attacksInARow: number;
   usedThisTurn: Set<string>;
   lastAction?: string;
 
-  constructor(public template: EnemyTemplate) {
+  constructor(public g: Engine, public template: EnemyTemplate) {
     this.isPC = false;
     this.name = template.name;
-    this.maxHp = template.maxHp;
-    this.maxSp = template.maxSp;
-    this.hp = this.maxHp;
-    this.sp = this.maxSp;
-    this.determination = template.determination;
-    this.camaraderie = template.camaraderie;
-    this.spirit = template.spirit;
-    this.dr = template.dr;
+    this.baseMaxHP = template.maxHP;
+    this.baseMaxSP = template.maxSP;
+    this.hp = this.maxHP;
+    this.sp = this.maxSP;
+    this.baseCamaraderie = template.camaraderie;
+    this.baseDetermination = template.determination;
+    this.baseSpirit = template.spirit;
+    this.baseDR = template.dr;
     this.actions = template.actions;
     this.equipment = new Map();
     this.attacksInARow = 0;
@@ -120,8 +127,33 @@ export class Enemy implements Combatant {
   get alive() {
     return this.hp > 0;
   }
+
+  getStat(stat: BoostableStat, base: number): number {
+    return this.g.applyStatModifiers(this, stat, base);
+  }
+
+  get maxHP() {
+    return this.getStat("maxHP", this.baseMaxHP);
+  }
+  get maxSP() {
+    return this.getStat("maxHP", this.baseMaxSP);
+  }
+
+  get dr() {
+    return this.getStat("dr", this.baseDR);
+  }
+
+  get camaraderie() {
+    return this.getStat("camaraderie", this.baseCamaraderie);
+  }
+  get determination() {
+    return this.getStat("determination", this.baseDetermination);
+  }
+  get spirit() {
+    return this.getStat("spirit", this.baseSpirit);
+  }
 }
 
-export function spawn(name: EnemyName) {
-  return new Enemy(enemies[name]);
+export function spawn(g: Engine, name: EnemyName) {
+  return new Enemy(g, enemies[name]);
 }

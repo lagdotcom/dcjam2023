@@ -8,6 +8,7 @@ export const GorgothilSword: Item = {
   restrict: ["Cleavesman"],
   slot: "Hand",
   type: "Weapon",
+  bonus: {},
   action: {
     name: "Bash",
     tags: ["attack"],
@@ -25,6 +26,7 @@ export const Haringplate: Item = {
   restrict: ["Cleavesman"],
   slot: "Body",
   type: "Armour",
+  bonus: {},
   action: Brace,
 };
 
@@ -33,6 +35,7 @@ export const Gullark: Item = {
   restrict: ["Cleavesman"],
   slot: "Hand",
   type: "Shield",
+  bonus: {},
   action: {
     name: "Deflect",
     tags: ["defence+"],
@@ -61,6 +64,7 @@ export const Jaegerstock: Item = {
   restrict: ["Cleavesman"],
   slot: "Hand",
   type: "Weapon",
+  bonus: {},
   action: DuoStab,
 };
 
@@ -69,6 +73,7 @@ export const Varganglia: Item = {
   restrict: ["Cleavesman"],
   slot: "Body",
   type: "Armour",
+  bonus: {},
   action: {
     name: "Barb",
     tags: ["counter"],
@@ -108,4 +113,4 @@ Gullark.lore = `Dredged from the Furnace of Ogkh, gullarks are formerly the shel
 
 Jaegerstock.lore = `Able to stab in a forward and back motion, then a back to forward motion, and once again in a forward and back motion. Wielders often put one foot forward to brace themselves, and those with transcendental minds? They also stab in a forward and back motion.`;
 
-Varganglia.lore = `Armour that's slithered between the creviced wounds that remain after the Long War ended. Varganglia carcasses have become a common attire for cleavesmen, their pelts covered with thick and venomous barbs that erupt from the carcass when struck, making the wearer difficult to strike. `;
+Varganglia.lore = `Armour that's slithered forth from Telnoth's scars after the Long War ended. Varganglia carcasses have become a common attire for cleavesmen, their pelts covered with thick and venomous barbs that erupt from the carcass when struck, making the wearer difficult to strike.`;

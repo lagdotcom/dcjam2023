@@ -18,9 +18,11 @@ export default interface Game {
     targets: Combatant[],
     amount: number,
     type: AttackableStat
-  ): void;
+  ): number;
 
   endTurn(): void;
+
+  getAllies(me: Combatant, includeMe: boolean): Combatant[];
 
   getOpponent(me: Combatant, rotate?: number): Combatant | undefined;
 

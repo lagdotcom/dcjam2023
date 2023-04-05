@@ -1,11 +1,11 @@
-import { random } from "./tools/rng";
 import CombatAction, { ActionTarget } from "./types/CombatAction";
 import Game from "./types/Game";
 
 // damage/heal amounts
+export const weak = (g: Game) => g.roll(4);
 export const mild = (g: Game) => g.roll(6) + 2;
 export const medium = (g: Game) => g.roll(8) + 4;
-export const heavy = (g: Game) => g.roll(12) + 6;
+export const heavy = (g: Game) => g.roll(12) + 8;
 
 // targeting types
 export const onlyMe: ActionTarget = { type: "self" };
@@ -29,8 +29,7 @@ export const opponents = (
 export const oneEnemy: ActionTarget = { type: "enemy", count: 1 };
 
 export const generateAttack = (
-  minDamage: number,
-  maxDamage: number,
+  roller: (g: Game) => number,
   sp = 2
 ): CombatAction => ({
   name: "Attack",
@@ -39,7 +38,7 @@ export const generateAttack = (
   targets: oneOpponent,
   act({ g, targets, me }) {
     const bonus = me.attacksInARow;
-    const amount = random(maxDamage - minDamage + bonus) + minDamage;
+    const amount = roller(g) + bonus;
     g.applyDamage(me, targets, amount, "hp");
   },
 });

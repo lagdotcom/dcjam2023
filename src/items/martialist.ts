@@ -15,6 +15,7 @@ export const Penduchaimmer: Item = {
   restrict: ["Martialist"],
   slot: "Hand",
   type: "Weapon",
+  bonus: {},
   action: DuoStab,
 };
 
@@ -23,6 +24,7 @@ export const HaringleeKasaya: Item = {
   restrict: ["Martialist"],
   slot: "Body",
   type: "Armour",
+  bonus: {},
   action: {
     name: "Parry",
     tags: ["counter", "defence+"],
@@ -54,6 +56,7 @@ export const KhakkharaOfGhanju: Item = {
   restrict: ["Martialist"],
   slot: "Hand",
   type: "Weapon",
+  bonus: {},
   action: {
     name: "Sweep",
     tags: ["attack"],
@@ -71,6 +74,7 @@ export const Halberdigan: Item = {
   restrict: ["Martialist"],
   slot: "Hand",
   type: "Weapon",
+  bonus: {},
   action: {
     name: "Thrust",
     tags: ["attack"],
@@ -88,6 +92,7 @@ export const NundarialVestments: Item = {
   restrict: ["Martialist"],
   slot: "Body",
   type: "Armour",
+  bonus: {},
   action: Brace,
 };
 
@@ -95,6 +100,7 @@ export const HalflightCowl: Item = {
   name: "Halflight Cowl",
   restrict: ["Martialist"],
   slot: "Body",
+  bonus: {},
   action: {
     name: "Flight",
     tags: ["attack"],
@@ -111,6 +117,7 @@ export const YamorolMouth: Item = {
   name: "Yamorol's Mouth",
   restrict: ["Martialist"],
   slot: "Special",
+  bonus: {},
   action: {
     name: "Mantra",
     tags: [],
@@ -130,6 +137,7 @@ export const LoromayHand: Item = {
   name: "Loromay's Hand",
   restrict: ["Martialist"],
   slot: "Special",
+  bonus: {},
   action: {
     name: "Mudra",
     tags: ["defence-", "strength+"],

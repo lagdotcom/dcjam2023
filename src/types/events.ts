@@ -5,8 +5,12 @@ export const GameEventNames = [
   "onAfterDamage",
   "onBeforeAction",
   "onCalculateDamage",
-  "onCalculateDetermination",
   "onCalculateDR",
+  "onCalculateCamaraderie",
+  "onCalculateDetermination",
+  "onCalculateSpirit",
+  "onCalculateMaxHP",
+  "onCalculateMaxSP",
   "onCanAct",
   "onCombatOver",
   "onKilled",
@@ -36,8 +40,12 @@ export type GameEvents = {
     type: AttackableStat;
   };
 
+  onCalculateCamaraderie: { who: Combatant; value: number };
   onCalculateDetermination: { who: Combatant; value: number };
+  onCalculateSpirit: { who: Combatant; value: number };
   onCalculateDR: { who: Combatant; value: number };
+  onCalculateMaxHP: { who: Combatant; value: number };
+  onCalculateMaxSP: { who: Combatant; value: number };
 
   onCanAct: { who: Combatant; action: CombatAction; cancel: boolean };
 

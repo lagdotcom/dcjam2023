@@ -58,8 +58,12 @@
     "onAfterDamage",
     "onBeforeAction",
     "onCalculateDamage",
-    "onCalculateDetermination",
     "onCalculateDR",
+    "onCalculateCamaraderie",
+    "onCalculateDetermination",
+    "onCalculateSpirit",
+    "onCalculateMaxHP",
+    "onCalculateMaxSP",
     "onCanAct",
     "onCombatOver",
     "onKilled",
@@ -139,30 +143,11 @@
     return dirOffsets[start][end];
   }
 
-  // src/tools/rng.ts
-  function random(max) {
-    return Math.floor(Math.random() * max);
-  }
-  function oneOf(items) {
-    return items[random(items.length)];
-  }
-  function pickN(items, count) {
-    const left = items.slice();
-    if (count >= items.length)
-      return left;
-    const picked = /* @__PURE__ */ new Set();
-    for (let i = 0; i < count; i++) {
-      const item = oneOf(left);
-      picked.add(item);
-      left.splice(left.indexOf(item), 1);
-    }
-    return Array.from(picked);
-  }
-
   // src/actions.ts
+  var weak = (g) => g.roll(4);
   var mild = (g) => g.roll(6) + 2;
   var medium = (g) => g.roll(8) + 4;
-  var heavy = (g) => g.roll(12) + 6;
+  var heavy = (g) => g.roll(12) + 8;
   var onlyMe = { type: "self" };
   var ally = (count) => ({ type: "ally", count });
   var allAllies = { type: "ally" };
@@ -179,14 +164,14 @@
     offsets
   });
   var oneEnemy = { type: "enemy", count: 1 };
-  var generateAttack = (minDamage, maxDamage, sp = 2) => ({
+  var generateAttack = (roller, sp = 2) => ({
     name: "Attack",
     tags: ["attack"],
     sp,
     targets: oneOpponent,
     act({ g, targets, me }) {
       const bonus = me.attacksInARow;
-      const amount = random(maxDamage - minDamage + bonus) + minDamage;
+      const amount = roller(g) + bonus;
       g.applyDamage(me, targets, amount, "hp");
     }
   });
@@ -245,14 +230,14 @@
     Sage: {
       object: EnemyObjects.eSage,
       name: "Sage",
-      maxHp: 20,
-      maxSp: 10,
-      determination: 3,
+      maxHP: 20,
+      maxSP: 10,
       camaraderie: 3,
+      determination: 3,
       spirit: 3,
       dr: 0,
       actions: [
-        generateAttack(2, 5),
+        generateAttack(weak),
         {
           name: "Zap",
           tags: ["attack"],
@@ -267,32 +252,32 @@
     Monk: {
       object: EnemyObjects.eMonk,
       name: "Monk",
-      maxHp: 20,
-      maxSp: 10,
-      determination: 3,
+      maxHP: 20,
+      maxSP: 10,
       camaraderie: 3,
+      determination: 3,
       spirit: 3,
       dr: 1,
-      actions: [generateAttack(9, 16)]
+      actions: [generateAttack(medium)]
     },
     Rogue: {
       object: EnemyObjects.eRogue,
       name: "Rogue",
-      maxHp: 20,
-      maxSp: 10,
-      determination: 3,
+      maxHP: 20,
+      maxSP: 10,
       camaraderie: 3,
+      determination: 3,
       spirit: 3,
       dr: 0,
       actions: [
-        generateAttack(4, 9),
+        generateAttack(mild),
         {
           name: "Arrow",
           tags: ["attack"],
           sp: 3,
           targets: oneEnemy,
           act({ g, targets, me }) {
-            g.applyDamage(me, targets, random(14) + 1, "hp");
+            g.applyDamage(me, targets, medium(g), "hp");
           }
         }
       ]
@@ -303,18 +288,19 @@
     return EnemyNames.includes(name);
   }
   var Enemy = class {
-    constructor(template) {
+    constructor(g, template) {
+      this.g = g;
       this.template = template;
       this.isPC = false;
       this.name = template.name;
-      this.maxHp = template.maxHp;
-      this.maxSp = template.maxSp;
-      this.hp = this.maxHp;
-      this.sp = this.maxSp;
-      this.determination = template.determination;
-      this.camaraderie = template.camaraderie;
-      this.spirit = template.spirit;
-      this.dr = template.dr;
+      this.baseMaxHP = template.maxHP;
+      this.baseMaxSP = template.maxSP;
+      this.hp = this.maxHP;
+      this.sp = this.maxSP;
+      this.baseCamaraderie = template.camaraderie;
+      this.baseDetermination = template.determination;
+      this.baseSpirit = template.spirit;
+      this.baseDR = template.dr;
       this.actions = template.actions;
       this.equipment = /* @__PURE__ */ new Map();
       this.attacksInARow = 0;
@@ -323,9 +309,50 @@
     get alive() {
       return this.hp > 0;
     }
+    getStat(stat, base) {
+      return this.g.applyStatModifiers(this, stat, base);
+    }
+    get maxHP() {
+      return this.getStat("maxHP", this.baseMaxHP);
+    }
+    get maxSP() {
+      return this.getStat("maxHP", this.baseMaxSP);
+    }
+    get dr() {
+      return this.getStat("dr", this.baseDR);
+    }
+    get camaraderie() {
+      return this.getStat("camaraderie", this.baseCamaraderie);
+    }
+    get determination() {
+      return this.getStat("determination", this.baseDetermination);
+    }
+    get spirit() {
+      return this.getStat("spirit", this.baseSpirit);
+    }
   };
-  function spawn(name) {
-    return new Enemy(enemies[name]);
+  function spawn(g, name) {
+    return new Enemy(g, enemies[name]);
+  }
+
+  // src/tools/rng.ts
+  function random(max) {
+    return Math.floor(Math.random() * max);
+  }
+  function oneOf(items) {
+    return items[random(items.length)];
+  }
+  function pickN(items, count) {
+    const left = items.slice();
+    if (count >= items.length)
+      return left;
+    const picked = /* @__PURE__ */ new Set();
+    for (let i = 0; i < count; i++) {
+      const item = oneOf(left);
+      picked.add(item);
+      left.splice(left.indexOf(item), 1);
+    }
+    return Array.from(picked);
   }
 
   // src/tools/isDefined.ts
@@ -410,13 +437,13 @@
         this.g.removeEffect(e);
       this.resetEnemies();
       for (const name of enemies2) {
-        const enemy = spawn(name);
+        const enemy = spawn(this.g, name);
         const dir = random(4);
         this.enemies[dir].push(enemy);
       }
       for (const c of this.aliveCombatants) {
         c.usedThisTurn.clear();
-        c.sp = Math.min(c.spirit, c.maxSp);
+        c.sp = Math.min(c.spirit, c.maxSP);
       }
       this.inCombat = true;
       this.side = "player";
@@ -443,7 +470,7 @@
         if (!c.alive)
           continue;
         const newSp = c.sp < c.spirit ? c.spirit : c.sp + 1;
-        c.sp = Math.min(newSp, c.maxSp);
+        c.sp = Math.min(newSp, c.maxSP);
       }
       for (const e of this.effects.slice()) {
         if (--e.duration < 1)
@@ -1065,8 +1092,8 @@
   var AttackableStats = [
     "hp",
     "sp",
-    "determination",
     "camaraderie",
+    "determination",
     "spirit"
   ];
 
@@ -1331,17 +1358,17 @@
     renderPC({ x, y }, pc, bg, index) {
       const { text, hp, sp } = this;
       const { ctx } = this.g;
-      this.renderBar(x + hp.x, y + hp.y, pc.hp, pc.maxHp, Colours_default.hp);
-      this.renderBar(x + sp.x, y + sp.y, pc.sp, pc.maxSp, Colours_default.sp);
+      this.renderBar(x + hp.x, y + hp.y, pc.hp, pc.maxHP, Colours_default.hp);
+      this.renderBar(x + sp.x, y + sp.y, pc.sp, pc.maxSP, Colours_default.sp);
       ctx.globalAlpha = index === this.g.facing ? 1 : 0.7;
       ctx.drawImage(bg, x, y);
       ctx.globalAlpha = 1;
       const { draw } = withTextStyle(ctx, {
-        textAlign: "left",
+        textAlign: "center",
         textBaseline: "middle",
         fillStyle: "white"
       });
-      draw(pc.name, x + text.x, y + text.y, barWidth);
+      draw(pc.name, x + bg.width / 2, y + text.y, barWidth);
       this.spots.push({
         id: index,
         x,
@@ -1659,6 +1686,7 @@
     restrict: ["Cleavesman"],
     slot: "Hand",
     type: "Weapon",
+    bonus: {},
     action: {
       name: "Bash",
       tags: ["attack"],
@@ -1675,6 +1703,7 @@
     restrict: ["Cleavesman"],
     slot: "Body",
     type: "Armour",
+    bonus: {},
     action: Brace
   };
   var Gullark = {
@@ -1682,6 +1711,7 @@
     restrict: ["Cleavesman"],
     slot: "Hand",
     type: "Shield",
+    bonus: {},
     action: {
       name: "Deflect",
       tags: ["defence+"],
@@ -1709,6 +1739,7 @@
     restrict: ["Cleavesman"],
     slot: "Hand",
     type: "Weapon",
+    bonus: {},
     action: DuoStab
   };
   var Varganglia = {
@@ -1716,6 +1747,7 @@
     restrict: ["Cleavesman"],
     slot: "Body",
     type: "Armour",
+    bonus: {},
     action: {
       name: "Barb",
       tags: ["counter"],
@@ -1749,7 +1781,89 @@
 This phrase has been uttered ever since Gorgothil was liberated from the thralls of Mullanginan during the Lost War. Gorgothil is now an ever devoted ally, paying their debts by smithing weaponry for all cleavesmen under Cherraphy's wing."`;
   Gullark.lore = `Dredged from the Furnace of Ogkh, gullarks are formerly the shells belonging to an ancient creature called a Crim; egg shaped quadrupeds with the face of someone screaming in torment. Many believe their extinction is owed to the over-production of gullarks during the Lost War.`;
   Jaegerstock.lore = `Able to stab in a forward and back motion, then a back to forward motion, and once again in a forward and back motion. Wielders often put one foot forward to brace themselves, and those with transcendental minds? They also stab in a forward and back motion.`;
-  Varganglia.lore = `Armour that's slithered between the creviced wounds that remain after the Long War ended. Varganglia carcasses have become a common attire for cleavesmen, their pelts covered with thick and venomous barbs that erupt from the carcass when struck, making the wearer difficult to strike. `;
+  Varganglia.lore = `Armour that's slithered forth from Telnoth's scars after the Long War ended. Varganglia carcasses have become a common attire for cleavesmen, their pelts covered with thick and venomous barbs that erupt from the carcass when struck, making the wearer difficult to strike.`;
+
+  // src/items/flagSinger.ts
+  var CarvingKnife = {
+    name: "Carving Knife",
+    restrict: ["Flag Singer"],
+    slot: "Hand",
+    type: "Weapon",
+    bonus: {},
+    action: {
+      name: "Scar",
+      tags: ["attack"],
+      sp: 3,
+      targets: oneOpponent,
+      act({ g, me, targets }) {
+        const amount = 4;
+        g.applyDamage(me, targets, amount, "hp");
+        g.applyDamage(me, targets, amount, "hp");
+        g.applyDamage(me, targets, amount, "hp");
+      }
+    }
+  };
+  var SignedCasque = {
+    name: "Signed Casque",
+    restrict: ["Flag Singer"],
+    slot: "Body",
+    type: "Armour",
+    bonus: {},
+    action: {
+      name: "Cheer",
+      tags: ["defence+"],
+      sp: 2,
+      targets: ally(1),
+      act({ g, targets }) {
+        g.addEffect(() => ({
+          name: "Cheer",
+          duration: 2,
+          affects: targets,
+          onCalculateDR(e) {
+            if (targets.includes(e.who))
+              e.value += 3;
+          }
+        }));
+      }
+    }
+  };
+  var Fandagger = {
+    name: "Fandagger",
+    restrict: ["Flag Singer"],
+    slot: "Hand",
+    type: "Flag",
+    bonus: {},
+    action: {
+      name: "Conduct",
+      tags: ["attack"],
+      sp: 3,
+      targets: oneOpponent,
+      act({ g, me, targets }) {
+        const dealt = g.applyDamage(me, targets, 6, "hp");
+        if (dealt > 0) {
+          const ally2 = oneOf(g.getAllies(me, false));
+          if (ally2) {
+            g.addToLog(`${me.name} conducts ${ally2.name}'s next attack.`);
+            g.addEffect((destroy) => ({
+              name: "Conduct",
+              duration: 1,
+              affects: [ally2],
+              onCalculateDamage(e) {
+                if (e.attacker === ally2) {
+                  const bonus = g.roll(10);
+                  e.amount += bonus;
+                  destroy();
+                }
+              }
+            }));
+          }
+        }
+      }
+    }
+  };
+  CarvingKnife.lore = `Not a martial weapon, but rather a craftsman and artist's tool. Having secretly spurned Cherraphy's foul request, this Singer carries this knife as a confirmation that what they did was right.`;
+  SignedCasque.lore = `A vest made of traditional plaster and adorned in writing with the feelings and wishes of each villager the Singer dares to protect.`;
+  Fandagger.lore = `Fandaggers are graceful tools of the rogue, to be danced with and to be thrown between acrobats in relay. Held at one end they concertina into painted fans; the other suits the stabbing grip.`;
 
   // src/items/loamSeer.ts
   var Cornucopia = {
@@ -1757,12 +1871,13 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     restrict: ["Loam Seer"],
     slot: "Hand",
     type: "Catalyst",
+    bonus: {},
     action: {
       name: "Bless",
       tags: ["heal"],
       sp: 1,
       targets: ally(1),
-      targetFilter: (c) => c.hp < c.maxHp,
+      targetFilter: (c) => c.hp < c.maxHP,
       act({ g, me, targets }) {
         const amount = mild(g);
         g.heal(me, targets, amount);
@@ -1774,6 +1889,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     restrict: ["Loam Seer"],
     slot: "Body",
     type: "Armour",
+    bonus: {},
     action: {
       name: "Search",
       tags: [],
@@ -1796,6 +1912,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     restrict: ["Martialist"],
     slot: "Hand",
     type: "Weapon",
+    bonus: {},
     action: DuoStab
   };
   var HaringleeKasaya = {
@@ -1803,6 +1920,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     restrict: ["Martialist"],
     slot: "Body",
     type: "Armour",
+    bonus: {},
     action: {
       name: "Parry",
       tags: ["counter", "defence+"],
@@ -1832,6 +1950,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     restrict: ["Martialist"],
     slot: "Hand",
     type: "Weapon",
+    bonus: {},
     action: {
       name: "Sweep",
       tags: ["attack"],
@@ -1848,6 +1967,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     restrict: ["Martialist"],
     slot: "Hand",
     type: "Weapon",
+    bonus: {},
     action: {
       name: "Thrust",
       tags: ["attack"],
@@ -1864,12 +1984,14 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     restrict: ["Martialist"],
     slot: "Body",
     type: "Armour",
+    bonus: {},
     action: Brace
   };
   var HalflightCowl = {
     name: "Halflight Cowl",
     restrict: ["Martialist"],
     slot: "Body",
+    bonus: {},
     action: {
       name: "Flight",
       tags: ["attack"],
@@ -1885,6 +2007,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     name: "Yamorol's Mouth",
     restrict: ["Martialist"],
     slot: "Special",
+    bonus: {},
     action: {
       name: "Mantra",
       tags: [],
@@ -1903,6 +2026,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     name: "Loromay's Hand",
     restrict: ["Martialist"],
     slot: "Special",
+    bonus: {},
     action: {
       name: "Mudra",
       tags: ["defence-", "strength+"],
@@ -1936,6 +2060,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     restrict: ["War Caller"],
     slot: "Hand",
     type: "Catalyst",
+    bonus: {},
     action: {
       name: "Defy",
       tags: ["defence+"],
@@ -1969,6 +2094,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     restrict: ["War Caller"],
     slot: "Body",
     type: "Armour",
+    bonus: {},
     action: {
       name: "Endure",
       tags: ["defence+"],
@@ -2006,6 +2132,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
   // src/classes.ts
   var classes = {
     Martialist: {
+      name: "Kirkwin",
       hp: 21,
       sp: 7,
       determination: 6,
@@ -2015,6 +2142,8 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       skill: "Smash"
     },
     Cleavesman: {
+      name: "Mogrigg",
+      lore: `The village's headsman, a role instigated by Cherraphy and chosen at random. Considered a luckless man, not blamed for the three lives he's taken at his god's behest. Was previously a loyal soldier and pikeman at a time when his lord was just and interested in protecting the border villages, before the man's personality crumbled into rote righteousness. Mogrigg still has the scars, but none of the respect he earned. Of course he volunteered to brave the Nightjar! His hand was the first to rise!`,
       hp: 25,
       sp: 6,
       determination: 4,
@@ -2024,6 +2153,8 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       skill: "Cut"
     },
     "Far Scout": {
+      name: "Tam",
+      lore: `The surest bow in Haringlee. Favouring high cliffs above the treetops, she is a very fine huntress who's found that her place in the village of her birth has become slowly less secure. Tam worships only as far as socially necessary, excusing herself more and more from the mania overtaking the populace. Still, that does leave more time to practise her woodscraft, her acrobacy and her deadly aim. Sensing the opportunity for change in the expedition to the Nightjar, she signs up, explaining that she already knows the best route over the river.`,
       hp: 18,
       sp: 7,
       determination: 3,
@@ -2033,6 +2164,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       skill: "Tamper"
     },
     "War Caller": {
+      name: "Silas",
       hp: 30,
       sp: 5,
       determination: 5,
@@ -2042,15 +2174,18 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       skill: "Prayer"
     },
     "Flag Singer": {
+      name: "Belsome",
+      lore: `A travelling auteur, stranded in Haringlee, their stagecoach impounded under the most arbitrary of Cherraphic laws. Before that, a bard, and before that, a wanted street thief. Now reformed as an entertainer, their reflexes remain true. Belsome has the instinct and the presence of mind needed to size up a dangerous situation, the savvy required to navigate it without incident and the compassion that also steers those around them to safety. Belsome doesn't know how vital their skills of performance, of misdirection and of psychic intuition will be inside the Fortress Nightjar, but this isn't exactly the first time they've performed without rehearsal.`,
       hp: 21,
       sp: 6,
       determination: 2,
       camaraderie: 6,
       spirit: 3,
-      items: [],
-      skill: "???"
+      items: [CarvingKnife, SignedCasque],
+      skill: "Kneel"
     },
     "Loam Seer": {
+      name: "Chiteri",
       hp: 18,
       sp: 5,
       determination: 2,
@@ -2067,18 +2202,11 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     return classes_default[className][stat] + (bonusStat === stat ? bonusIfTrue : 0);
   }
   var Player = class {
-    constructor(g, name, className, bonus, items = classes_default[className].items) {
+    constructor(g, className, bonus, items = classes_default[className].items) {
       this.g = g;
-      this.name = name;
       this.className = className;
+      this.name = classes_default[className].name;
       this.isPC = true;
-      this.maxHp = getBaseStat(className, "hp", bonus, 5);
-      this.hp = this.maxHp;
-      this.maxSp = getBaseStat(className, "sp", bonus);
-      this.determination = getBaseStat(className, "determination", bonus);
-      this.camaraderie = getBaseStat(className, "camaraderie", bonus);
-      this.spirit = getBaseStat(className, "spirit", bonus);
-      this.sp = Math.min(this.maxSp, this.spirit);
       this.attacksInARow = 0;
       this.equipment = /* @__PURE__ */ new Map();
       this.usedThisTurn = /* @__PURE__ */ new Set();
@@ -2089,19 +2217,45 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
         else
           g.inventory.push(item);
       }
+      this.baseMaxHP = getBaseStat(className, "hp", bonus, 5);
+      this.baseMaxSP = getBaseStat(className, "sp", bonus);
+      this.baseCamaraderie = getBaseStat(className, "camaraderie", bonus);
+      this.baseDetermination = getBaseStat(className, "determination", bonus);
+      this.baseSpirit = getBaseStat(className, "spirit", bonus);
+      this.hp = this.maxHP;
+      this.sp = Math.min(this.baseMaxSP, this.spirit);
     }
     get alive() {
       return this.hp > 0;
     }
+    getStat(stat, base = 0) {
+      var _a;
+      let value = base;
+      for (const item of this.equipment.values()) {
+        value += (_a = item == null ? void 0 : item.bonus[stat]) != null ? _a : 0;
+      }
+      return this.g.applyStatModifiers(this, stat, value);
+    }
+    get maxHP() {
+      return this.getStat("maxHP", this.baseMaxHP);
+    }
+    get maxSP() {
+      return this.getStat("maxHP", this.baseMaxSP);
+    }
     get dr() {
-      let value = 0;
-      for (const item of this.equipment.values())
-        if (item == null ? void 0 : item.dr)
-          value += item.dr;
-      return value;
+      return this.getStat("dr", 0);
+    }
+    get camaraderie() {
+      return this.getStat("camaraderie", this.baseCamaraderie);
+    }
+    get determination() {
+      return this.getStat("determination", this.baseDetermination);
+    }
+    get spirit() {
+      return this.getStat("spirit", this.baseSpirit);
     }
     get actions() {
-      return Array.from(this.equipment.values()).map((i) => i.action).concat(endTurnAction);
+      return Array.from(this.equipment.values()).map((i) => i.action).concat(generateAttack(mild), endTurnAction);
     }
     get canMove() {
       return !this.alive || this.sp > 0;
@@ -2850,6 +3004,14 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
   };
 
   // src/Engine.ts
+  var calculateEventName = {
+    dr: "onCalculateDR",
+    maxHP: "onCalculateMaxHP",
+    maxSP: "onCalculateMaxSP",
+    camaraderie: "onCalculateCamaraderie",
+    determination: "onCalculateDetermination",
+    spirit: "onCalculateSpirit"
+  };
   var Engine = class {
     constructor(canvas) {
       this.canvas = canvas;
@@ -2902,10 +3064,10 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       this.pendingEnemies = [];
       this.spotElements = [];
       this.party = [
-        new Player(this, "A", "Martialist"),
-        new Player(this, "B", "Cleavesman"),
-        new Player(this, "C", "War Caller"),
-        new Player(this, "D", "Loam Seer")
+        new Player(this, "Martialist"),
+        new Player(this, "Cleavesman"),
+        new Player(this, "War Caller"),
+        new Player(this, "Loam Seer")
       ];
       canvas.addEventListener("keyup", (e) => {
         const keys = getKeyNames(e.code, e.shiftKey, e.altKey, e.ctrlKey);
@@ -3229,6 +3391,10 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       const dir = rotate(myDir, turn);
       return me.isPC ? this.combat.enemies[dir][0] : distance === 0 ? this.party[dir] : void 0;
     }
+    getAllies(me, includeMe) {
+      const allies = me.isPC ? this.party : this.combat.allEnemies;
+      return includeMe ? allies : allies.filter((c) => c !== me);
+    }
     getTargetPossibilities(c, a) {
       var _a;
       if (a.targets.type === "self")
@@ -3323,14 +3489,12 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       this.fire("onRoll", { size, value });
       return value;
     }
-    getStat(who, stat) {
-      if (stat === "dr")
-        return this.fire("onCalculateDR", { who, value: who.dr }).value;
-      if (stat === "determination")
-        return this.fire("onCalculateDetermination", { who, value: who.dr }).value;
-      return who[stat];
+    applyStatModifiers(who, stat, value) {
+      const event = calculateEventName[stat];
+      return this.fire(event, { who, value }).value;
     }
     applyDamage(attacker, targets, amount, type) {
+      let total = 0;
       for (const target of targets) {
         const damage = this.fire("onCalculateDamage", {
           attacker,
@@ -3338,9 +3502,10 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
           amount,
           type
         });
-        const resist = type === "hp" ? this.getStat(target, "dr") : 0;
+        const resist = type === "hp" ? target.dr : 0;
         const deal = Math.floor(damage.amount - resist);
         if (deal > 0) {
+          total += deal;
           target[type] -= deal;
           this.draw();
           const message = type === "hp" ? `${target.name} takes ${deal} damage.` : `${target.name} loses ${deal} ${type}.`;
@@ -3350,10 +3515,11 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
           this.fire("onAfterDamage", { attacker, target, amount, type });
         }
       }
+      return total;
     }
     heal(healer, targets, amount) {
       for (const target of targets) {
-        const newHP = Math.min(target.hp + amount, target.maxHp);
+        const newHP = Math.min(target.hp + amount, target.maxHP);
         const gain = newHP - target.hp;
         if (gain) {
           target.hp = newHP;
