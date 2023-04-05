@@ -2,7 +2,7 @@ import Combatant, { AttackableStat, BoostableStat } from "./types/Combatant";
 import Item, { ItemSlot } from "./types/Item";
 
 import { ClassName } from "./types/ClassName";
-import { endTurnAction, generateAttack, mild } from "./actions";
+import { endTurnAction, generateAttack } from "./actions";
 import classes from "./classes";
 import Engine from "./Engine";
 
@@ -95,7 +95,7 @@ export default class Player implements Combatant {
   get actions() {
     return Array.from(this.equipment.values())
       .map((i) => i.action)
-      .concat(generateAttack(mild), endTurnAction);
+      .concat(generateAttack(), endTurnAction);
   }
 
   get canMove() {

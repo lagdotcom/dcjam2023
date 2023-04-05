@@ -2,14 +2,7 @@ import Item, { ItemSlot } from "./types/Item";
 import CombatAction from "./types/CombatAction";
 
 import Combatant, { BoostableStat } from "./types/Combatant";
-import {
-  oneEnemy,
-  generateAttack,
-  opponents,
-  weak,
-  medium,
-  mild,
-} from "./actions";
+import { oneEnemy, generateAttack, opponents } from "./actions";
 import Engine from "./Engine";
 
 type EnemyTemplate = Pick<
@@ -34,14 +27,14 @@ const enemies = {
     spirit: 3,
     dr: 0,
     actions: [
-      generateAttack(weak),
+      generateAttack(0),
       {
         name: "Zap",
-        tags: ["attack"],
+        tags: ["attack", "spell"],
         sp: 3,
         targets: opponents(),
         act({ g, targets, me }) {
-          g.applyDamage(me, targets, 3, "hp");
+          g.applyDamage(me, targets, 3, "hp", "magic");
         },
       },
     ],
@@ -56,7 +49,7 @@ const enemies = {
     determination: 3,
     spirit: 3,
     dr: 1,
-    actions: [generateAttack(medium)],
+    actions: [generateAttack(6)],
   },
 
   Rogue: {
@@ -69,14 +62,15 @@ const enemies = {
     spirit: 3,
     dr: 0,
     actions: [
-      generateAttack(mild),
+      generateAttack(2),
       {
         name: "Arrow",
         tags: ["attack"],
         sp: 3,
         targets: oneEnemy,
         act({ g, targets, me }) {
-          g.applyDamage(me, targets, medium(g), "hp");
+          const amount = g.roll(me) + 4;
+          g.applyDamage(me, targets, amount, "hp", "normal");
         },
       },
     ],

@@ -144,10 +144,6 @@
   }
 
   // src/actions.ts
-  var weak = (g) => g.roll(4);
-  var mild = (g) => g.roll(6) + 2;
-  var medium = (g) => g.roll(8) + 4;
-  var heavy = (g) => g.roll(12) + 8;
   var onlyMe = { type: "self" };
   var ally = (count) => ({ type: "ally", count });
   var allAllies = { type: "ally" };
@@ -164,15 +160,15 @@
     offsets
   });
   var oneEnemy = { type: "enemy", count: 1 };
-  var generateAttack = (roller, sp = 2) => ({
+  var generateAttack = (plus = 0, sp = 2) => ({
     name: "Attack",
     tags: ["attack"],
     sp,
     targets: oneOpponent,
     act({ g, targets, me }) {
       const bonus = me.attacksInARow;
-      const amount = roller(g) + bonus;
-      g.applyDamage(me, targets, amount, "hp");
+      const amount = g.roll(me) + plus + bonus;
+      g.applyDamage(me, targets, amount, "hp", "normal");
     }
   });
   var endTurnAction = {
@@ -185,21 +181,62 @@
       g.endTurn();
     }
   };
+  var Bless = {
+    name: "Bless",
+    tags: ["heal", "spell"],
+    sp: 1,
+    targets: ally(1),
+    targetFilter: (c) => c.hp < c.maxHP,
+    act({ g, me, targets }) {
+      for (const target of targets) {
+        const amount = Math.max(0, target.camaraderie) + 2;
+        g.heal(me, [target], amount);
+      }
+    }
+  };
   var Brace = {
     name: "Brace",
-    tags: ["defence+"],
+    tags: ["buff"],
     sp: 3,
     targets: onlyMe,
     act({ g, me }) {
       g.addEffect((destroy) => ({
         name: "Brace",
-        duration: Infinity,
+        duration: 2,
         affects: [me],
+        buff: true,
         onCalculateDamage(e) {
-          if (e.target === me) {
+          if (this.affects.includes(e.target)) {
             e.amount /= 2;
             destroy();
           }
+        }
+      }));
+    }
+  };
+  var Defy = {
+    name: "Defy",
+    tags: ["buff"],
+    sp: 3,
+    targets: onlyMe,
+    act({ g, me }) {
+      g.addEffect(() => ({
+        name: "Defy",
+        duration: 2,
+        affects: [me],
+        onAfterDamage({ target, attacker }) {
+          if (this.affects.includes(target))
+            return;
+          g.addToLog(`${me.name} stuns ${attacker.name} with their defiance!`);
+          g.addEffect(() => ({
+            name: "Defied",
+            duration: 1,
+            affects: [attacker],
+            onCanAct(e) {
+              if (this.affects.includes(e.who))
+                e.cancel = true;
+            }
+          }));
         }
       }));
     }
@@ -209,14 +246,8 @@
     tags: ["attack"],
     sp: 3,
     targets: opponents(Infinity, [0, 2]),
-    act({ g, me }) {
-      const amount = mild(g);
-      const front = g.getOpponent(me);
-      if (front)
-        g.applyDamage(me, [front], amount, "hp");
-      const opposite = g.getOpponent(me, 2);
-      if (opposite)
-        g.applyDamage(me, [opposite], amount / 2, "hp");
+    act({ g, me, targets }) {
+      g.applyDamage(me, targets, 6, "hp", "normal");
     }
   };
 
@@ -237,14 +268,14 @@
       spirit: 3,
       dr: 0,
       actions: [
-        generateAttack(weak),
+        generateAttack(0),
         {
           name: "Zap",
-          tags: ["attack"],
+          tags: ["attack", "spell"],
           sp: 3,
           targets: opponents(),
           act({ g, targets, me }) {
-            g.applyDamage(me, targets, 3, "hp");
+            g.applyDamage(me, targets, 3, "hp", "magic");
           }
         }
       ]
@@ -258,7 +289,7 @@
       determination: 3,
       spirit: 3,
       dr: 1,
-      actions: [generateAttack(medium)]
+      actions: [generateAttack(6)]
     },
     Rogue: {
       object: EnemyObjects.eRogue,
@@ -270,14 +301,15 @@
       spirit: 3,
       dr: 0,
       actions: [
-        generateAttack(mild),
+        generateAttack(2),
         {
           name: "Arrow",
           tags: ["attack"],
           sp: 3,
           targets: oneEnemy,
           act({ g, targets, me }) {
-            g.applyDamage(me, targets, medium(g), "hp");
+            const amount = g.roll(me) + 4;
+            g.applyDamage(me, targets, amount, "hp", "normal");
           }
         }
       ]
@@ -1150,7 +1182,7 @@
         (index, type, amount) => {
           const pc = getPC(index);
           const stat = getStat(type);
-          g.applyDamage(pc, [pc], amount, stat);
+          g.applyDamage(pc, [pc], amount, stat, "normal");
         }
       );
       this.addNative(
@@ -1203,7 +1235,7 @@
           const stat = getStat(type);
           const pcIndex = this.env.get("pcIndex").value;
           const pc = g.party[pcIndex];
-          const roll = g.roll(10) + pc[stat];
+          const roll = g.roll(pc) + pc[stat];
           return roll >= dc;
         }
       );
@@ -1693,8 +1725,8 @@
       sp: 1,
       targets: oneOpponent,
       act({ g, me, targets }) {
-        const amount = medium(g);
-        g.applyDamage(me, targets, amount, "hp");
+        const amount = g.roll(me) + 4;
+        g.applyDamage(me, targets, amount, "hp", "normal");
       }
     }
   };
@@ -1703,7 +1735,7 @@
     restrict: ["Cleavesman"],
     slot: "Body",
     type: "Armour",
-    bonus: {},
+    bonus: { maxHP: 5 },
     action: Brace
   };
   var Gullark = {
@@ -1711,10 +1743,10 @@
     restrict: ["Cleavesman"],
     slot: "Hand",
     type: "Shield",
-    bonus: {},
+    bonus: { maxHP: 3 },
     action: {
       name: "Deflect",
-      tags: ["defence+"],
+      tags: ["buff"],
       sp: 2,
       targets: onlyMe,
       act({ g, me }) {
@@ -1723,7 +1755,7 @@
           duration: Infinity,
           affects: [me],
           onCalculateDamage(e) {
-            if (e.target === me) {
+            if (this.affects.includes(e.target)) {
               g.addToLog(`${me.name} deflects the blow.`);
               e.amount = 0;
               destroy();
@@ -1759,7 +1791,7 @@
           duration: 2,
           affects: [me],
           onAfterDamage(e) {
-            if (e.target === me) {
+            if (this.affects.includes(e.target)) {
               const targets = [
                 g.getOpponent(me, 0),
                 g.getOpponent(me, 1),
@@ -1767,12 +1799,29 @@
               ].filter(isDefined);
               if (targets.length) {
                 const target = oneOf(targets);
-                const amount = mild(g);
-                g.applyDamage(me, [target], amount, "hp");
+                const amount = g.roll(me);
+                g.applyDamage(me, [target], amount, "hp", "normal");
               }
             }
           }
         }));
+      }
+    }
+  };
+  var Gambesar = {
+    name: "Gambesar",
+    restrict: ["Cleavesman"],
+    slot: "Body",
+    type: "Armour",
+    bonus: { maxHP: 5 },
+    action: {
+      name: "Tackle",
+      tags: ["attack"],
+      sp: 3,
+      targets: opponents(1, [1, 3]),
+      act({ g, me, targets }) {
+        const amount = g.roll(me);
+        g.applyDamage(me, targets, amount, "hp", "normal");
       }
     }
   };
@@ -1782,6 +1831,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
   Gullark.lore = `Dredged from the Furnace of Ogkh, gullarks are formerly the shells belonging to an ancient creature called a Crim; egg shaped quadrupeds with the face of someone screaming in torment. Many believe their extinction is owed to the over-production of gullarks during the Lost War.`;
   Jaegerstock.lore = `Able to stab in a forward and back motion, then a back to forward motion, and once again in a forward and back motion. Wielders often put one foot forward to brace themselves, and those with transcendental minds? They also stab in a forward and back motion.`;
   Varganglia.lore = `Armour that's slithered forth from Telnoth's scars after the Long War ended. Varganglia carcasses have become a common attire for cleavesmen, their pelts covered with thick and venomous barbs that erupt from the carcass when struck, making the wearer difficult to strike.`;
+  Gambesar.lore = `"Enchanted by Cherraphy's highest order of sages, gambesars are awarded only to cleavesman that return from battle after sustaining tremendous injury. It's said that wearing one allows the user to shift the environment around them, appearing multiple steps from where they first started in just an instant.`;
 
   // src/items/flagSinger.ts
   var CarvingKnife = {
@@ -1797,9 +1847,9 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       targets: oneOpponent,
       act({ g, me, targets }) {
         const amount = 4;
-        g.applyDamage(me, targets, amount, "hp");
-        g.applyDamage(me, targets, amount, "hp");
-        g.applyDamage(me, targets, amount, "hp");
+        g.applyDamage(me, targets, amount, "hp", "normal");
+        g.applyDamage(me, targets, amount, "hp", "normal");
+        g.applyDamage(me, targets, amount, "hp", "normal");
       }
     }
   };
@@ -1811,7 +1861,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     bonus: {},
     action: {
       name: "Cheer",
-      tags: ["defence+"],
+      tags: ["buff"],
       sp: 2,
       targets: ally(1),
       act({ g, targets }) {
@@ -1819,8 +1869,9 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
           name: "Cheer",
           duration: 2,
           affects: targets,
+          buff: true,
           onCalculateDR(e) {
-            if (targets.includes(e.who))
+            if (this.affects.includes(e.who))
               e.value += 3;
           }
         }));
@@ -1839,7 +1890,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       sp: 3,
       targets: oneOpponent,
       act({ g, me, targets }) {
-        const dealt = g.applyDamage(me, targets, 6, "hp");
+        const dealt = g.applyDamage(me, targets, 6, "hp", "normal");
         if (dealt > 0) {
           const ally2 = oneOf(g.getAllies(me, false));
           if (ally2) {
@@ -1848,9 +1899,10 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
               name: "Conduct",
               duration: 1,
               affects: [ally2],
+              buff: true,
               onCalculateDamage(e) {
-                if (e.attacker === ally2) {
-                  const bonus = g.roll(10);
+                if (this.affects.includes(e.attacker)) {
+                  const bonus = g.roll(me);
                   e.amount += bonus;
                   destroy();
                 }
@@ -1861,9 +1913,79 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       }
     }
   };
+  var Storyscroll = {
+    name: "Storyscroll",
+    restrict: ["Flag Singer"],
+    slot: "Hand",
+    type: "Flag",
+    bonus: { spirit: 1 },
+    action: {
+      name: "Bravery",
+      tags: ["buff"],
+      sp: 3,
+      targets: allAllies,
+      act({ g, targets }) {
+        g.addEffect(() => ({
+          name: "Bravery",
+          duration: 2,
+          affects: targets,
+          buff: true,
+          onCalculateDR(e) {
+            if (this.affects.includes(e.who))
+              e.value += 2;
+          }
+        }));
+      }
+    }
+  };
+  var DivaDress = {
+    name: "Diva's Dress",
+    restrict: ["Flag Singer"],
+    slot: "Body",
+    type: "Armour",
+    bonus: { spirit: 1 },
+    action: Defy
+  };
+  var GrowlingCollar = {
+    name: "Growling Collar",
+    restrict: ["Flag Singer"],
+    slot: "Body",
+    type: "Armour",
+    bonus: {},
+    action: {
+      name: "Vox Pop",
+      tags: ["debuff"],
+      sp: 4,
+      targets: allAllies,
+      act({ g, me, targets }) {
+        g.addEffect(() => ({
+          name: "Vox Pop",
+          duration: 2,
+          affects: targets,
+          buff: true,
+          onCalculateDR(e) {
+            if (this.affects.includes(e.who))
+              e.value += 2;
+          }
+        }));
+        const opponent = g.getOpponent(me);
+        if (opponent) {
+          const effects = g.getEffectsOn(opponent).filter((e) => e.buff);
+          if (effects.length) {
+            g.addToLog(`${opponent.name} loses their protections.`);
+            g.removeEffectsFrom(effects, opponent);
+            g.applyDamage(me, [opponent], g.roll(me), "hp", "normal");
+          }
+        }
+      }
+    }
+  };
   CarvingKnife.lore = `Not a martial weapon, but rather a craftsman and artist's tool. Having secretly spurned Cherraphy's foul request, this Singer carries this knife as a confirmation that what they did was right.`;
   SignedCasque.lore = `A vest made of traditional plaster and adorned in writing with the feelings and wishes of each villager the Singer dares to protect.`;
   Fandagger.lore = `Fandaggers are graceful tools of the rogue, to be danced with and to be thrown between acrobats in relay. Held at one end they concertina into painted fans; the other suits the stabbing grip.`;
+  Storyscroll.lore = `A furled tapestry illustrated with a brief history of Haringlee myth. When the Flag Singer whirls it about them as though dancing with ribbons, their comrades are enriched by the spirit of the fantasies it depicts.`;
+  DivaDress.lore = `Few dare interfere with the performance of a Singer so dressed: these glittering magic garments dazzle any foolish enough to try! All may wear the Diva's Dress so long as it is earned by skill; gender matters not to the craft.`;
+  GrowlingCollar.lore = `A mechanical amplifier pressed tightly to the skin of the throat, held in place by a black leather collar. When you speak, it roars.`;
 
   // src/items/loamSeer.ts
   var Cornucopia = {
@@ -1872,17 +1994,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     slot: "Hand",
     type: "Catalyst",
     bonus: {},
-    action: {
-      name: "Bless",
-      tags: ["heal"],
-      sp: 1,
-      targets: ally(1),
-      targetFilter: (c) => c.hp < c.maxHP,
-      act({ g, me, targets }) {
-        const amount = mild(g);
-        g.heal(me, targets, amount);
-      }
-    }
+    action: Bless
   };
   var JacketAndRucksack = {
     name: "Jacket and Rucksack",
@@ -1905,6 +2017,13 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       }
     }
   };
+  Cornucopia.lore = `The proverbial horn of plenty, or rather a replica crafted by the artists of Haringlee, then bestowed by its priests with a magickal knack for exuding a sweet restorative nectar.`;
+  JacketAndRucksack.lore = `Clothes and containers of simple leather. Sensible wear for foragers and druidic types; not truly intended for fighting.`;
+
+  // src/tools/sets.ts
+  function intersection(a, b) {
+    return a.filter((item) => b.includes(item));
+  }
 
   // src/items/martialist.ts
   var Penduchaimmer = {
@@ -1923,7 +2042,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     bonus: {},
     action: {
       name: "Parry",
-      tags: ["counter", "defence+"],
+      tags: ["counter", "buff"],
       sp: 3,
       targets: onlyMe,
       act({ g, me }) {
@@ -1932,10 +2051,10 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
           duration: Infinity,
           affects: [me],
           onBeforeAction(e) {
-            if (e.targets.includes(me) && e.action.tags.includes("attack")) {
+            if (intersection(this.affects, e.targets).length && e.action.tags.includes("attack")) {
               g.addToLog(`${me.name} counters!`);
-              const amount = mild(g);
-              g.applyDamage(me, [e.attacker], amount, "hp");
+              const amount = g.roll(me);
+              g.applyDamage(me, [e.attacker], amount, "hp", "normal");
               destroy();
               e.cancel = true;
               return;
@@ -1957,8 +2076,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       sp: 1,
       targets: opponents(3, [0, 1, 3]),
       act({ g, me, targets }) {
-        const amount = mild(g);
-        g.applyDamage(me, targets, amount, "hp");
+        g.applyDamage(me, targets, 4, "hp", "normal");
       }
     }
   };
@@ -1967,15 +2085,15 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     restrict: ["Martialist"],
     slot: "Hand",
     type: "Weapon",
-    bonus: {},
+    bonus: { determination: 1 },
     action: {
       name: "Thrust",
       tags: ["attack"],
       sp: 2,
-      targets: opponents(1, [0, 2]),
+      targets: opponents(1, [0, 1, 3]),
       act({ g, me, targets }) {
-        const amount = medium(g);
-        g.applyDamage(me, targets, amount, "hp");
+        const amount = g.roll(me) + 3;
+        g.applyDamage(me, targets, amount, "hp", "normal");
       }
     }
   };
@@ -1984,7 +2102,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     restrict: ["Martialist"],
     slot: "Body",
     type: "Armour",
-    bonus: {},
+    bonus: { camaraderie: 1 },
     action: Brace
   };
   var HalflightCowl = {
@@ -1998,8 +2116,8 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       sp: 4,
       targets: opponents(1, [1, 3]),
       act({ g, me, targets }) {
-        const amount = heavy(g);
-        g.applyDamage(me, targets, amount, "hp");
+        const amount = g.roll(me) + 10;
+        g.applyDamage(me, targets, amount, "hp", "normal");
       }
     }
   };
@@ -2026,10 +2144,10 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     name: "Loromay's Hand",
     restrict: ["Martialist"],
     slot: "Special",
-    bonus: {},
+    bonus: { spirit: 1 },
     action: {
       name: "Mudra",
-      tags: ["defence-", "strength+"],
+      tags: ["buff", "debuff"],
       sp: 3,
       targets: onlyMe,
       act({ g, me }) {
@@ -2038,8 +2156,32 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
           duration: 2,
           affects: [me],
           onCalculateDamage(e) {
-            if (e.attacker === me || e.target === me)
+            if (intersection(this.affects, [e.attacker, e.target]).length)
               e.amount *= 2;
+          }
+        }));
+      }
+    }
+  };
+  var LastEyeOfRaong = {
+    name: "Last Eye of Raong",
+    restrict: ["Martialist"],
+    slot: "Special",
+    bonus: {},
+    action: {
+      name: "Chakra",
+      tags: ["buff"],
+      sp: 3,
+      targets: onlyMe,
+      act({ g, me }) {
+        g.addEffect(() => ({
+          name: "Chakra",
+          duration: 2,
+          affects: [me],
+          buff: true,
+          onRoll(e) {
+            if (this.affects.includes(e.who))
+              e.value = e.size;
           }
         }));
       }
@@ -2053,6 +2195,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
   HalflightCowl.lore = `Commonly mistaken as a half light cowl. This cowl instead is named after Halfli's Flight, an ancient martialist technique that requires such speed and precision it gives off the appearance that it's user is flying. Though many martialists don this cowl, few are capable of performing Halfli's Flight to it's full potential.`;
   YamorolMouth.lore = `In all essence, a beginning. Words spoken aloud, repeated in infinite chanting verse. All words and meanings find a beginning from Yamorol, the primordial birthplace of all things and where even the spirits of Gods are born.`;
   LoromayHand.lore = `In all essence, an end. Gestures and actions performed, repeated in infinite repeating motion. All motion and form finds an ending from Loromay, the primordial deathbed of all things and where even the actions of Gods become meaningless.`;
+  LastEyeOfRaong.lore = `In all essence, sense. Sight to view actions, sound to hear verse. All senses are owed to Raong, whom may only witness the world of Telnoth through this lens so viciously plucked from its being in the primordial age.`;
 
   // src/items/warCaller.ts
   var OwlSkull = {
@@ -2061,43 +2204,17 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     slot: "Hand",
     type: "Catalyst",
     bonus: {},
-    action: {
-      name: "Defy",
-      tags: ["defence+"],
-      sp: 3,
-      targets: onlyMe,
-      act({ g, me }) {
-        g.addEffect(() => ({
-          name: "Defy",
-          duration: 2,
-          affects: [me],
-          onAfterDamage({ target, attacker }) {
-            if (target !== me)
-              return;
-            g.addToLog(`${me.name} stuns ${attacker.name} with their defiance!`);
-            g.addEffect(() => ({
-              name: "Defied",
-              duration: 1,
-              affects: [attacker],
-              onCanAct(e) {
-                if (e.who === attacker)
-                  e.cancel = true;
-              }
-            }));
-          }
-        }));
-      }
-    }
+    action: Defy
   };
   var IronFullcase = {
     name: "Iron Fullcase",
     restrict: ["War Caller"],
     slot: "Body",
     type: "Armour",
-    bonus: {},
+    bonus: { dr: 1 },
     action: {
       name: "Endure",
-      tags: ["defence+"],
+      tags: ["buff"],
       sp: 2,
       targets: onlyMe,
       act({ g, me }) {
@@ -2105,8 +2222,9 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
           name: "Endure",
           duration: 2,
           affects: [me],
+          buff: true,
           onCalculateDR(e) {
-            if (e.who === me)
+            if (this.affects.includes(e.who))
               e.value += 2;
           }
         }));
@@ -2120,7 +2238,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
             duration: 2,
             affects: [opposite],
             onCalculateDetermination(e) {
-              if (e.who === opposite)
+              if (this.affects.includes(e.who))
                 e.value -= 2;
             }
           }));
@@ -2128,6 +2246,174 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       }
     }
   };
+  var PolishedArenaShield = {
+    name: "Polished Arena-Shield",
+    restrict: ["War Caller"],
+    slot: "Hand",
+    type: "Shield",
+    bonus: { dr: 1 },
+    action: {
+      name: "Pose",
+      tags: ["movement"],
+      sp: 2,
+      targets: opponents(),
+      act({ g, me }) {
+        const front = g.getPosition(me).dir;
+        const right = rotate(front, 1);
+        const back = rotate(front, 2);
+        const left = rotate(front, 3);
+        const frontIsEmpty = () => !g.getOpponent(me);
+        const rightIsEmpty = () => !g.getOpponent(me, 1);
+        const backIsEmpty = () => !g.getOpponent(me, 2);
+        const leftIsEmpty = () => !g.getOpponent(me, 3);
+        if (frontIsEmpty()) {
+          if (!leftIsEmpty()) {
+            g.moveEnemy(left, front);
+          } else if (!rightIsEmpty()) {
+            g.moveEnemy(right, front);
+          }
+        }
+        if (!backIsEmpty) {
+          if (leftIsEmpty()) {
+            g.moveEnemy(back, left);
+          } else if (rightIsEmpty()) {
+            g.moveEnemy(back, right);
+          }
+        }
+      }
+    }
+  };
+  var BrassHeartInsignia = {
+    name: "Brass Heart Insignia",
+    restrict: ["War Caller"],
+    slot: "Hand",
+    type: "Catalyst",
+    bonus: { dr: 1 },
+    action: Bless
+  };
+  var HairShirt = {
+    name: "Hair Shirt",
+    restrict: ["War Caller"],
+    slot: "Body",
+    type: "Armour",
+    bonus: { determination: 1 },
+    action: {
+      name: "Kneel",
+      tags: ["debuff"],
+      sp: 0,
+      targets: onlyMe,
+      act({ g, me }) {
+        g.addEffect(() => ({
+          name: "Kneel",
+          duration: 2,
+          affects: [me],
+          onCalculateDR(e) {
+            if (this.affects.includes(e.who))
+              e.value = 0;
+          }
+        }));
+      }
+    }
+  };
+  var PlatesOfWhite = {
+    name: "Plates of White, Brass and Gold",
+    restrict: ["War Caller"],
+    slot: "Body",
+    type: "Armour",
+    bonus: { dr: 3 },
+    action: {
+      name: "Gleam",
+      tags: ["buff"],
+      sp: 3,
+      targets: onlyMe,
+      act({ g, me }) {
+        g.addEffect((destroy) => ({
+          name: "Gleam",
+          duration: 2,
+          affects: [me],
+          onBeforeAction(e) {
+            if (intersection(this.affects, e.targets).length && e.action.tags.includes("spell")) {
+              e.cancel = true;
+              g.addToLog(`The gleam disrupts the spell.`);
+              destroy();
+              return;
+            }
+          }
+        }));
+      }
+    }
+  };
+  var SternMask = {
+    name: "The Stern Mask",
+    restrict: ["War Caller"],
+    slot: "Special",
+    bonus: { determination: 1 },
+    action: {
+      name: "Ram",
+      tags: ["attack"],
+      sp: 4,
+      targets: oneOpponent,
+      act({ g, me, targets }) {
+        g.applyDamage(me, targets, 6, "hp", "normal");
+        g.applyDamage(me, targets, 1, "camaraderie", "normal");
+        g.applyDamage(me, targets, 6, "hp", "normal");
+        g.applyDamage(me, targets, 1, "camaraderie", "normal");
+        for (const target of targets) {
+          if (target.camaraderie <= 0)
+            g.applyDamage(me, [target], g.roll(me), "hp", "normal");
+        }
+      }
+    }
+  };
+  var CherClaspeGauntlet = {
+    name: "Cher-claspe Gauntlet",
+    restrict: ["War Caller"],
+    slot: "Special",
+    bonus: {},
+    action: {
+      name: "Smash",
+      tags: ["attack"],
+      sp: 3,
+      x: true,
+      targets: oneOpponent,
+      act({ g, me, targets, x }) {
+        const magnitude = x + Math.floor(me.hp / me.maxHP * 8);
+        g.applyDamage(me, targets, magnitude * 4, "hp", "normal");
+      }
+    }
+  };
+  var SaintGong = {
+    name: "Saint's Gong",
+    restrict: ["War Caller"],
+    slot: "Special",
+    bonus: { maxSP: 1 },
+    action: {
+      name: "Truce",
+      tags: ["counter"],
+      sp: 6,
+      targets: { type: "enemy" },
+      act({ g, targets }) {
+        g.addEffect(() => ({
+          name: "Truce",
+          duration: 2,
+          affects: targets,
+          onCanAct(e) {
+            if (this.affects.includes(e.who) && e.action.tags.includes("attack"))
+              e.cancel = true;
+          }
+        }));
+      }
+    }
+  };
+  OwlSkull.lore = `All experienced knights know that menace lies mainly in the eyes, whether it be communicated via a glare through the slits of a full helmet or by a wild, haunting stare. War Callers find common ground with the owls that hunt their forests and sometimes try to tame them as familiars, as others do falcons in different realms.`;
+  IronFullcase.lore = `A stiff layer of iron to protect the innards, sleeveless to allow flexibility in one's arms. Arena veterans favour such gear, goading their opponents with weapons brandished wildly, their chest remaining an impossible target to hit.`;
+  PolishedArenaShield.lore = `As well as being a serviceable shield, this example has a percussive quality; when beaten with a club it resounds as a bell.`;
+  BrassHeartInsignia.lore = `War Caller iconography is not to be shown to anyone who has studied medicine; the Brass Heart signifies that the will to heal one's self comes from the chest, always thrust proudly forwards to receive terrible blows. (Two weeks in bed and a poultice applied thrice daily notwithstanding.)`;
+  HairShirt.lore = `A garment for penitents: the unwelcome itching generated by its wiry goat-hair lining must be surpassed through strength of will.`;
+  PlatesOfWhite.lore = `An impressive suit of armour, decorated in the colours that the Crusaders of Cherraphy favour. Despite the lavish attention to presentation, it is no ceremonial costume: beneath the inlaid discs of fine metal, steel awaits to contest any oncoming blade.`;
+  SternMask.lore = `A full helm, decorated in paint and fine metalwork to resemble the disdainful face of a saint. Each headbutt it delivers communicates severe chastisement.`;
+  CherClaspeGauntlet.lore = `A pair of iron gauntlets ensorcelled with a modest enchantment; upon the command of a priest, these matching metal gloves each lock into the shape of a fist and cannot be undone by the bearer; a stricture that War Callers willingly bear, that it may sustain their resolve and dismiss their idle habits.`;
+  SaintGong.lore = `A brass percussive disc mounted on a seven foot bannerpole and hung from hinge-chains, letting it swing freely enough that its shuddering surface rings clean. Most effective when tuned to the frequency of a chosen knight's bellows, allowing it to crash loudly in accompaniment with each war cry.`;
 
   // src/classes.ts
   var classes = {
@@ -2186,6 +2472,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     },
     "Loam Seer": {
       name: "Chiteri",
+      lore: `Chiteri is a beetle-like humanoid who observes human activity from safety, where the river meets the wood. Sad at the many recent upheavals in Haringlee culture, Chiteri reveals her existence to the dumbfounded villagers and, furthermore, offers her magical assistance in their trip to the Nightjar, secretly planning to defame the goddess Cherraphy, thereby salvaging the lives of the people. Able to call on the magic dwelling deep within the earth, Chiteri is a canny healer and is also able to bestow curious magickal toughness to her quick new friends, even if she doesn't share their cause.`,
       hp: 18,
       sp: 5,
       determination: 2,
@@ -2255,7 +2542,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       return this.getStat("spirit", this.baseSpirit);
     }
     get actions() {
-      return Array.from(this.equipment.values()).map((i) => i.action).concat(generateAttack(mild), endTurnAction);
+      return Array.from(this.equipment.values()).map((i) => i.action).concat(generateAttack(), endTurnAction);
     }
     get canMove() {
       return !this.alive || this.sp > 0;
@@ -3386,8 +3673,11 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       this.act(pc, action, targets);
       return true;
     }
+    getPosition(who) {
+      return this.combat.getPosition(who);
+    }
     getOpponent(me, turn = 0) {
-      const { dir: myDir, distance } = this.combat.getPosition(me);
+      const { dir: myDir, distance } = this.getPosition(me);
       const dir = rotate(myDir, turn);
       return me.isPC ? this.combat.enemies[dir][0] : distance === 0 ? this.party[dir] : void 0;
     }
@@ -3406,15 +3696,15 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       if (a.targetFilter)
         filters.push(a.targetFilter);
       const { distance, offsets } = a.targets;
-      const me = this.combat.getPosition(c);
+      const me = this.getPosition(c);
       if (offsets)
         filters.push((o) => {
-          const them = this.combat.getPosition(o);
+          const them = this.getPosition(o);
           return offsets.includes(getDirOffset(me.dir, them.dir));
         });
       if (typeof distance === "number")
         filters.push((o) => {
-          const them = this.combat.getPosition(o);
+          const them = this.getPosition(o);
           const diff = Math.abs(them.distance - me.distance);
           return diff <= distance;
         });
@@ -3470,8 +3760,11 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       this.combat.effects.push(effect);
       for (const name of GameEventNames) {
         const handler = effect[name];
-        if (handler)
-          this.eventHandlers[name].add(handler);
+        if (handler) {
+          const bound = handler.bind(effect);
+          effect[name] = bound;
+          this.eventHandlers[name].add(bound);
+        }
       }
     }
     removeEffect(effect) {
@@ -3484,25 +3777,37 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
           this.eventHandlers[name].delete(handler);
       }
     }
-    roll(size) {
+    getEffectsOn(who) {
+      return this.combat.effects.filter((e) => e.affects.includes(who));
+    }
+    removeEffectsFrom(effects, who) {
+      for (const e of effects) {
+        const index = e.affects.indexOf(who);
+        if (index > 0)
+          e.affects.splice(index, 1);
+        if (!e.affects.length)
+          this.removeEffect(e);
+      }
+    }
+    roll(who, size = 10) {
       const value = random(size) + 1;
-      this.fire("onRoll", { size, value });
-      return value;
+      return this.fire("onRoll", { who, size, value }).value;
     }
     applyStatModifiers(who, stat, value) {
       const event = calculateEventName[stat];
       return this.fire(event, { who, value }).value;
     }
-    applyDamage(attacker, targets, amount, type) {
+    applyDamage(attacker, targets, amount, type, origin) {
       let total = 0;
       for (const target of targets) {
         const damage = this.fire("onCalculateDamage", {
           attacker,
           target,
           amount,
-          type
+          type,
+          origin
         });
-        const resist = type === "hp" ? target.dr : 0;
+        const resist = type === "hp" && origin === "normal" ? target.dr : 0;
         const deal = Math.floor(damage.amount - resist);
         if (deal > 0) {
           total += deal;
@@ -3512,7 +3817,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
           this.addToLog(message);
           if (target.hp < 1)
             this.kill(target, attacker);
-          this.fire("onAfterDamage", { attacker, target, amount, type });
+          this.fire("onAfterDamage", { attacker, target, amount, type, origin });
         }
       }
       return total;
@@ -3575,6 +3880,15 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       this.party[dir] = me;
       this.draw();
       return true;
+    }
+    moveEnemy(from, to) {
+      const fromArray = this.combat.enemies[from];
+      const toArray = this.combat.enemies[to];
+      const enemy = fromArray.shift();
+      if (enemy) {
+        toArray.unshift(enemy);
+        this.draw();
+      }
     }
   };
 

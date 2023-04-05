@@ -507,8 +507,12 @@ export default class Engine implements Game {
     return true;
   }
 
+  getPosition(who: Combatant) {
+    return this.combat.getPosition(who);
+  }
+
   getOpponent(me: Combatant, turn = 0) {
-    const { dir: myDir, distance } = this.combat.getPosition(me);
+    const { dir: myDir, distance } = this.getPosition(me);
     const dir = rotate(myDir, turn);
 
     return me.isPC
@@ -540,17 +544,17 @@ export default class Engine implements Game {
     if (a.targetFilter) filters.push(a.targetFilter);
 
     const { distance, offsets } = a.targets;
-    const me = this.combat.getPosition(c);
+    const me = this.getPosition(c);
 
     if (offsets)
       filters.push((o) => {
-        const them = this.combat.getPosition(o);
+        const them = this.getPosition(o);
         return offsets.includes(getDirOffset(me.dir, them.dir));
       });
 
     if (typeof distance === "number")
       filters.push((o) => {
-        const them = this.combat.getPosition(o);
+        const them = this.getPosition(o);
         const diff = Math.abs(them.distance - me.distance);
         return diff <= distance;
       });
@@ -569,6 +573,8 @@ export default class Engine implements Game {
 
   fire<T extends GameEventName>(name: T, e: GameEvents[T]) {
     const handlers = this.eventHandlers[name];
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-expect-error
     for (const handler of handlers) handler(e);
     return e;
   }
@@ -611,9 +617,17 @@ export default class Engine implements Game {
     this.combat.effects.push(effect);
     for (const name of GameEventNames) {
       const handler = effect[name];
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-expect-error
-      if (handler) this.eventHandlers[name].add(handler);
+      if (handler) {
+        const bound = handler.bind(effect);
+
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-expect-error
+        effect[name] = bound;
+
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-expect-error
+        this.eventHandlers[name].add(bound);
+      }
     }
   }
 
@@ -629,10 +643,21 @@ export default class Engine implements Game {
     }
   }
 
-  roll(size: number) {
+  getEffectsOn(who: Combatant) {
+    return this.combat.effects.filter((e) => e.affects.includes(who));
+  }
+
+  removeEffectsFrom(effects: GameEffect[], who: Combatant) {
+    for (const e of effects) {
+      const index = e.affects.indexOf(who);
+      if (index > 0) e.affects.splice(index, 1);
+      if (!e.affects.length) this.removeEffect(e);
+    }
+  }
+
+  roll(who: Combatant, size = 10) {
     const value = random(size) + 1;
-    this.fire("onRoll", { size, value });
-    return value;
+    return this.fire("onRoll", { who, size, value }).value;
   }
 
   applyStatModifiers(who: Combatant, stat: BoostableStat, value: number) {
@@ -644,7 +669,8 @@ export default class Engine implements Game {
     attacker: Combatant,
     targets: Combatant[],
     amount: number,
-    type: AttackableStat
+    type: AttackableStat,
+    origin: "normal" | "magic"
   ) {
     let total = 0;
 
@@ -654,9 +680,10 @@ export default class Engine implements Game {
         target,
         amount,
         type,
+        origin,
       });
 
-      const resist = type === "hp" ? target.dr : 0;
+      const resist = type === "hp" && origin === "normal" ? target.dr : 0;
 
       const deal = Math.floor(damage.amount - resist);
       if (deal > 0) {
@@ -672,7 +699,7 @@ export default class Engine implements Game {
 
         if (target.hp < 1) this.kill(target, attacker);
 
-        this.fire("onAfterDamage", { attacker, target, amount, type });
+        this.fire("onAfterDamage", { attacker, target, amount, type, origin });
       }
     }
 
@@ -756,5 +783,16 @@ export default class Engine implements Game {
     // TODO: replace with return this.turn(side) ?
     this.draw();
     return true;
+  }
+
+  moveEnemy(from: Dir, to: Dir): void {
+    const fromArray = this.combat.enemies[from];
+    const toArray = this.combat.enemies[to];
+
+    const enemy = fromArray.shift();
+    if (enemy) {
+      toArray.unshift(enemy);
+      this.draw();
+    }
   }
 }

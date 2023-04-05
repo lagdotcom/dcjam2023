@@ -1,4 +1,4 @@
-import { ally, mild, oneOpponent } from "../actions";
+import { Bless, oneOpponent } from "../actions";
 import Item from "../types/Item";
 
 export const Cornucopia: Item = {
@@ -7,17 +7,7 @@ export const Cornucopia: Item = {
   slot: "Hand",
   type: "Catalyst",
   bonus: {},
-  action: {
-    name: "Bless",
-    tags: ["heal"],
-    sp: 1,
-    targets: ally(1),
-    targetFilter: (c) => c.hp < c.maxHP,
-    act({ g, me, targets }) {
-      const amount = mild(g);
-      g.heal(me, targets, amount);
-    },
-  },
+  action: Bless,
 };
 
 export const JacketAndRucksack: Item = {
@@ -41,3 +31,7 @@ export const JacketAndRucksack: Item = {
     },
   },
 };
+
+Cornucopia.lore = `The proverbial horn of plenty, or rather a replica crafted by the artists of Haringlee, then bestowed by its priests with a magickal knack for exuding a sweet restorative nectar.`;
+
+JacketAndRucksack.lore = `Clothes and containers of simple leather. Sensible wear for foragers and druidic types; not truly intended for fighting.`;

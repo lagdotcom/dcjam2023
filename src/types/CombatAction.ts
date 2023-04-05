@@ -5,11 +5,11 @@ import { Predicate } from "./logic";
 export type ActionTag =
   | "attack"
   | "counter"
-  | "defence+"
-  | "defence-"
+  | "buff"
+  | "debuff"
   | "heal"
-  | "strength+"
-  | "strength-";
+  | "movement"
+  | "spell";
 
 export type ActionTarget =
   | { type: "self" }

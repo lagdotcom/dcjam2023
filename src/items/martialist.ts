@@ -1,13 +1,5 @@
-import {
-  opponents,
-  mild,
-  medium,
-  ally,
-  onlyMe,
-  Brace,
-  heavy,
-  DuoStab,
-} from "../actions";
+import { ally, Brace, DuoStab, onlyMe, opponents } from "../actions";
+import { intersection } from "../tools/sets";
 import Item from "../types/Item";
 
 export const Penduchaimmer: Item = {
@@ -27,7 +19,7 @@ export const HaringleeKasaya: Item = {
   bonus: {},
   action: {
     name: "Parry",
-    tags: ["counter", "defence+"],
+    tags: ["counter", "buff"],
     sp: 3,
     targets: onlyMe,
     act({ g, me }) {
@@ -36,11 +28,14 @@ export const HaringleeKasaya: Item = {
         duration: Infinity,
         affects: [me],
         onBeforeAction(e) {
-          if (e.targets.includes(me) && e.action.tags.includes("attack")) {
+          if (
+            intersection(this.affects, e.targets).length &&
+            e.action.tags.includes("attack")
+          ) {
             g.addToLog(`${me.name} counters!`);
 
-            const amount = mild(g);
-            g.applyDamage(me, [e.attacker], amount, "hp");
+            const amount = g.roll(me);
+            g.applyDamage(me, [e.attacker], amount, "hp", "normal");
             destroy();
             e.cancel = true;
             return;
@@ -63,8 +58,7 @@ export const KhakkharaOfGhanju: Item = {
     sp: 1,
     targets: opponents(3, [0, 1, 3]),
     act({ g, me, targets }) {
-      const amount = mild(g);
-      g.applyDamage(me, targets, amount, "hp");
+      g.applyDamage(me, targets, 4, "hp", "normal");
     },
   },
 };
@@ -74,15 +68,15 @@ export const Halberdigan: Item = {
   restrict: ["Martialist"],
   slot: "Hand",
   type: "Weapon",
-  bonus: {},
+  bonus: { determination: 1 },
   action: {
     name: "Thrust",
     tags: ["attack"],
     sp: 2,
-    targets: opponents(1, [0, 2]),
+    targets: opponents(1, [0, 1, 3]),
     act({ g, me, targets }) {
-      const amount = medium(g);
-      g.applyDamage(me, targets, amount, "hp");
+      const amount = g.roll(me) + 3;
+      g.applyDamage(me, targets, amount, "hp", "normal");
     },
   },
 };
@@ -92,7 +86,7 @@ export const NundarialVestments: Item = {
   restrict: ["Martialist"],
   slot: "Body",
   type: "Armour",
-  bonus: {},
+  bonus: { camaraderie: 1 },
   action: Brace,
 };
 
@@ -107,8 +101,8 @@ export const HalflightCowl: Item = {
     sp: 4,
     targets: opponents(1, [1, 3]),
     act({ g, me, targets }) {
-      const amount = heavy(g);
-      g.applyDamage(me, targets, amount, "hp");
+      const amount = g.roll(me) + 10;
+      g.applyDamage(me, targets, amount, "hp", "normal");
     },
   },
 };
@@ -137,10 +131,10 @@ export const LoromayHand: Item = {
   name: "Loromay's Hand",
   restrict: ["Martialist"],
   slot: "Special",
-  bonus: {},
+  bonus: { spirit: 1 },
   action: {
     name: "Mudra",
-    tags: ["defence-", "strength+"],
+    tags: ["buff", "debuff"],
     sp: 3,
     targets: onlyMe,
     act({ g, me }) {
@@ -149,7 +143,32 @@ export const LoromayHand: Item = {
         duration: 2,
         affects: [me],
         onCalculateDamage(e) {
-          if (e.attacker === me || e.target === me) e.amount *= 2;
+          if (intersection(this.affects, [e.attacker, e.target]).length)
+            e.amount *= 2;
+        },
+      }));
+    },
+  },
+};
+
+export const LastEyeOfRaong: Item = {
+  name: "Last Eye of Raong",
+  restrict: ["Martialist"],
+  slot: "Special",
+  bonus: {},
+  action: {
+    name: "Chakra",
+    tags: ["buff"],
+    sp: 3,
+    targets: onlyMe,
+    act({ g, me }) {
+      g.addEffect(() => ({
+        name: "Chakra",
+        duration: 2,
+        affects: [me],
+        buff: true,
+        onRoll(e) {
+          if (this.affects.includes(e.who)) e.value = e.size;
         },
       }));
     },
@@ -171,3 +190,5 @@ HalflightCowl.lore = `Commonly mistaken as a half light cowl. This cowl instead 
 YamorolMouth.lore = `In all essence, a beginning. Words spoken aloud, repeated in infinite chanting verse. All words and meanings find a beginning from Yamorol, the primordial birthplace of all things and where even the spirits of Gods are born.`;
 
 LoromayHand.lore = `In all essence, an end. Gestures and actions performed, repeated in infinite repeating motion. All motion and form finds an ending from Loromay, the primordial deathbed of all things and where even the actions of Gods become meaningless.`;
+
+LastEyeOfRaong.lore = `In all essence, sense. Sight to view actions, sound to hear verse. All senses are owed to Raong, whom may only witness the world of Telnoth through this lens so viciously plucked from its being in the primordial age.`;

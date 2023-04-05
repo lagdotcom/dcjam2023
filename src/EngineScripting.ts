@@ -67,7 +67,7 @@ export default class EngineScripting extends DScriptHost {
       (index: number, type: string, amount: number) => {
         const pc = getPC(index);
         const stat = getStat(type);
-        g.applyDamage(pc, [pc], amount, stat);
+        g.applyDamage(pc, [pc], amount, stat, "normal");
       }
     );
 
@@ -122,7 +122,7 @@ export default class EngineScripting extends DScriptHost {
         const pcIndex = (this.env.get("pcIndex") as LiteralNumber).value;
         const pc = g.party[pcIndex];
 
-        const roll = g.roll(10) + pc[stat];
+        const roll = g.roll(pc) + pc[stat];
         return roll >= dc;
       }
     );

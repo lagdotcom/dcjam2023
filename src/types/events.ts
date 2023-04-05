@@ -1,5 +1,6 @@
 import CombatAction from "./CombatAction";
 import Combatant, { AttackableStat } from "./Combatant";
+import { GameEffect } from "./Game";
 
 export const GameEventNames = [
   "onAfterDamage",
@@ -24,6 +25,7 @@ export type GameEvents = {
     target: Combatant;
     amount: number;
     type: AttackableStat;
+    origin: "normal" | "magic";
   };
 
   onBeforeAction: {
@@ -38,6 +40,7 @@ export type GameEvents = {
     target: Combatant;
     amount: number;
     type: AttackableStat;
+    origin: "normal" | "magic";
   };
 
   onCalculateCamaraderie: { who: Combatant; value: number };
@@ -53,9 +56,12 @@ export type GameEvents = {
 
   onKilled: { who: Combatant; attacker: Combatant };
 
-  onRoll: { size: number; value: number };
+  onRoll: { who: Combatant; size: number; value: number };
 };
-export type EventHandler<K extends GameEventName> = (e: GameEvents[K]) => void;
+export type EventHandler<K extends GameEventName> = (
+  this: GameEffect,
+  e: GameEvents[K]
+) => void;
 
 export type GameEventHandler = {
   [K in GameEventName]: EventHandler<K>;
