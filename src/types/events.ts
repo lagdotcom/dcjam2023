@@ -1,5 +1,6 @@
 import CombatAction from "./CombatAction";
 import Combatant, { AttackableStat } from "./Combatant";
+import Dir from "./Dir";
 import { GameEffect } from "./Game";
 
 export const GameEventNames = [
@@ -15,6 +16,7 @@ export const GameEventNames = [
   "onCanAct",
   "onCombatOver",
   "onKilled",
+  "onPartySwap",
   "onRoll",
 ] as const;
 export type GameEventName = (typeof GameEventNames)[number];
@@ -56,6 +58,8 @@ export type GameEvents = {
   onCombatOver: { winners: "party" | "enemies" };
 
   onKilled: { who: Combatant; attacker: Combatant };
+
+  onPartySwap: { swaps: { from: Dir; to: Dir }[] };
 
   onRoll: { who: Combatant; size: number; value: number };
 };

@@ -67,6 +67,7 @@
     "onCanAct",
     "onCombatOver",
     "onKilled",
+    "onPartySwap",
     "onRoll"
   ];
 
@@ -141,6 +142,14 @@
   };
   function getDirOffset(start, end) {
     return dirOffsets[start][end];
+  }
+  function lerpXY(from, to, ratio) {
+    if (ratio <= 0)
+      return from;
+    if (ratio >= 1)
+      return to;
+    const fr = 1 - ratio;
+    return xy(from.x * fr + to.x * ratio, from.y * fr + to.y * ratio);
   }
 
   // src/actions.ts
@@ -1389,18 +1398,53 @@
     xy(200, 210),
     xy(140, 166)
   ];
+  var MarbleAnimator = class {
+    constructor(parent, interval = 50, progressTick = 0.2) {
+      this.parent = parent;
+      this.interval = interval;
+      this.progressTick = progressTick;
+      this.tick = () => {
+        this.parent.g.draw();
+        this.progress += this.progressTick;
+        if (this.progress >= 1) {
+          clearInterval(this.timeout);
+          this.timeout = void 0;
+        }
+        this.parent.positions = this.getPositions();
+      };
+      this.progress = 0;
+      this.swaps = [];
+    }
+    handle(swaps) {
+      if (!this.timeout)
+        this.timeout = setInterval(this.tick, this.interval);
+      this.swaps = swaps;
+      this.progress = 0;
+      this.parent.positions = this.getPositions();
+    }
+    getPositions() {
+      const positions = coordinates.slice();
+      for (const { from, to } of this.swaps) {
+        positions[to] = lerpXY(coordinates[from], coordinates[to], this.progress);
+      }
+      return positions;
+    }
+  };
   var StatsRenderer = class {
     constructor(g, text = xy(21, 36), hp = xy(22, 43), sp = xy(22, 49)) {
       this.g = g;
       this.text = text;
       this.hp = hp;
       this.sp = sp;
+      this.animator = new MarbleAnimator(this);
       this.spots = [];
+      this.positions = coordinates;
+      g.eventHandlers.onPartySwap.add((e) => this.animator.handle(e.swaps));
     }
     render(bg) {
       this.spots = [];
       for (let i = 0; i < 4; i++) {
-        const xy2 = coordinates[i];
+        const xy2 = this.positions[i];
         const pc = this.g.party[i];
         this.renderPC(xy2, pc, bg, i);
       }
@@ -3500,6 +3544,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     determination: "onCalculateDetermination",
     spirit: "onCalculateSpirit"
   };
+  var swap = (from, to) => ({ from, to });
   var Engine = class {
     constructor(canvas) {
       this.canvas = canvas;
@@ -4062,9 +4107,25 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       if (dir === -1) {
         const north = this.party.shift();
         this.party.push(north);
+        this.fire("onPartySwap", {
+          swaps: [
+            swap(Dir_default.N, Dir_default.W),
+            swap(Dir_default.E, Dir_default.N),
+            swap(Dir_default.S, Dir_default.E),
+            swap(Dir_default.W, Dir_default.S)
+          ]
+        });
       } else {
         const west = this.party.pop();
         this.party.unshift(west);
+        this.fire("onPartySwap", {
+          swaps: [
+            swap(Dir_default.N, Dir_default.E),
+            swap(Dir_default.E, Dir_default.S),
+            swap(Dir_default.S, Dir_default.W),
+            swap(Dir_default.W, Dir_default.N)
+          ]
+        });
       }
       this.draw();
       return true;
@@ -4081,6 +4142,9 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       }
       this.party[this.facing] = them;
       this.party[dir] = me;
+      this.fire("onPartySwap", {
+        swaps: [swap(this.facing, dir), swap(dir, this.facing)]
+      });
       this.draw();
       return true;
     }

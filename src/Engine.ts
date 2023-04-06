@@ -64,6 +64,8 @@ const calculateEventName = {
   spirit: "onCalculateSpirit",
 } as const satisfies Record<BoostableStat, GameEventName>;
 
+const swap = (from: Dir, to: Dir) => ({ from, to });
+
 export default class Engine implements Game {
   combat: CombatManager;
   controls: Map<string, GameInput[]>;
@@ -755,10 +757,26 @@ export default class Engine implements Game {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const north = this.party.shift()!;
       this.party.push(north);
+      this.fire("onPartySwap", {
+        swaps: [
+          swap(Dir.N, Dir.W),
+          swap(Dir.E, Dir.N),
+          swap(Dir.S, Dir.E),
+          swap(Dir.W, Dir.S),
+        ],
+      });
     } else {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const west = this.party.pop()!;
       this.party.unshift(west);
+      this.fire("onPartySwap", {
+        swaps: [
+          swap(Dir.N, Dir.E),
+          swap(Dir.E, Dir.S),
+          swap(Dir.S, Dir.W),
+          swap(Dir.W, Dir.N),
+        ],
+      });
     }
 
     // TODO: replace with return this.turn(rotate(this.facing, dir)) ?
@@ -781,6 +799,9 @@ export default class Engine implements Game {
 
     this.party[this.facing] = them;
     this.party[dir] = me;
+    this.fire("onPartySwap", {
+      swaps: [swap(this.facing, dir), swap(dir, this.facing)],
+    });
 
     // TODO: replace with return this.turn(side) ?
     this.draw();

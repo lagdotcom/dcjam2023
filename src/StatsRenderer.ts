@@ -3,9 +3,12 @@ import Engine from "./Engine";
 import Player from "./Player";
 import XY from "./types/XY";
 import withTextStyle from "./tools/withTextStyle";
-import { xy } from "./tools/geometry";
+import { lerpXY, xy } from "./tools/geometry";
 import Hotspot from "./tools/Hotspot";
 import HasHotspots from "./types/HasHotspots";
+import Dir from "./types/Dir";
+
+type SwapData = { from: Dir; to: Dir }[];
 
 const barWidth = 38;
 const coordinates: XY[] = [
@@ -15,8 +18,53 @@ const coordinates: XY[] = [
   xy(140, 166),
 ];
 
+class MarbleAnimator {
+  progress: number;
+  swaps: SwapData;
+  timeout?: ReturnType<typeof setInterval>;
+
+  constructor(
+    public parent: StatsRenderer,
+    public interval = 50,
+    public progressTick = 0.2
+  ) {
+    this.progress = 0;
+    this.swaps = [];
+  }
+
+  handle(swaps: SwapData) {
+    if (!this.timeout) this.timeout = setInterval(this.tick, this.interval);
+
+    this.swaps = swaps;
+    this.progress = 0;
+    this.parent.positions = this.getPositions();
+  }
+
+  getPositions() {
+    const positions = coordinates.slice();
+    for (const { from, to } of this.swaps) {
+      positions[to] = lerpXY(coordinates[from], coordinates[to], this.progress);
+    }
+    return positions;
+  }
+
+  tick = () => {
+    this.parent.g.draw();
+
+    this.progress += this.progressTick;
+    if (this.progress >= 1) {
+      clearInterval(this.timeout);
+      this.timeout = undefined;
+    }
+
+    this.parent.positions = this.getPositions();
+  };
+}
+
 export default class StatsRenderer implements HasHotspots {
   public spots: Hotspot[];
+  animator: MarbleAnimator;
+  positions: XY[];
 
   constructor(
     public g: Engine,
@@ -24,14 +72,17 @@ export default class StatsRenderer implements HasHotspots {
     public hp = xy(22, 43),
     public sp = xy(22, 49)
   ) {
+    this.animator = new MarbleAnimator(this);
     this.spots = [];
+    this.positions = coordinates;
+    g.eventHandlers.onPartySwap.add((e) => this.animator.handle(e.swaps));
   }
 
   render(bg: HTMLImageElement) {
     this.spots = [];
 
     for (let i = 0; i < 4; i++) {
-      const xy = coordinates[i];
+      const xy = this.positions[i];
       const pc = this.g.party[i];
       this.renderPC(xy, pc, bg, i);
     }

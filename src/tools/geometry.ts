@@ -59,3 +59,12 @@ const dirOffsets = {
 export function getDirOffset(start: Dir, end: Dir) {
   return dirOffsets[start][end];
 }
+
+export function lerpXY(from: XY, to: XY, ratio: number) {
+  if (ratio <= 0) return from;
+  if (ratio >= 1) return to;
+
+  const fr = 1 - ratio;
+
+  return xy(from.x * fr + to.x * ratio, from.y * fr + to.y * ratio);
+}
