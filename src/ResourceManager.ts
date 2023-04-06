@@ -5,6 +5,7 @@ export default class ResourceManager {
   promises: Map<string, Promise<unknown>>;
   loaders: Promise<unknown>[];
   atlases: Record<string, Atlas>;
+  audio: Record<string, HTMLAudioElement>;
   maps: Record<string, GCMap>;
   images: Record<string, HTMLImageElement>;
   scripts: Record<string, string>;
@@ -15,6 +16,7 @@ export default class ResourceManager {
     this.promises = new Map();
     this.loaders = [];
     this.atlases = {};
+    this.audio = {};
     this.images = {};
     this.maps = {};
     this.scripts = {};
@@ -95,6 +97,24 @@ export default class ResourceManager {
           this.scripts[src] = script;
           return script;
         })
+    );
+  }
+
+  loadAudio(src: string): Promise<HTMLAudioElement> {
+    const res = this.promises.get(src);
+    if (res) return res as Promise<HTMLAudioElement>;
+
+    return this.start(
+      src,
+      new Promise<HTMLAudioElement>((resolve) => {
+        const audio = new Audio();
+        audio.src = src;
+
+        audio.addEventListener("canplaythrough", () => {
+          this.audio[src] = audio;
+          resolve(audio);
+        });
+      })
     );
   }
 }

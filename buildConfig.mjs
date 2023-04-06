@@ -8,6 +8,11 @@ const config = {
   outfile: "docs/bundle.js",
   // minify: true,
   plugins: [CDNModule],
-  loader: { ".dscript": "file", ".json": "file", ".png": "file" },
+  loader: {
+    ".dscript": "file",
+    ".json": "file",
+    ".ogg": "file",
+    ".png": "file",
+  },
 };
 export default config;

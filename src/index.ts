@@ -36,6 +36,7 @@ function loadEngine(parent: HTMLElement) {
   onResize();
 
   void g.loadGCMap(mapJson, 0, 1);
+  void g.jukebox.play("explore");
 }
 
 window.addEventListener("load", () => loadEngine(document.body));

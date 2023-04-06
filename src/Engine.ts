@@ -45,6 +45,7 @@ import { wrap } from "./tools/numbers";
 import Item from "./types/Item";
 import { Predicate, matchAll } from "./types/logic";
 import HasHotspots from "./types/HasHotspots";
+import Jukebox from "./Jukebox";
 
 interface WallType {
   canSeeDoor: boolean;
@@ -84,6 +85,7 @@ export default class Engine implements Game {
   eventHandlers: GameEventListeners;
   facing: Dir;
   inventory: Item[];
+  jukebox: Jukebox;
   log: string[];
   party: Player[];
   pendingEnemies: EnemyName[];
@@ -134,6 +136,7 @@ export default class Engine implements Game {
       new Player(this, "War Caller"),
       new Player(this, "Loam Seer"),
     ];
+    this.jukebox = new Jukebox(this);
 
     canvas.addEventListener("keyup", (e) => {
       const keys = getKeyNames(e.code, e.shiftKey, e.altKey, e.ctrlKey);
@@ -375,6 +378,7 @@ export default class Engine implements Game {
       this.markNavigable(old, dir);
       this.draw();
 
+      this.fire("onPartyMove", { from: old, to: this.position });
       this.scripting.onEnter(this.position, old);
       return true;
     }
@@ -474,7 +478,9 @@ export default class Engine implements Game {
     if (this.pickingTargets) return false;
 
     this.combat.index = 0;
-    this.facing = rotate(this.facing, clockwise);
+    const old = this.facing;
+    this.facing = rotate(old, clockwise);
+    this.fire("onPartyTurn", { from: old, to: this.facing });
     this.draw();
     return true;
   }

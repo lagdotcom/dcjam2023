@@ -2,6 +2,7 @@ import CombatAction from "./CombatAction";
 import Combatant, { AttackableStat } from "./Combatant";
 import Dir from "./Dir";
 import { GameEffect } from "./Game";
+import XY from "./XY";
 
 export const GameEventNames = [
   "onAfterDamage",
@@ -16,7 +17,9 @@ export const GameEventNames = [
   "onCanAct",
   "onCombatOver",
   "onKilled",
+  "onPartyMove",
   "onPartySwap",
+  "onPartyTurn",
   "onRoll",
 ] as const;
 export type GameEventName = (typeof GameEventNames)[number];
@@ -59,7 +62,9 @@ export type GameEvents = {
 
   onKilled: { who: Combatant; attacker: Combatant };
 
+  onPartyMove: { from: XY; to: XY };
   onPartySwap: { swaps: { from: Dir; to: Dir }[] };
+  onPartyTurn: { from: Dir; to: Dir };
 
   onRoll: { who: Combatant; size: number; value: number };
 };

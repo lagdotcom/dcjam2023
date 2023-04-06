@@ -67,7 +67,9 @@
     "onCanAct",
     "onCombatOver",
     "onKilled",
+    "onPartyMove",
     "onPartySwap",
+    "onPartyTurn",
     "onRoll"
   ];
 
@@ -2808,6 +2810,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       this.promises = /* @__PURE__ */ new Map();
       this.loaders = [];
       this.atlases = {};
+      this.audio = {};
       this.images = {};
       this.maps = {};
       this.scripts = {};
@@ -2874,6 +2877,22 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
         fetch(src).then((r) => r.text()).then((script) => {
           this.scripts[src] = script;
           return script;
+        })
+      );
+    }
+    loadAudio(src) {
+      const res = this.promises.get(src);
+      if (res)
+        return res;
+      return this.start(
+        src,
+        new Promise((resolve) => {
+          const audio = new Audio();
+          audio.src = src;
+          audio.addEventListener("canplaythrough", () => {
+            this.audio[src] = audio;
+            resolve(audio);
+          });
         })
       );
     }
@@ -3535,6 +3554,115 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     return true;
   };
 
+  // res/music/komfort-zone.ogg
+  var komfort_zone_default = "./komfort-zone-GXVCNDIF.ogg";
+
+  // res/music/mod-dot-vigor.ogg
+  var mod_dot_vigor_default = "./mod-dot-vigor-OULMZ74T.ogg";
+
+  // res/music/selume.ogg
+  var selume_default = "./selume-SBU4SIT3.ogg";
+
+  // src/Jukebox.ts
+  var playlists = {
+    explore: {
+      tracks: [komfort_zone_default, selume_default],
+      between: { roll: 20, bonus: 10 }
+    },
+    combat: { tracks: [mod_dot_vigor_default] }
+  };
+  var trackNames = {
+    [komfort_zone_default]: "komfort zone",
+    [mod_dot_vigor_default]: "mod dot vigor",
+    [selume_default]: "selume"
+  };
+  var Jukebox = class {
+    constructor(g) {
+      this.g = g;
+      this.trackEnded = () => {
+        const { playlist } = this;
+        if (!playlist)
+          return;
+        if (playlist.between) {
+          const delay = random(playlist.between.roll) + playlist.between.bonus;
+          if (delay) {
+            this.delayTimer = setTimeout(this.next, delay * 1e3);
+            return;
+          }
+        }
+        this.next();
+      };
+      this.next = () => {
+        const { index, playlist } = this;
+        if (!playlist)
+          return;
+        this.cancelDelay();
+        this.index = wrap(index + 1, playlist.tracks.length);
+        void this.start();
+      };
+      this.tryPlay = () => {
+        if (this.wantToPlay) {
+          const name = this.wantToPlay;
+          this.wantToPlay = void 0;
+          void this.play(name);
+        }
+      };
+      this.index = 0;
+      g.eventHandlers.onPartyMove.add(this.tryPlay);
+      g.eventHandlers.onPartySwap.add(this.tryPlay);
+      g.eventHandlers.onPartyTurn.add(this.tryPlay);
+    }
+    acquire(url) {
+      return __async(this, null, function* () {
+        const audio = yield this.g.res.loadAudio(url);
+        audio.addEventListener("ended", this.trackEnded);
+        return audio;
+      });
+    }
+    get status() {
+      if (this.delayTimer)
+        return "between tracks";
+      if (!this.playingUrl)
+        return "idle";
+      return `playing: ${trackNames[this.playingUrl]}`;
+    }
+    cancelDelay() {
+      if (this.delayTimer) {
+        clearTimeout(this.delayTimer);
+        this.delayTimer = void 0;
+      }
+    }
+    play(p) {
+      return __async(this, null, function* () {
+        var _a;
+        this.cancelDelay();
+        this.wantToPlay = p;
+        (_a = this.playing) == null ? void 0 : _a.pause();
+        const playlist = playlists[p];
+        this.playlist = playlist;
+        this.index = random(playlist.tracks.length);
+        yield this.start();
+      });
+    }
+    start() {
+      return __async(this, null, function* () {
+        if (!this.playlist)
+          return;
+        this.cancelDelay();
+        const url = this.playlist.tracks[this.index];
+        this.playing = yield this.acquire(url);
+        try {
+          yield this.playing.play();
+          this.playingUrl = url;
+          this.wantToPlay = void 0;
+        } catch (e) {
+          console.warn(e);
+          this.playing = void 0;
+        }
+      });
+    }
+  };
+
   // src/Engine.ts
   var calculateEventName = {
     dr: "onCalculateDR",
@@ -3602,6 +3730,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
         new Player(this, "War Caller"),
         new Player(this, "Loam Seer")
       ];
+      this.jukebox = new Jukebox(this);
       canvas.addEventListener("keyup", (e) => {
         const keys = getKeyNames(e.code, e.shiftKey, e.altKey, e.ctrlKey);
         for (const key of keys) {
@@ -3789,6 +3918,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
         this.markVisited();
         this.markNavigable(old, dir);
         this.draw();
+        this.fire("onPartyMove", { from: old, to: this.position });
         this.scripting.onEnter(this.position, old);
         return true;
       }
@@ -3875,7 +4005,9 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       if (this.pickingTargets)
         return false;
       this.combat.index = 0;
-      this.facing = rotate(this.facing, clockwise);
+      const old = this.facing;
+      this.facing = rotate(old, clockwise);
+      this.fire("onPartyTurn", { from: old, to: this.facing });
       this.draw();
       return true;
     }
@@ -4231,6 +4363,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     window.addEventListener("resize", onResize);
     onResize();
     void g.loadGCMap(map_default2, 0, 1);
+    void g.jukebox.play("explore");
   }
   window.addEventListener("load", () => loadEngine(document.body));
 })();
