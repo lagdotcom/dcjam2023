@@ -1,4 +1,4 @@
-import { Defy, allAllies, ally, oneOpponent } from "../actions";
+import { Bravery, Defy, allAllies, ally, oneOpponent } from "../actions";
 import { oneOf } from "../tools/rng";
 import Item from "../types/Item";
 
@@ -90,23 +90,7 @@ export const Storyscroll: Item = {
   slot: "Hand",
   type: "Flag",
   bonus: { spirit: 1 },
-  action: {
-    name: "Bravery",
-    tags: ["buff"],
-    sp: 3,
-    targets: allAllies,
-    act({ g, targets }) {
-      g.addEffect(() => ({
-        name: "Bravery",
-        duration: 2,
-        affects: targets,
-        buff: true,
-        onCalculateDR(e) {
-          if (this.affects.includes(e.who)) e.value += 2;
-        },
-      }));
-    },
-  },
+  action: Bravery,
 };
 
 export const DivaDress: Item = {
@@ -153,6 +137,73 @@ export const GrowlingCollar: Item = {
   },
 };
 
+export const FolkHarp: Item = {
+  name: "Folk Harp",
+  restrict: ["Flag Singer"],
+  slot: "Special",
+  bonus: {},
+  action: {
+    name: "Muse",
+    tags: ["buff"],
+    sp: 2,
+    targets: allAllies,
+    act({ g, targets }) {
+      g.addEffect(() => ({
+        name: "Muse",
+        duration: 2,
+        affects: targets,
+        onCalculateDamage(e) {
+          if (this.affects.includes(e.attacker))
+            e.amount += e.attacker.camaraderie;
+        },
+      }));
+    },
+  },
+};
+
+export const CatFacedMasquerade: Item = {
+  name: "Cat-faced Masquerade",
+  restrict: ["Flag Singer"],
+  slot: "Special",
+  bonus: {},
+  action: {
+    name: "Inspire",
+    tags: ["buff"],
+    sp: 4,
+    targets: allAllies,
+    act({ g, me, targets }) {
+      g.addEffect(() => ({
+        name: "Inspire",
+        duration: 2,
+        affects: targets,
+        onCalculateDamage(e) {
+          if (this.affects.includes(e.target)) {
+            e.multiplier = 0;
+            g.addToLog(`${e.attacker.name} faces backlash!`);
+            g.applyDamage(me, [e.attacker], g.roll(me), "hp", "magic");
+          }
+        },
+      }));
+    },
+  },
+};
+
+export const WindmillRobe: Item = {
+  name: "Windmill Robe",
+  restrict: ["Flag Singer"],
+  slot: "Special",
+  bonus: { dr: 1 },
+  action: {
+    name: "Unveil",
+    tags: [],
+    sp: 1,
+    targets: oneOpponent,
+    act() {
+      // TODO look at opposing enemy's skills et
+    },
+  },
+};
+
 CarvingKnife.lore = `Not a martial weapon, but rather a craftsman and artist's tool. Having secretly spurned Cherraphy's foul request, this Singer carries this knife as a confirmation that what they did was right.`;
 
 SignedCasque.lore = `A vest made of traditional plaster and adorned in writing with the feelings and wishes of each villager the Singer dares to protect.`;
@@ -164,3 +215,9 @@ Storyscroll.lore = `A furled tapestry illustrated with a brief history of Haring
 DivaDress.lore = `Few dare interfere with the performance of a Singer so dressed: these glittering magic garments dazzle any foolish enough to try! All may wear the Diva's Dress so long as it is earned by skill; gender matters not to the craft.`;
 
 GrowlingCollar.lore = `A mechanical amplifier pressed tightly to the skin of the throat, held in place by a black leather collar. When you speak, it roars.`;
+
+FolkHarp.lore = `An ancient traditional instrument, strings of animal innards sprung over a tune-measured wooden frame to create a playable musical scale. Can be plucked melodically, or strummed to produce a glistening, harmonic, rain-like sound.`;
+
+CatFacedMasquerade.lore = `A mask that lends its wearer a mocking air, or one of being deeply unimpressed. Turning this disdainful expression on an enemy reassures your allies of their superiority; a simple means of encouragement in complicated times.`;
+
+WindmillRobe.lore = `A pale blue robe with ultra-long sleeves, slung with diamond-shaped hanging sheets of fabric. Psychic expertise and practise allows you to manipulate these flags and perform intricate displays without so much as moving your arms; the most complicated dances can have a mesmerizing effect.`;

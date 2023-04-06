@@ -71,9 +71,27 @@ export const Brace: CombatAction = {
       buff: true,
       onCalculateDamage(e) {
         if (this.affects.includes(e.target)) {
-          e.amount /= 2;
+          e.multiplier /= 2;
           destroy();
         }
+      },
+    }));
+  },
+};
+
+export const Bravery: CombatAction = {
+  name: "Bravery",
+  tags: ["buff"],
+  sp: 3,
+  targets: allAllies,
+  act({ g, targets }) {
+    g.addEffect(() => ({
+      name: "Bravery",
+      duration: 2,
+      affects: targets,
+      buff: true,
+      onCalculateDR(e) {
+        if (this.affects.includes(e.who)) e.value += 2;
       },
     }));
   },

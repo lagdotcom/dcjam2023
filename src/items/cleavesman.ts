@@ -56,7 +56,7 @@ export const Gullark: Item = {
         onCalculateDamage(e) {
           if (this.affects.includes(e.target)) {
             g.addToLog(`${me.name} deflects the blow.`);
-            e.amount = 0;
+            e.multiplier = 0;
             destroy();
             return;
           }
@@ -148,7 +148,7 @@ export const ChivalrousMantle: Item = {
         buff: true,
         onCalculateDamage(e) {
           if (this.affects.includes(e.target) && e.type === "determination")
-            e.amount = 0;
+            e.multiplier = 0;
         },
       }));
     },

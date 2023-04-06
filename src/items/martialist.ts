@@ -144,7 +144,7 @@ export const LoromayHand: Item = {
         affects: [me],
         onCalculateDamage(e) {
           if (intersection(this.affects, [e.attacker, e.target]).length)
-            e.amount *= 2;
+            e.multiplier *= 2;
         },
       }));
     },

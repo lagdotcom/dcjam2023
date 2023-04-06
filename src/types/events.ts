@@ -39,6 +39,7 @@ export type GameEvents = {
     attacker: Combatant;
     target: Combatant;
     amount: number;
+    multiplier: number;
     type: AttackableStat;
     origin: "normal" | "magic";
   };

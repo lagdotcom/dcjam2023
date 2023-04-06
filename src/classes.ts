@@ -17,6 +17,7 @@ type ClassData = Pick<Combatant, AttackableStat> & {
 const classes: Record<ClassName, ClassData> = {
   Martialist: {
     name: "Kirkwin",
+    lore: `From birth, Kirkwin trained his body as a weapon, studying under the most brutal martialist sects that were allowed in Haringlee, and some that weren't. So it was to great surprise when Cherraphy appointed Kirkwin as the leader of Haringlee's guard; protector of the weak, defender of the pathetic as he saw it. Zealotry never suited Kirkwin, and rather than play his role as a coward soldier sitting idle, he abandons his post to join the assault on Nightjar, and in doing so vows to Cherraphy and Mullanginan both that they too will someday bleed and bow low.`,
     hp: 21,
     sp: 7,
     determination: 6,
@@ -49,6 +50,7 @@ const classes: Record<ClassName, ClassData> = {
   },
   "War Caller": {
     name: "Silas",
+    lore: `Silas considers himself dutybound to the goddess Cherraphy and exults her name without second thoughts. Blessed with unique conviction, his charmed surety in combat has increased even since his pit-fighting days; he now sees fit to call himself Knight-Enforcer and claim the ancient War Calling title from the old times... from before the wars made sense! Suspecting mischief and irreverence in the party that ventures to the Nightjar, he stubbornly joins, vowing to hold high the goddess's name. Yes, he's a nasty piece of work, but his arrogance serves to draw your enemy's ire away from your friends.`,
     hp: 30,
     sp: 5,
     determination: 5,
@@ -66,7 +68,7 @@ const classes: Record<ClassName, ClassData> = {
     camaraderie: 6,
     spirit: 3,
     items: [CarvingKnife, SignedCasque],
-    skill: "Kneel",
+    skill: "???",
   },
   "Loam Seer": {
     name: "Chiteri",

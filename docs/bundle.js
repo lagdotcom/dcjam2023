@@ -207,9 +207,27 @@
         buff: true,
         onCalculateDamage(e) {
           if (this.affects.includes(e.target)) {
-            e.amount /= 2;
+            e.multiplier /= 2;
             destroy();
           }
+        }
+      }));
+    }
+  };
+  var Bravery = {
+    name: "Bravery",
+    tags: ["buff"],
+    sp: 3,
+    targets: allAllies,
+    act({ g, targets }) {
+      g.addEffect(() => ({
+        name: "Bravery",
+        duration: 2,
+        affects: targets,
+        buff: true,
+        onCalculateDR(e) {
+          if (this.affects.includes(e.who))
+            e.value += 2;
         }
       }));
     }
@@ -1757,7 +1775,7 @@
           onCalculateDamage(e) {
             if (this.affects.includes(e.target)) {
               g.addToLog(`${me.name} deflects the blow.`);
-              e.amount = 0;
+              e.multiplier = 0;
               destroy();
               return;
             }
@@ -1919,24 +1937,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     slot: "Hand",
     type: "Flag",
     bonus: { spirit: 1 },
-    action: {
-      name: "Bravery",
-      tags: ["buff"],
-      sp: 3,
-      targets: allAllies,
-      act({ g, targets }) {
-        g.addEffect(() => ({
-          name: "Bravery",
-          duration: 2,
-          affects: targets,
-          buff: true,
-          onCalculateDR(e) {
-            if (this.affects.includes(e.who))
-              e.value += 2;
-          }
-        }));
-      }
-    }
+    action: Bravery
   };
   var DivaDress = {
     name: "Diva's Dress",
@@ -1980,12 +1981,78 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       }
     }
   };
+  var FolkHarp = {
+    name: "Folk Harp",
+    restrict: ["Flag Singer"],
+    slot: "Special",
+    bonus: {},
+    action: {
+      name: "Muse",
+      tags: ["buff"],
+      sp: 2,
+      targets: allAllies,
+      act({ g, targets }) {
+        g.addEffect(() => ({
+          name: "Muse",
+          duration: 2,
+          affects: targets,
+          onCalculateDamage(e) {
+            if (this.affects.includes(e.attacker))
+              e.amount += e.attacker.camaraderie;
+          }
+        }));
+      }
+    }
+  };
+  var CatFacedMasquerade = {
+    name: "Cat-faced Masquerade",
+    restrict: ["Flag Singer"],
+    slot: "Special",
+    bonus: {},
+    action: {
+      name: "Inspire",
+      tags: ["buff"],
+      sp: 4,
+      targets: allAllies,
+      act({ g, me, targets }) {
+        g.addEffect(() => ({
+          name: "Inspire",
+          duration: 2,
+          affects: targets,
+          onCalculateDamage(e) {
+            if (this.affects.includes(e.target)) {
+              e.multiplier = 0;
+              g.addToLog(`${e.attacker.name} faces backlash!`);
+              g.applyDamage(me, [e.attacker], g.roll(me), "hp", "magic");
+            }
+          }
+        }));
+      }
+    }
+  };
+  var WindmillRobe = {
+    name: "Windmill Robe",
+    restrict: ["Flag Singer"],
+    slot: "Special",
+    bonus: { dr: 1 },
+    action: {
+      name: "Unveil",
+      tags: [],
+      sp: 1,
+      targets: oneOpponent,
+      act() {
+      }
+    }
+  };
   CarvingKnife.lore = `Not a martial weapon, but rather a craftsman and artist's tool. Having secretly spurned Cherraphy's foul request, this Singer carries this knife as a confirmation that what they did was right.`;
   SignedCasque.lore = `A vest made of traditional plaster and adorned in writing with the feelings and wishes of each villager the Singer dares to protect.`;
   Fandagger.lore = `Fandaggers are graceful tools of the rogue, to be danced with and to be thrown between acrobats in relay. Held at one end they concertina into painted fans; the other suits the stabbing grip.`;
   Storyscroll.lore = `A furled tapestry illustrated with a brief history of Haringlee myth. When the Flag Singer whirls it about them as though dancing with ribbons, their comrades are enriched by the spirit of the fantasies it depicts.`;
   DivaDress.lore = `Few dare interfere with the performance of a Singer so dressed: these glittering magic garments dazzle any foolish enough to try! All may wear the Diva's Dress so long as it is earned by skill; gender matters not to the craft.`;
   GrowlingCollar.lore = `A mechanical amplifier pressed tightly to the skin of the throat, held in place by a black leather collar. When you speak, it roars.`;
+  FolkHarp.lore = `An ancient traditional instrument, strings of animal innards sprung over a tune-measured wooden frame to create a playable musical scale. Can be plucked melodically, or strummed to produce a glistening, harmonic, rain-like sound.`;
+  CatFacedMasquerade.lore = `A mask that lends its wearer a mocking air, or one of being deeply unimpressed. Turning this disdainful expression on an enemy reassures your allies of their superiority; a simple means of encouragement in complicated times.`;
+  WindmillRobe.lore = `A pale blue robe with ultra-long sleeves, slung with diamond-shaped hanging sheets of fabric. Psychic expertise and practise allows you to manipulate these flags and perform intricate displays without so much as moving your arms; the most complicated dances can have a mesmerizing effect.`;
 
   // src/items/loamSeer.ts
   var Cornucopia = {
@@ -2017,8 +2084,140 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       }
     }
   };
+  var IoliteCross = {
+    name: "Iolite Cross",
+    restrict: ["Loam Seer"],
+    slot: "Hand",
+    type: "Catalyst",
+    bonus: { spirit: 1 },
+    action: {
+      name: "Vanish",
+      tags: ["movement"],
+      sp: 2,
+      targets: onlyMe,
+      act() {
+      }
+    }
+  };
+  var BeekeeperBrooch = {
+    name: "Beekeeper's Brooch of Needling",
+    restrict: ["Loam Seer"],
+    slot: "Hand",
+    type: "Catalyst",
+    bonus: {},
+    action: {
+      name: "Swarm",
+      tags: ["attack", "spell"],
+      sp: 2,
+      targets: opponents(3, [0, 1, 3]),
+      act({ g, me, targets }) {
+        g.applyDamage(me, targets, 3, "hp", "magic");
+      }
+    }
+  };
+  var RockringSleeve = {
+    name: "Rockring Sleeve",
+    restrict: ["Loam Seer"],
+    slot: "Body",
+    type: "Armour",
+    bonus: { dr: 2 },
+    action: Bravery
+  };
+  var Mosscloak = {
+    name: "Mosscloak",
+    restrict: ["Loam Seer"],
+    slot: "Body",
+    type: "Armour",
+    bonus: {},
+    action: {
+      name: "Study",
+      tags: [],
+      sp: 1,
+      targets: onlyMe,
+      act({ g, me }) {
+        g.addEffect(() => ({
+          name: "Study",
+          duration: 2,
+          affects: [me],
+          onAfterDamage({ target, type }) {
+            if (this.affects.includes(target) && type === "hp")
+              target.sp = Math.min(target.sp + 2, target.maxSP);
+          }
+        }));
+      }
+    }
+  };
+  var WandOfWorkedFlint = {
+    name: "Wand of Worked Flint",
+    restrict: ["Loam Seer"],
+    slot: "Special",
+    bonus: {},
+    action: {
+      name: "Crackle",
+      tags: ["attack", "spell"],
+      sp: 2,
+      x: true,
+      targets: { type: "enemy" },
+      act({ g, me, targets, x }) {
+        for (let i = 0; i < x; i++) {
+          const alive = targets.filter((t) => t.alive);
+          if (!alive.length)
+            return;
+          const target = oneOf(alive);
+          const amount = g.roll(me) + 2;
+          g.applyDamage(me, [target], amount, "hp", "magic");
+        }
+      }
+    }
+  };
+  var TortoiseFamiliar = {
+    name: "Tortoise Familiar",
+    restrict: ["Loam Seer"],
+    slot: "Special",
+    bonus: { camaraderie: 1 },
+    action: {
+      name: "Reforge",
+      tags: ["heal", "spell"],
+      sp: 5,
+      targets: onlyMe,
+      act({ g, me }) {
+        g.heal(me, [me], Infinity);
+      }
+    }
+  };
+  var MantleOfClay = {
+    name: "Mantle of Clay",
+    restrict: ["Loam Seer"],
+    slot: "Special",
+    bonus: { dr: 1 },
+    action: {
+      name: "Rumble",
+      tags: ["attack", "spell"],
+      sp: 4,
+      targets: opponents(),
+      act({ g, me }) {
+        const amount = g.roll(me) + 10;
+        const opponent = g.getOpponent(me);
+        const others = [
+          g.getOpponent(me, 1),
+          g.getOpponent(me, 2),
+          g.getOpponent(me, 3)
+        ].filter(isDefined);
+        const targets = [opponent, oneOf(others)].filter(isDefined);
+        g.applyDamage(me, targets, amount, "hp", "magic");
+        g.applyDamage(me, targets, 1, "spirit", "magic");
+      }
+    }
+  };
   Cornucopia.lore = `The proverbial horn of plenty, or rather a replica crafted by the artists of Haringlee, then bestowed by its priests with a magickal knack for exuding a sweet restorative nectar.`;
   JacketAndRucksack.lore = `Clothes and containers of simple leather. Sensible wear for foragers and druidic types; not truly intended for fighting.`;
+  IoliteCross.lore = `A semi-precious crux. Light generated by uncanny phosphorous plants - or by the setting sun - hits this substance at a remarkable, almost magickal angle.`;
+  BeekeeperBrooch.lore = `The badge of office for any who ally with insectkind. Bids fierce clouds of bees to deliver a salvo of stings to the assailants of one truly in harmony with the earth, if they are humble and bereft of secret ambition.`;
+  RockringSleeve.lore = `A set of four polished hoops of granite, fit to mold closely to its wearer's forearm. Studied practitioners of the power that dwells within rock can share the protection of such a carapace with their compatriots.`;
+  Mosscloak.lore = `Deep into the wilderness where wood meets river, a type of silver-grey-green moss flourishes that piles on so thick that, when carefully detached from the tree trunk it hugs, can retain its integrity as a naturally-occurring fabric. This specimen reaches all the way from shoulder to foot and trails some length along the ground behind you!`;
+  WandOfWorkedFlint.lore = `A spike of sparking rock, decorated with one twisting groove from haft to tip. Rubbing your thumb along the thing produces a faint sizzling sound.`;
+  TortoiseFamiliar.lore = `The tortoise is one of the ground's favoured children, fashioned in its image. This one seems to have an interest in your cause.`;
+  MantleOfClay.lore = `Pots of runny clay, into which fingers and paintbrushes can be dipped. It grips the skin tight as any tattoo when applied in certain patterns, like veins; so too can the shaman who wears these marks espy the "veins" of the rocks below them and, with a tug, bid them tremble.`;
 
   // src/tools/sets.ts
   function intersection(a, b) {
@@ -2157,7 +2356,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
           affects: [me],
           onCalculateDamage(e) {
             if (intersection(this.affects, [e.attacker, e.target]).length)
-              e.amount *= 2;
+              e.multiplier *= 2;
           }
         }));
       }
@@ -2419,6 +2618,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
   var classes = {
     Martialist: {
       name: "Kirkwin",
+      lore: `From birth, Kirkwin trained his body as a weapon, studying under the most brutal martialist sects that were allowed in Haringlee, and some that weren't. So it was to great surprise when Cherraphy appointed Kirkwin as the leader of Haringlee's guard; protector of the weak, defender of the pathetic as he saw it. Zealotry never suited Kirkwin, and rather than play his role as a coward soldier sitting idle, he abandons his post to join the assault on Nightjar, and in doing so vows to Cherraphy and Mullanginan both that they too will someday bleed and bow low.`,
       hp: 21,
       sp: 7,
       determination: 6,
@@ -2451,6 +2651,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     },
     "War Caller": {
       name: "Silas",
+      lore: `Silas considers himself dutybound to the goddess Cherraphy and exults her name without second thoughts. Blessed with unique conviction, his charmed surety in combat has increased even since his pit-fighting days; he now sees fit to call himself Knight-Enforcer and claim the ancient War Calling title from the old times... from before the wars made sense! Suspecting mischief and irreverence in the party that ventures to the Nightjar, he stubbornly joins, vowing to hold high the goddess's name. Yes, he's a nasty piece of work, but his arrogance serves to draw your enemy's ire away from your friends.`,
       hp: 30,
       sp: 5,
       determination: 5,
@@ -2468,7 +2669,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       camaraderie: 6,
       spirit: 3,
       items: [CarvingKnife, SignedCasque],
-      skill: "Kneel"
+      skill: "???"
     },
     "Loam Seer": {
       name: "Chiteri",
@@ -3804,11 +4005,13 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
           attacker,
           target,
           amount,
+          multiplier: 1,
           type,
           origin
         });
+        const calculated = damage.amount * damage.multiplier;
         const resist = type === "hp" && origin === "normal" ? target.dr : 0;
-        const deal = Math.floor(damage.amount - resist);
+        const deal = Math.floor(calculated - resist);
         if (deal > 0) {
           total += deal;
           target[type] -= deal;

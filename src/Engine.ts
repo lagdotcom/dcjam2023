@@ -679,13 +679,15 @@ export default class Engine implements Game {
         attacker,
         target,
         amount,
+        multiplier: 1,
         type,
         origin,
       });
+      const calculated = damage.amount * damage.multiplier;
 
       const resist = type === "hp" && origin === "normal" ? target.dr : 0;
 
-      const deal = Math.floor(damage.amount - resist);
+      const deal = Math.floor(calculated - resist);
       if (deal > 0) {
         total += deal;
         target[type] -= deal;
