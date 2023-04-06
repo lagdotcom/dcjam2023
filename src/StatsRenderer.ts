@@ -117,8 +117,7 @@ export default class StatsRenderer implements HasHotspots {
   }
 
   spotClicked(spot: Hotspot) {
-    const pos = spot.id;
-    if (this.g.facing !== pos) this.g.partySwap(pos - this.g.facing);
+    this.g.pcClicked(spot.id as Dir);
   }
 
   renderBar(

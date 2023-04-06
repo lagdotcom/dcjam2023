@@ -8,6 +8,7 @@ export interface GameEffect extends Partial<GameEventHandler> {
   affects: Combatant[];
   duration: number;
   buff?: true;
+  permanent?: true;
 }
 
 export default interface Game {

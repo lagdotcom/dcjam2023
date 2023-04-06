@@ -14,5 +14,6 @@ type GameInput =
   | "Interact"
   | "MenuUp"
   | "MenuDown"
-  | "MenuChoose";
+  | "MenuChoose"
+  | "Cancel";
 export default GameInput;

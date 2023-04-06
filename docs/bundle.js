@@ -493,7 +493,8 @@
     }
     begin(enemies2) {
       for (const e of this.effects.slice())
-        this.g.removeEffect(e);
+        if (!e.permanent)
+          this.g.removeEffect(e);
       this.resetEnemies();
       for (const name of enemies2) {
         const enemy = spawn(this.g, name);
@@ -647,7 +648,8 @@
     ["Alt+KeyA", ["SwapLeft"]],
     ["Space", ["ToggleLog"]],
     ["Enter", ["Interact", "MenuChoose"]],
-    ["Return", ["Interact", "MenuChoose"]]
+    ["Return", ["Interact", "MenuChoose"]],
+    ["Escape", ["Cancel"]]
   ];
   var DefaultControls_default = DefaultControls;
 
@@ -1473,9 +1475,7 @@
       });
     }
     spotClicked(spot) {
-      const pos = spot.id;
-      if (this.g.facing !== pos)
-        this.g.partySwap(pos - this.g.facing);
+      this.g.pcClicked(spot.id);
     }
     renderBar(x, y, current, max, colour) {
       const width = Math.floor(
@@ -3670,6 +3670,8 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
           return this.partySwap(1);
         case "SwapBehind":
           return this.partySwap(2);
+        case "Cancel":
+          return this.cancel();
       }
     }
     loadWorld(w, position) {
@@ -3870,12 +3872,16 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       return `${dTag}${sTag}${wTag}`;
     }
     turn(clockwise) {
+      if (this.pickingTargets)
+        return false;
       this.combat.index = 0;
       this.facing = rotate(this.facing, clockwise);
       this.draw();
       return true;
     }
     menuMove(mod) {
+      if (this.pickingTargets)
+        return false;
       if (!this.combat.inCombat)
         return false;
       if (this.combat.side === "enemy")
@@ -3899,6 +3905,8 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       return true;
     }
     menuChoose() {
+      if (this.pickingTargets)
+        return false;
       if (!this.combat.inCombat)
         return false;
       if (this.combat.side === "enemy")
@@ -3910,12 +3918,18 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       if (!this.canAct(pc, action))
         return false;
       const { possibilities, amount } = this.getTargetPossibilities(pc, action);
-      if (!possibilities.length)
+      if (!possibilities.length) {
+        this.addToLog("No valid targets.");
         return false;
-      const targets = pickN(
-        possibilities.filter((c) => c.alive),
-        amount
-      );
+      }
+      if (possibilities.length > amount) {
+        if (amount !== 1)
+          throw new Error(`Don't know how to pick ${amount} targets`);
+        this.pickingTargets = { pc, action, possibilities };
+        this.addToLog("Choose target.");
+        return true;
+      }
+      const targets = pickN(possibilities, amount);
       this.act(pc, action, targets);
       return true;
     }
@@ -4097,6 +4111,8 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       }
     }
     partyRotate(dir) {
+      if (this.pickingTargets)
+        return false;
       if (this.combat.inCombat) {
         const immobile = this.party.find((pc) => !pc.canMove);
         if (immobile)
@@ -4131,6 +4147,8 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       return true;
     }
     partySwap(side) {
+      if (this.pickingTargets)
+        return false;
       const dir = rotate(this.facing, side);
       const me = this.party[this.facing];
       const them = this.party[dir];
@@ -4156,6 +4174,29 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
         toArray.unshift(enemy);
         this.draw();
       }
+    }
+    pcClicked(dir) {
+      if (this.pickingTargets) {
+        const { pc, action, possibilities } = this.pickingTargets;
+        const target = this.party[dir];
+        if (possibilities.includes(target)) {
+          this.pickingTargets = void 0;
+          this.act(pc, action, [target]);
+          return;
+        }
+        this.addToLog("Invalid target.");
+        return;
+      }
+      if (this.facing !== dir)
+        this.partySwap(dir - this.facing);
+    }
+    cancel() {
+      if (this.pickingTargets) {
+        this.pickingTargets = void 0;
+        this.addToLog("Cancelled.");
+        return true;
+      }
+      return false;
     }
   };
 

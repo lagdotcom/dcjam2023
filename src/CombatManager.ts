@@ -56,7 +56,8 @@ export default class CombatManager {
 
   begin(enemies: EnemyName[]) {
     // TODO more permanent things... penance?
-    for (const e of this.effects.slice()) this.g.removeEffect(e);
+    for (const e of this.effects.slice())
+      if (!e.permanent) this.g.removeEffect(e);
 
     // TODO arrange them more sensibly
     this.resetEnemies();

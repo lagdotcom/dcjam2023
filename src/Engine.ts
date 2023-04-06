@@ -46,7 +46,17 @@ import Item from "./types/Item";
 import { Predicate, matchAll } from "./types/logic";
 import HasHotspots from "./types/HasHotspots";
 
-type WallType = { canSeeDoor: boolean; isSolid: boolean; canSeeWall: boolean };
+interface WallType {
+  canSeeDoor: boolean;
+  isSolid: boolean;
+  canSeeWall: boolean;
+}
+
+interface TargetPicking {
+  pc: Player;
+  action: CombatAction;
+  possibilities: Combatant[];
+}
 
 interface RenderSetup {
   dungeon: DungeonRenderer;
@@ -78,6 +88,7 @@ export default class Engine implements Game {
   party: Player[];
   pendingEnemies: EnemyName[];
   position: XY;
+  pickingTargets?: TargetPicking;
   renderSetup?: RenderSetup;
   res: ResourceManager;
   showLog: boolean;
@@ -196,6 +207,8 @@ export default class Engine implements Game {
         return this.partySwap(1);
       case "SwapBehind":
         return this.partySwap(2);
+      case "Cancel":
+        return this.cancel();
     }
   }
 
@@ -457,6 +470,9 @@ export default class Engine implements Game {
   }
 
   turn(clockwise: number) {
+    // TODO move cursor with keys
+    if (this.pickingTargets) return false;
+
     this.combat.index = 0;
     this.facing = rotate(this.facing, clockwise);
     this.draw();
@@ -464,6 +480,8 @@ export default class Engine implements Game {
   }
 
   menuMove(mod: number) {
+    // TODO move cursor with keys
+    if (this.pickingTargets) return false;
     if (!this.combat.inCombat) return false;
     if (this.combat.side === "enemy") return false;
 
@@ -487,6 +505,8 @@ export default class Engine implements Game {
   }
 
   menuChoose() {
+    // TODO picking targets with keys
+    if (this.pickingTargets) return false;
     if (!this.combat.inCombat) return false;
     if (this.combat.side === "enemy") return false;
 
@@ -497,14 +517,21 @@ export default class Engine implements Game {
     if (!this.canAct(pc, action)) return false;
 
     const { possibilities, amount } = this.getTargetPossibilities(pc, action);
-    if (!possibilities.length) return false;
+    if (!possibilities.length) {
+      this.addToLog("No valid targets.");
+      return false;
+    }
 
-    // TODO give ability to pick targets...
-    const targets = pickN(
-      possibilities.filter((c) => c.alive),
-      amount
-    );
+    if (possibilities.length > amount) {
+      if (amount !== 1)
+        throw new Error(`Don't know how to pick ${amount} targets`);
 
+      this.pickingTargets = { pc, action, possibilities };
+      this.addToLog("Choose target.");
+      return true;
+    }
+
+    const targets = pickN(possibilities, amount);
     this.act(pc, action, targets);
     return true;
   }
@@ -746,6 +773,8 @@ export default class Engine implements Game {
   }
 
   partyRotate(dir: -1 | 1) {
+    if (this.pickingTargets) return false;
+
     if (this.combat.inCombat) {
       const immobile = this.party.find((pc) => !pc.canMove);
       if (immobile) return false;
@@ -785,6 +814,8 @@ export default class Engine implements Game {
   }
 
   partySwap(side: number) {
+    if (this.pickingTargets) return false;
+
     const dir = rotate(this.facing, side);
 
     const me = this.party[this.facing];
@@ -817,5 +848,32 @@ export default class Engine implements Game {
       toArray.unshift(enemy);
       this.draw();
     }
+  }
+
+  pcClicked(dir: Dir) {
+    if (this.pickingTargets) {
+      const { pc, action, possibilities } = this.pickingTargets;
+      const target = this.party[dir];
+      if (possibilities.includes(target)) {
+        this.pickingTargets = undefined;
+        this.act(pc, action, [target]);
+        return;
+      }
+
+      this.addToLog("Invalid target.");
+      return;
+    }
+
+    if (this.facing !== dir) this.partySwap(dir - this.facing);
+  }
+
+  cancel() {
+    if (this.pickingTargets) {
+      this.pickingTargets = undefined;
+      this.addToLog("Cancelled.");
+      return true;
+    }
+
+    return false;
   }
 }
