@@ -191,4 +191,21 @@ export default class CombatManager {
 
     this.g.draw();
   };
+
+  checkOver() {
+    const alive = this.g.party.find((pc) => pc.alive);
+    const winners = alive
+      ? this.allEnemies.length === 0
+        ? "party"
+        : undefined
+      : "enemies";
+
+    if (winners) {
+      if (alive) this.g.addToLog(`You have vanquished your foes.`);
+      else this.g.addToLog(`You have failed.`);
+
+      this.g.fire("onCombatOver", { winners });
+      // TODO item drops
+    }
+  }
 }

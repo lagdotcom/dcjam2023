@@ -1,4 +1,3 @@
-import Item, { ItemSlot } from "./types/Item";
 import CombatAction from "./types/CombatAction";
 
 import Combatant, { BoostableStat } from "./types/Combatant";

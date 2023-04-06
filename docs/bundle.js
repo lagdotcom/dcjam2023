@@ -748,6 +748,17 @@
       this.enemies[dir].splice(distance, 1);
       this.g.draw();
     }
+    checkOver() {
+      const alive = this.g.party.find((pc) => pc.alive);
+      const winners = alive ? this.allEnemies.length === 0 ? "party" : void 0 : "enemies";
+      if (winners) {
+        if (alive)
+          this.g.addToLog(`You have vanquished your foes.`);
+        else
+          this.g.addToLog(`You have failed.`);
+        this.g.fire("onCombatOver", { winners });
+      }
+    }
   };
 
   // src/Colours.ts
@@ -4496,6 +4507,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
         targets,
         cancelled: e.cancel
       });
+      this.combat.checkOver();
     }
     endTurn() {
       this.combat.endTurn();
@@ -4589,15 +4601,6 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       who.hp = 0;
       this.addToLog(`${who.name} dies!`);
       this.fire("onKilled", { who, attacker });
-      const alive = this.party.find((pc) => pc.alive);
-      const winners = alive ? this.combat.allEnemies.length === 0 ? "party" : void 0 : "enemies";
-      if (winners) {
-        if (alive)
-          this.addToLog(`You have vanquished your foes.`);
-        else
-          this.addToLog(`You have failed.`);
-        this.fire("onCombatOver", { winners });
-      }
     }
     partyRotate(dir) {
       if (this.pickingTargets)

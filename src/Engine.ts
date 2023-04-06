@@ -651,6 +651,7 @@ export default class Engine implements Game {
       targets,
       cancelled: e.cancel,
     });
+    this.combat.checkOver();
   }
 
   endTurn() {
@@ -780,21 +781,6 @@ export default class Engine implements Game {
     who.hp = 0;
     this.addToLog(`${who.name} dies!`);
     this.fire("onKilled", { who, attacker });
-
-    const alive = this.party.find((pc) => pc.alive);
-    const winners = alive
-      ? this.combat.allEnemies.length === 0
-        ? "party"
-        : undefined
-      : "enemies";
-
-    if (winners) {
-      if (alive) this.addToLog(`You have vanquished your foes.`);
-      else this.addToLog(`You have failed.`);
-
-      this.fire("onCombatOver", { winners });
-      // TODO item drops
-    }
   }
 
   partyRotate(dir: -1 | 1) {
