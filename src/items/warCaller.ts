@@ -110,7 +110,7 @@ export const HairShirt: Item = {
   bonus: { determination: 1 },
   action: {
     name: "Kneel",
-    tags: ["debuff"],
+    tags: ["duff"],
     sp: 0,
     targets: onlyMe,
     act({ g, me }) {
@@ -240,4 +240,4 @@ SternMask.lore = `A full helm, decorated in paint and fine metalwork to resemble
 
 CherClaspeGauntlet.lore = `A pair of iron gauntlets ensorcelled with a modest enchantment; upon the command of a priest, these matching metal gloves each lock into the shape of a fist and cannot be undone by the bearer; a stricture that War Callers willingly bear, that it may sustain their resolve and dismiss their idle habits.`;
 
-SaintGong.lore = `A brass percussive disc mounted on a seven foot bannerpole and hung from hinge-chains, letting it swing freely enough that its shuddering surface rings clean. Most effective when tuned to the frequency of a chosen knight's bellows, allowing it to crash loudly in accompaniment with each war cry.`;
+SaintGong.lore = `A brass percussive disc mounted on a seven foot banner-pole and hung from hinge-chains, letting it swing freely enough that its shuddering surface rings clean. Most effective when tuned to the frequency of a chosen knight's bellows, allowing it to crash loudly in accompaniment with each war cry.`;

@@ -110,7 +110,7 @@ export const GrowlingCollar: Item = {
   bonus: {},
   action: {
     name: "Vox Pop",
-    tags: ["debuff"],
+    tags: ["duff"],
     sp: 4,
     targets: allAllies,
     act({ g, me, targets }) {

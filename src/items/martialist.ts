@@ -134,7 +134,7 @@ export const LoromayHand: Item = {
   bonus: { spirit: 1 },
   action: {
     name: "Mudra",
-    tags: ["buff", "debuff"],
+    tags: ["buff", "duff"],
     sp: 3,
     targets: onlyMe,
     act({ g, me }) {

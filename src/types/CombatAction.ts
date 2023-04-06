@@ -6,7 +6,7 @@ export type ActionTag =
   | "attack"
   | "counter"
   | "buff"
-  | "debuff"
+  | "duff"
   | "heal"
   | "movement"
   | "spell";
