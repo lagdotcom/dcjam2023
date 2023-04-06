@@ -6,32 +6,35 @@ import selumeUrl from "../res/music/selume.ogg";
 import { random } from "./tools/rng";
 import { wrap } from "./tools/numbers";
 
+interface Track {
+  url: string;
+  name: string;
+  audio?: HTMLAudioElement;
+}
+
 interface Playlist {
-  tracks: string[];
+  tracks: Track[];
   between?: { roll: number; bonus: number };
 }
 
 const PlaylistNames = ["explore", "combat"] as const;
 type PlaylistName = (typeof PlaylistNames)[number];
 
+const komfortZone: Track = { name: "komfort zone", url: komfortZoneUrl };
+const modDotVigor: Track = { name: "mod dot vigor", url: modDotVigorUrl };
+const selume: Track = { name: "selume", url: selumeUrl };
+
 const playlists: Record<PlaylistName, Playlist> = {
   explore: {
-    tracks: [komfortZoneUrl, selumeUrl],
+    tracks: [komfortZone, selume],
     between: { roll: 20, bonus: 10 },
   },
-  combat: { tracks: [modDotVigorUrl] },
-};
-
-const trackNames = {
-  [komfortZoneUrl]: "komfort zone",
-  [modDotVigorUrl]: "mod dot vigor",
-  [selumeUrl]: "selume",
+  combat: { tracks: [modDotVigor] },
 };
 
 export default class Jukebox {
   delayTimer?: ReturnType<typeof setTimeout>;
-  playing?: HTMLAudioElement;
-  playingUrl?: string;
+  playing?: Track;
   playlist?: Playlist;
   index: number;
   wantToPlay?: PlaylistName;
@@ -44,16 +47,20 @@ export default class Jukebox {
     g.eventHandlers.onPartyTurn.add(this.tryPlay);
   }
 
-  private async acquire(url: string) {
-    const audio = await this.g.res.loadAudio(url);
-    audio.addEventListener("ended", this.trackEnded);
-    return audio;
+  private async acquire(track: Track) {
+    if (!track.audio) {
+      const audio = await this.g.res.loadAudio(track.url);
+      audio.addEventListener("ended", this.trackEnded);
+      track.audio = audio;
+    }
+
+    return track;
   }
 
   get status() {
     if (this.delayTimer) return "between tracks";
-    if (!this.playingUrl) return "idle";
-    return `playing: ${trackNames[this.playingUrl]}`;
+    if (!this.playing) return "idle";
+    return `playing: ${this.playing.name}`;
   }
 
   private cancelDelay() {
@@ -66,7 +73,7 @@ export default class Jukebox {
   async play(p: PlaylistName) {
     this.cancelDelay();
     this.wantToPlay = p;
-    this.playing?.pause();
+    this.playing?.audio?.pause();
 
     const playlist = playlists[p];
     this.playlist = playlist;
@@ -78,14 +85,23 @@ export default class Jukebox {
     if (!this.playlist) return;
 
     this.cancelDelay();
-    const url = this.playlist.tracks[this.index];
-    this.playing = await this.acquire(url);
+    const track = this.playlist.tracks[this.index];
+    this.playing = await this.acquire(track);
     try {
-      await this.playing.play();
-      this.playingUrl = url;
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      await this.playing.audio!.play();
+      this.playing = track;
       this.wantToPlay = undefined;
     } catch (e) {
       console.warn(e);
+      this.playing = undefined;
+    }
+  }
+
+  stop() {
+    if (this.playing) {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      this.playing.audio!.pause();
       this.playing = undefined;
     }
   }

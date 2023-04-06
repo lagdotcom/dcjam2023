@@ -3564,17 +3564,15 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
   var selume_default = "./selume-SBU4SIT3.ogg";
 
   // src/Jukebox.ts
+  var komfortZone = { name: "komfort zone", url: komfort_zone_default };
+  var modDotVigor = { name: "mod dot vigor", url: mod_dot_vigor_default };
+  var selume = { name: "selume", url: selume_default };
   var playlists = {
     explore: {
-      tracks: [komfort_zone_default, selume_default],
+      tracks: [komfortZone, selume],
       between: { roll: 20, bonus: 10 }
     },
-    combat: { tracks: [mod_dot_vigor_default] }
-  };
-  var trackNames = {
-    [komfort_zone_default]: "komfort zone",
-    [mod_dot_vigor_default]: "mod dot vigor",
-    [selume_default]: "selume"
+    combat: { tracks: [modDotVigor] }
   };
   var Jukebox = class {
     constructor(g) {
@@ -3612,19 +3610,22 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       g.eventHandlers.onPartySwap.add(this.tryPlay);
       g.eventHandlers.onPartyTurn.add(this.tryPlay);
     }
-    acquire(url) {
+    acquire(track) {
       return __async(this, null, function* () {
-        const audio = yield this.g.res.loadAudio(url);
-        audio.addEventListener("ended", this.trackEnded);
-        return audio;
+        if (!track.audio) {
+          const audio = yield this.g.res.loadAudio(track.url);
+          audio.addEventListener("ended", this.trackEnded);
+          track.audio = audio;
+        }
+        return track;
       });
     }
     get status() {
       if (this.delayTimer)
         return "between tracks";
-      if (!this.playingUrl)
+      if (!this.playing)
         return "idle";
-      return `playing: ${trackNames[this.playingUrl]}`;
+      return `playing: ${this.playing.name}`;
     }
     cancelDelay() {
       if (this.delayTimer) {
@@ -3634,10 +3635,10 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     }
     play(p) {
       return __async(this, null, function* () {
-        var _a;
+        var _a, _b;
         this.cancelDelay();
         this.wantToPlay = p;
-        (_a = this.playing) == null ? void 0 : _a.pause();
+        (_b = (_a = this.playing) == null ? void 0 : _a.audio) == null ? void 0 : _b.pause();
         const playlist = playlists[p];
         this.playlist = playlist;
         this.index = random(playlist.tracks.length);
@@ -3649,17 +3650,23 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
         if (!this.playlist)
           return;
         this.cancelDelay();
-        const url = this.playlist.tracks[this.index];
-        this.playing = yield this.acquire(url);
+        const track = this.playlist.tracks[this.index];
+        this.playing = yield this.acquire(track);
         try {
-          yield this.playing.play();
-          this.playingUrl = url;
+          yield this.playing.audio.play();
+          this.playing = track;
           this.wantToPlay = void 0;
         } catch (e) {
           console.warn(e);
           this.playing = void 0;
         }
       });
+    }
+    stop() {
+      if (this.playing) {
+        this.playing.audio.pause();
+        this.playing = void 0;
+      }
     }
   };
 
