@@ -48,21 +48,21 @@ end
 onTagInteract('LockedDoorA', LockedDoorA)
 
 function AddSage()
-  addEnemy('Sage')
+  addEnemy('Nettle Sage')
   removeTag(partyX, partyY, 'AddSage')
   message('A robed man bows mockingly at you and fades into nothingness.')
 end
 onTagEnter('AddSage', AddSage)
 
 function AddMonk()
-  addEnemy('Monk')
+  addEnemy('Mullanginan Martialist')
   removeTag(partyX, partyY, 'AddMonk')
   message('A seated man looks up at you impassively as you approach. Without a word, he disappears.')
 end
 onTagEnter('AddMonk', AddMonk)
 
 function AddRogue()
-  addEnemy('Rogue')
+  addEnemy('Eve Scout')
   removeTag(partyX, partyY, 'AddRogue')
   message('You catch sight of someone wearing dark clothes before they vanish into the shadows.')
 end

@@ -1,0 +1,285 @@
+{
+  "version": "0.0.1",
+  "generated": "2023-04-06",
+  "resolution": { "width": 296, "height": 118 },
+  "depth": 5,
+  "width": 4,
+  "layers": [
+    {
+      "on": true,
+      "index": 4,
+      "name": "Sneed Crawler",
+      "type": "Object",
+      "id": 120,
+      "scale": { "x": 0.5, "y": 0.9 },
+      "offset": { "x": 0, "y": 0 },
+      "tiles": [
+        {
+          "type": "object",
+          "flipped": false,
+          "tile": { "x": 0, "z": 0 },
+          "screen": { "x": 104, "y": 9 },
+          "coords": { "x": 16, "y": 0, "w": 85, "h": 109, "fullWidth": 182 }
+        },
+        {
+          "type": "object",
+          "flipped": false,
+          "tile": { "x": 0, "z": -1 },
+          "screen": { "x": 124, "y": 22 },
+          "coords": { "x": 103, "y": 0, "w": 47, "h": 62, "fullWidth": 102 }
+        },
+        {
+          "type": "object",
+          "flipped": false,
+          "tile": { "x": 0, "z": -2 },
+          "screen": { "x": 134, "y": 30 },
+          "coords": { "x": 103, "y": 64, "w": 27, "h": 35, "fullWidth": 56 }
+        },
+        {
+          "type": "object",
+          "flipped": false,
+          "tile": { "x": 0, "z": -3 },
+          "screen": { "x": 141, "y": 37 },
+          "coords": { "x": 0, "y": 16, "w": 14, "h": 19, "fullWidth": 40 }
+        },
+        {
+          "type": "object",
+          "flipped": false,
+          "tile": { "x": 0, "z": -4 },
+          "screen": { "x": 141, "y": 35 },
+          "coords": { "x": 0, "y": 37, "w": 14, "h": 18, "fullWidth": 30 }
+        }
+      ]
+    },
+    {
+      "on": true,
+      "index": 5,
+      "name": "Sneed Crawler",
+      "type": "Object",
+      "id": 121,
+      "scale": { "x": 0.5, "y": 0.9 },
+      "offset": { "x": 0, "y": 0 },
+      "tiles": [
+        {
+          "type": "object",
+          "flipped": false,
+          "tile": { "x": 0, "z": 0 },
+          "screen": { "x": 106, "y": 8 },
+          "coords": { "x": 0, "y": 127, "w": 83, "h": 109, "fullWidth": 182 }
+        },
+        {
+          "type": "object",
+          "flipped": false,
+          "tile": { "x": 0, "z": -1 },
+          "screen": { "x": 124, "y": 22 },
+          "coords": { "x": 85, "y": 127, "w": 47, "h": 61, "fullWidth": 102 }
+        },
+        {
+          "type": "object",
+          "flipped": false,
+          "tile": { "x": 0, "z": -2 },
+          "screen": { "x": 135, "y": 30 },
+          "coords": { "x": 85, "y": 190, "w": 26, "h": 34, "fullWidth": 56 }
+        },
+        {
+          "type": "object",
+          "flipped": false,
+          "tile": { "x": 0, "z": -3 },
+          "screen": { "x": 141, "y": 36 },
+          "coords": { "x": 132, "y": 64, "w": 15, "h": 20, "fullWidth": 40 }
+        },
+        {
+          "type": "object",
+          "flipped": false,
+          "tile": { "x": 0, "z": -4 },
+          "screen": { "x": 141, "y": 35 },
+          "coords": { "x": 0, "y": 57, "w": 14, "h": 18, "fullWidth": 30 }
+        }
+      ]
+    },
+    {
+      "on": true,
+      "index": 6,
+      "name": "Sneed Crawler",
+      "type": "Object",
+      "id": 122,
+      "scale": { "x": 0.5, "y": 0.9 },
+      "offset": { "x": 0, "y": 0 },
+      "tiles": [
+        {
+          "type": "object",
+          "flipped": false,
+          "tile": { "x": 0, "z": 0 },
+          "screen": { "x": 104, "y": 8 },
+          "coords": { "x": 152, "y": 0, "w": 85, "h": 110, "fullWidth": 182 }
+        },
+        {
+          "type": "object",
+          "flipped": false,
+          "tile": { "x": 0, "z": -1 },
+          "screen": { "x": 124, "y": 22 },
+          "coords": { "x": 152, "y": 112, "w": 47, "h": 62, "fullWidth": 102 }
+        },
+        {
+          "type": "object",
+          "flipped": false,
+          "tile": { "x": 0, "z": -2 },
+          "screen": { "x": 135, "y": 30 },
+          "coords": { "x": 113, "y": 190, "w": 26, "h": 34, "fullWidth": 56 }
+        },
+        {
+          "type": "object",
+          "flipped": false,
+          "tile": { "x": 0, "z": -3 },
+          "screen": { "x": 141, "y": 36 },
+          "coords": { "x": 103, "y": 101, "w": 15, "h": 20, "fullWidth": 40 }
+        },
+        {
+          "type": "object",
+          "flipped": false,
+          "tile": { "x": 0, "z": -4 },
+          "screen": { "x": 141, "y": 35 },
+          "coords": { "x": 0, "y": 77, "w": 14, "h": 17, "fullWidth": 30 }
+        }
+      ]
+    },
+    {
+      "on": true,
+      "index": 7,
+      "name": "Sneed Crawler",
+      "type": "Object",
+      "id": 123,
+      "scale": { "x": 0.5, "y": 0.9 },
+      "offset": { "x": 0, "y": 0 },
+      "tiles": [
+        {
+          "type": "object",
+          "flipped": false,
+          "tile": { "x": 0, "z": 0 },
+          "screen": { "x": 106, "y": 6 },
+          "coords": { "x": 0, "y": 238, "w": 83, "h": 109, "fullWidth": 182 }
+        },
+        {
+          "type": "object",
+          "flipped": false,
+          "tile": { "x": 0, "z": -1 },
+          "screen": { "x": 124, "y": 21 },
+          "coords": { "x": 85, "y": 238, "w": 47, "h": 61, "fullWidth": 102 }
+        },
+        {
+          "type": "object",
+          "flipped": false,
+          "tile": { "x": 0, "z": -2 },
+          "screen": { "x": 135, "y": 29 },
+          "coords": { "x": 201, "y": 112, "w": 26, "h": 34, "fullWidth": 56 }
+        },
+        {
+          "type": "object",
+          "flipped": false,
+          "tile": { "x": 0, "z": -3 },
+          "screen": { "x": 141, "y": 34 },
+          "coords": { "x": 120, "y": 101, "w": 15, "h": 22, "fullWidth": 40 }
+        },
+        {
+          "type": "object",
+          "flipped": false,
+          "tile": { "x": 0, "z": -4 },
+          "screen": { "x": 141, "y": 34 },
+          "coords": { "x": 0, "y": 96, "w": 14, "h": 18, "fullWidth": 30 }
+        }
+      ]
+    },
+    {
+      "on": true,
+      "index": 8,
+      "name": "Sneed Crawler",
+      "type": "Object",
+      "id": 124,
+      "scale": { "x": 0.5, "y": 0.9 },
+      "offset": { "x": 0, "y": 0 },
+      "tiles": [
+        {
+          "type": "object",
+          "flipped": false,
+          "tile": { "x": 0, "z": 0 },
+          "screen": { "x": 104, "y": 5 },
+          "coords": { "x": 239, "y": 0, "w": 85, "h": 110, "fullWidth": 182 }
+        },
+        {
+          "type": "object",
+          "flipped": false,
+          "tile": { "x": 0, "z": -1 },
+          "screen": { "x": 124, "y": 20 },
+          "coords": { "x": 134, "y": 238, "w": 47, "h": 62, "fullWidth": 102 }
+        },
+        {
+          "type": "object",
+          "flipped": false,
+          "tile": { "x": 0, "z": -2 },
+          "screen": { "x": 134, "y": 29 },
+          "coords": { "x": 152, "y": 176, "w": 27, "h": 34, "fullWidth": 56 }
+        },
+        {
+          "type": "object",
+          "flipped": false,
+          "tile": { "x": 0, "z": -3 },
+          "screen": { "x": 141, "y": 35 },
+          "coords": { "x": 134, "y": 127, "w": 14, "h": 21, "fullWidth": 40 }
+        },
+        {
+          "type": "object",
+          "flipped": false,
+          "tile": { "x": 0, "z": -4 },
+          "screen": { "x": 141, "y": 34 },
+          "coords": { "x": 134, "y": 150, "w": 14, "h": 18, "fullWidth": 30 }
+        }
+      ]
+    },
+    {
+      "on": true,
+      "index": 9,
+      "name": "Sneed Crawler",
+      "type": "Object",
+      "id": 125,
+      "scale": { "x": 0.5, "y": 0.9 },
+      "offset": { "x": 0, "y": 0 },
+      "tiles": [
+        {
+          "type": "object",
+          "flipped": false,
+          "tile": { "x": 0, "z": 0 },
+          "screen": { "x": 106, "y": 8 },
+          "coords": { "x": 239, "y": 112, "w": 83, "h": 109, "fullWidth": 182 }
+        },
+        {
+          "type": "object",
+          "flipped": false,
+          "tile": { "x": 0, "z": -1 },
+          "screen": { "x": 124, "y": 22 },
+          "coords": { "x": 183, "y": 238, "w": 47, "h": 61, "fullWidth": 102 }
+        },
+        {
+          "type": "object",
+          "flipped": false,
+          "tile": { "x": 0, "z": -2 },
+          "screen": { "x": 135, "y": 30 },
+          "coords": { "x": 181, "y": 176, "w": 26, "h": 34, "fullWidth": 56 }
+        },
+        {
+          "type": "object",
+          "flipped": false,
+          "tile": { "x": 0, "z": -3 },
+          "screen": { "x": 141, "y": 36 },
+          "coords": { "x": 201, "y": 148, "w": 15, "h": 20, "fullWidth": 40 }
+        },
+        {
+          "type": "object",
+          "flipped": false,
+          "tile": { "x": 0, "z": -4 },
+          "screen": { "x": 141, "y": 35 },
+          "coords": { "x": 134, "y": 170, "w": 14, "h": 18, "fullWidth": 30 }
+        }
+      ]
+    }
+  ]
+}

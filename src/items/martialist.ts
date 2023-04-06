@@ -1,4 +1,12 @@
-import { ally, Brace, DuoStab, onlyMe, opponents } from "../actions";
+import {
+  ally,
+  Brace,
+  DuoStab,
+  Flight,
+  onlyMe,
+  opponents,
+  Parry,
+} from "../actions";
 import { intersection } from "../tools/sets";
 import Item from "../types/Item";
 
@@ -17,33 +25,7 @@ export const HaringleeKasaya: Item = {
   slot: "Body",
   type: "Armour",
   bonus: {},
-  action: {
-    name: "Parry",
-    tags: ["counter", "buff"],
-    sp: 3,
-    targets: onlyMe,
-    act({ g, me }) {
-      g.addEffect((destroy) => ({
-        name: "Parry",
-        duration: Infinity,
-        affects: [me],
-        onBeforeAction(e) {
-          if (
-            intersection(this.affects, e.targets).length &&
-            e.action.tags.includes("attack")
-          ) {
-            g.addToLog(`${me.name} counters!`);
-
-            const amount = g.roll(me);
-            g.applyDamage(me, [e.attacker], amount, "hp", "normal");
-            destroy();
-            e.cancel = true;
-            return;
-          }
-        },
-      }));
-    },
-  },
+  action: Parry,
 };
 
 export const KhakkharaOfGhanju: Item = {
@@ -95,16 +77,7 @@ export const HalflightCowl: Item = {
   restrict: ["Martialist"],
   slot: "Body",
   bonus: {},
-  action: {
-    name: "Flight",
-    tags: ["attack"],
-    sp: 4,
-    targets: opponents(1, [1, 3]),
-    act({ g, me, targets }) {
-      const amount = g.roll(me) + 10;
-      g.applyDamage(me, targets, amount, "hp", "normal");
-    },
-  },
+  action: Flight,
 };
 
 export const YamorolMouth: Item = {

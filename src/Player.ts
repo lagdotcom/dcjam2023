@@ -1,10 +1,11 @@
 import Combatant, { AttackableStat, BoostableStat } from "./types/Combatant";
-import Item, { ItemSlot } from "./types/Item";
+import Item from "./types/Item";
 
 import { ClassName } from "./types/ClassName";
 import { endTurnAction, generateAttack } from "./actions";
 import classes from "./classes";
 import Engine from "./Engine";
+import isDefined from "./tools/isDefined";
 
 function getBaseStat(
   className: ClassName,
@@ -20,7 +21,6 @@ export default class Player implements Combatant {
   isPC: true;
   hp: number;
   sp: number;
-  equipment: Map<ItemSlot, Item>;
   attacksInARow: number;
   usedThisTurn: Set<string>;
   baseMaxHP: number;
@@ -29,6 +29,11 @@ export default class Player implements Combatant {
   baseDetermination: number;
   baseSpirit: number;
   skill: string;
+
+  LeftHand?: Item;
+  RightHand?: Item;
+  Body?: Item;
+  Special?: Item;
 
   constructor(
     public g: Engine,
@@ -39,7 +44,6 @@ export default class Player implements Combatant {
     this.name = classes[className].name;
     this.isPC = true;
     this.attacksInARow = 0;
-    this.equipment = new Map();
     this.usedThisTurn = new Set();
     this.skill = classes[className].skill;
 
@@ -61,10 +65,16 @@ export default class Player implements Combatant {
     return this.hp > 0;
   }
 
+  get equipment() {
+    return [this.LeftHand, this.RightHand, this.Body, this.Special].filter(
+      isDefined
+    );
+  }
+
   getStat(stat: BoostableStat, base = 0): number {
     let value = base;
 
-    for (const item of this.equipment.values()) {
+    for (const item of this.equipment) {
       value += item?.bonus[stat] ?? 0;
     }
 
@@ -107,7 +117,22 @@ export default class Player implements Combatant {
   }
 
   equip(item: Item) {
-    // TODO
-    if (item.slot) this.equipment.set(item.slot, item);
+    if (!item.slot) return;
+
+    if (item.slot === "Hand") {
+      if (this.LeftHand && this.RightHand) {
+        this.g.inventory.push(this.LeftHand);
+        this.LeftHand = this.RightHand;
+        this.RightHand = item;
+        return;
+      }
+
+      if (this.LeftHand) this.RightHand = item;
+      else this.LeftHand = item;
+    } else {
+      const old = this[item.slot];
+      if (old) this.g.inventory.push(old);
+      this[item.slot] = item;
+    }
   }
 }

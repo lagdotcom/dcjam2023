@@ -34,6 +34,7 @@ All the boring normal stuff:
 - `damagePC(number, stat, amount)`
 - `debug(any)` prints to console
 - `getPCName(number): string`
+- `giveItem(name)`
 - `isSolid(x: number, y: number, dir): bool` checks if the wall is solid
 - `makePartyFace(dir: number)`
 - `message(string)` adds in-game message

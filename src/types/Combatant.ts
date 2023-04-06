@@ -1,4 +1,3 @@
-import Item, { ItemSlot } from "./Item";
 import CombatAction from "./CombatAction";
 
 export const AttackableStats = [
@@ -34,7 +33,6 @@ export default interface Combatant {
   alive: boolean;
   dr: number;
   actions: CombatAction[];
-  equipment: Map<ItemSlot, Item>;
   attacksInARow: number;
   usedThisTurn: Set<string>;
   lastAction?: string;

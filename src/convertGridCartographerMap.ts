@@ -37,7 +37,7 @@ const EdgeDetails: Partial<Record<Edge, EdgeEntry>> = {
 };
 
 class GCMapConverter {
-  atlas?: AtlasReference;
+  atlases: AtlasReference[];
   decals: Map<string, number>;
   definitions: Map<string, number>;
   facing: Dir;
@@ -47,6 +47,7 @@ class GCMapConverter {
   textures: Map<number, number>;
 
   constructor(env: Record<string, number> = {}) {
+    this.atlases = [];
     this.decals = new Map();
     this.definitions = new Map(Object.entries(env));
     this.facing = Dir.N;
@@ -102,10 +103,10 @@ class GCMapConverter {
       }
     }
 
-    const { atlas, scripts, start, facing } = this;
+    const { atlases, scripts, start, facing } = this;
     const name = `${r.name}:${f.index}`;
     const cells = this.grid.asArray();
-    return { name, atlas, cells, scripts, start, facing };
+    return { name, atlases, cells, scripts, start, facing };
   }
 
   getTexture(index = 0) {
@@ -129,10 +130,10 @@ class GCMapConverter {
   applyCommand(cmd: string, arg: string, x: number, y: number) {
     switch (cmd) {
       case "#ATLAS":
-        this.atlas = {
+        this.atlases.push({
           image: getResourceURL(arg + ".png"),
           json: getResourceURL(arg + ".json"),
-        };
+        });
         return;
 
       case "#DEFINE": {

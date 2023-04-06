@@ -4,10 +4,28 @@
   var __defProp = Object.defineProperty;
   var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
   var __getOwnPropNames = Object.getOwnPropertyNames;
+  var __getOwnPropSymbols = Object.getOwnPropertySymbols;
   var __getProtoOf = Object.getPrototypeOf;
   var __hasOwnProp = Object.prototype.hasOwnProperty;
+  var __propIsEnum = Object.prototype.propertyIsEnumerable;
+  var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
+  var __spreadValues = (a, b) => {
+    for (var prop in b ||= {})
+      if (__hasOwnProp.call(b, prop))
+        __defNormalProp(a, prop, b[prop]);
+    if (__getOwnPropSymbols)
+      for (var prop of __getOwnPropSymbols(b)) {
+        if (__propIsEnum.call(b, prop))
+          __defNormalProp(a, prop, b[prop]);
+      }
+    return a;
+  };
   var __commonJS = (cb, mod) => function __require() {
     return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
+  };
+  var __export = (target, all) => {
+    for (var name in all)
+      __defProp(target, name, { get: all[name], enumerable: true });
   };
   var __copyProps = (to, from, except, desc) => {
     if (from && typeof from === "object" || typeof from === "function") {
@@ -55,6 +73,7 @@
 
   // src/types/events.ts
   var GameEventNames = [
+    "onAfterAction",
     "onAfterDamage",
     "onBeforeAction",
     "onCalculateDamage",
@@ -154,6 +173,36 @@
     return xy(from.x * fr + to.x * ratio, from.y * fr + to.y * ratio);
   }
 
+  // src/tools/isDefined.ts
+  function isDefined(item) {
+    return typeof item !== "undefined";
+  }
+
+  // src/tools/rng.ts
+  function random(max) {
+    return Math.floor(Math.random() * max);
+  }
+  function oneOf(items) {
+    return items[random(items.length)];
+  }
+  function pickN(items, count) {
+    const left = items.slice();
+    if (count >= items.length)
+      return left;
+    const picked = /* @__PURE__ */ new Set();
+    for (let i = 0; i < count; i++) {
+      const item = oneOf(left);
+      picked.add(item);
+      left.splice(left.indexOf(item), 1);
+    }
+    return Array.from(picked);
+  }
+
+  // src/tools/sets.ts
+  function intersection(a, b) {
+    return a.filter((item) => b.includes(item));
+  }
+
   // src/actions.ts
   var onlyMe = { type: "self" };
   var ally = (count) => ({ type: "ally", count });
@@ -170,7 +219,6 @@
     count,
     offsets
   });
-  var oneEnemy = { type: "enemy", count: 1 };
   var generateAttack = (plus = 0, sp = 2) => ({
     name: "Attack",
     tags: ["attack"],
@@ -190,6 +238,34 @@
     useMessage: "",
     act({ g }) {
       g.endTurn();
+    }
+  };
+  var Barb = {
+    name: "Barb",
+    tags: ["counter"],
+    sp: 3,
+    targets: onlyMe,
+    act({ g, me }) {
+      g.addEffect(() => ({
+        name: "Barb",
+        duration: 2,
+        affects: [me],
+        onAfterDamage(e) {
+          if (this.affects.includes(e.target)) {
+            const targets = [
+              g.getOpponent(me, 0),
+              g.getOpponent(me, 1),
+              g.getOpponent(me, 3)
+            ].filter(isDefined);
+            if (targets.length) {
+              const target = oneOf(targets);
+              const amount = g.roll(me);
+              g.addToLog(`${e.target.name} flails around!`);
+              g.applyDamage(me, [target], amount, "hp", "normal");
+            }
+          }
+        }
+      }));
     }
   };
   var Bless = {
@@ -243,6 +319,27 @@
       }));
     }
   };
+  var Deflect = {
+    name: "Deflect",
+    tags: ["buff"],
+    sp: 2,
+    targets: onlyMe,
+    act({ g, me }) {
+      g.addEffect((destroy) => ({
+        name: "Deflect",
+        duration: Infinity,
+        affects: [me],
+        onCalculateDamage(e) {
+          if (this.affects.includes(e.target)) {
+            g.addToLog(`${me.name} deflects the blow.`);
+            e.multiplier = 0;
+            destroy();
+            return;
+          }
+        }
+      }));
+    }
+  };
   var Defy = {
     name: "Defy",
     tags: ["buff"],
@@ -254,7 +351,7 @@
         duration: 2,
         affects: [me],
         onAfterDamage({ target, attacker }) {
-          if (this.affects.includes(target))
+          if (!this.affects.includes(target))
             return;
           g.addToLog(`${me.name} stuns ${attacker.name} with their defiance!`);
           g.addEffect(() => ({
@@ -279,69 +376,166 @@
       g.applyDamage(me, targets, 6, "hp", "normal");
     }
   };
+  var Flight = {
+    name: "Flight",
+    tags: ["attack"],
+    sp: 4,
+    targets: opponents(1, [1, 3]),
+    act({ g, me, targets }) {
+      const amount = g.roll(me) + 10;
+      g.applyDamage(me, targets, amount, "hp", "normal");
+    }
+  };
+  var Parry = {
+    name: "Parry",
+    tags: ["counter", "buff"],
+    sp: 3,
+    targets: onlyMe,
+    act({ g, me }) {
+      g.addEffect((destroy) => ({
+        name: "Parry",
+        duration: Infinity,
+        affects: [me],
+        onBeforeAction(e) {
+          if (intersection(this.affects, e.targets).length && e.action.tags.includes("attack")) {
+            g.addToLog(`${me.name} counters!`);
+            const amount = g.roll(me);
+            g.applyDamage(me, [e.attacker], amount, "hp", "normal");
+            destroy();
+            e.cancel = true;
+            return;
+          }
+        }
+      }));
+    }
+  };
+  var Sand = {
+    name: "Sand",
+    tags: ["duff"],
+    sp: 3,
+    targets: oneOpponent,
+    act({ g, targets }) {
+      g.addEffect(() => ({
+        name: "Sand",
+        duration: Infinity,
+        affects: targets,
+        onCalculateDetermination(e) {
+          if (this.affects.includes(e.who))
+            e.value--;
+        }
+      }));
+    }
+  };
+  var Scar = {
+    name: "Scar",
+    tags: ["attack"],
+    sp: 3,
+    targets: oneOpponent,
+    act({ g, me, targets }) {
+      const amount = 4;
+      g.applyDamage(me, targets, amount, "hp", "normal");
+      g.applyDamage(me, targets, amount, "hp", "normal");
+      g.applyDamage(me, targets, amount, "hp", "normal");
+    }
+  };
+  var Trick = {
+    name: "Trick",
+    tags: ["duff"],
+    sp: 3,
+    targets: oneOpponent,
+    act({ g, targets }) {
+      g.addEffect(() => ({
+        name: "Trick",
+        duration: Infinity,
+        affects: targets,
+        onCalculateCamaraderie(e) {
+          if (this.affects.includes(e.who))
+            e.value--;
+        }
+      }));
+    }
+  };
+
+  // src/tools/numbers.ts
+  function wrap(n, max) {
+    const m = n % max;
+    return m < 0 ? m + max : m;
+  }
 
   // src/enemies.ts
+  var Lash = {
+    name: "Lash",
+    tags: ["attack", "duff"],
+    sp: 3,
+    targets: oneOpponent,
+    act({ g, me, targets }) {
+      if (g.applyDamage(me, targets, 3, "hp", "normal") > 0) {
+        g.addEffect(() => ({
+          name: "Lash",
+          duration: 2,
+          affects: targets,
+          onCalculateDetermination(e) {
+            if (this.affects.includes(e.who))
+              e.value--;
+          }
+        }));
+      }
+    }
+  };
   var EnemyObjects = {
-    eSage: 100,
-    eMonk: 101,
-    eRogue: 102
+    eNettleSage: 100,
+    eEveScout: 110,
+    eSneedCrawler: 120,
+    eMullanginanMartialist: 130
   };
   var enemies = {
-    Sage: {
-      object: EnemyObjects.eSage,
-      name: "Sage",
-      maxHP: 20,
-      maxSP: 10,
+    "Eve Scout": {
+      object: EnemyObjects.eEveScout,
+      animation: { delay: 300, frames: [110, 111, 112, 113] },
+      name: "Eve Scout",
+      maxHP: 10,
+      maxSP: 5,
       camaraderie: 3,
       determination: 3,
-      spirit: 3,
+      spirit: 4,
       dr: 0,
-      actions: [
-        generateAttack(0),
-        {
-          name: "Zap",
-          tags: ["attack", "spell"],
-          sp: 3,
-          targets: opponents(),
-          act({ g, targets, me }) {
-            g.applyDamage(me, targets, 3, "hp", "magic");
-          }
-        }
-      ]
+      actions: [generateAttack(0, 1), Deflect, Sand, Trick]
     },
-    Monk: {
-      object: EnemyObjects.eMonk,
-      name: "Monk",
-      maxHP: 20,
-      maxSP: 10,
-      camaraderie: 3,
-      determination: 3,
-      spirit: 3,
-      dr: 1,
-      actions: [generateAttack(6)]
-    },
-    Rogue: {
-      object: EnemyObjects.eRogue,
-      name: "Rogue",
-      maxHP: 20,
-      maxSP: 10,
-      camaraderie: 3,
-      determination: 3,
-      spirit: 3,
+    "Sneed Crawler": {
+      object: EnemyObjects.eSneedCrawler,
+      animation: { delay: 300, frames: [120, 121, 122, 123, 124, 125] },
+      name: "Sneed Crawler",
+      maxHP: 13,
+      maxSP: 4,
+      camaraderie: 1,
+      determination: 5,
+      spirit: 4,
       dr: 0,
-      actions: [
-        generateAttack(2),
-        {
-          name: "Arrow",
-          tags: ["attack"],
-          sp: 3,
-          targets: oneEnemy,
-          act({ g, targets, me }) {
-            const amount = g.roll(me) + 4;
-            g.applyDamage(me, targets, amount, "hp", "normal");
-          }
-        }
-      ]
+      actions: [generateAttack(0, 1), Scar, Barb]
+    },
+    "Mullanginan Martialist": {
+      object: EnemyObjects.eMullanginanMartialist,
+      animation: { delay: 300, frames: [130, 131, 130, 132] },
+      name: "Mullanginan Martialist",
+      maxHP: 14,
+      maxSP: 4,
+      camaraderie: 3,
+      determination: 4,
+      spirit: 4,
+      dr: 0,
+      actions: [generateAttack(0, 1), Parry, Defy, Flight]
+    },
+    "Nettle Sage": {
+      object: EnemyObjects.eNettleSage,
+      animation: { delay: 300, frames: [100, 101, 100, 102] },
+      name: "Nettle Sage",
+      maxHP: 12,
+      maxSP: 7,
+      camaraderie: 2,
+      determination: 2,
+      spirit: 6,
+      dr: 0,
+      actions: [generateAttack(0, 1), Bravery, Bless, Lash]
     }
   };
   var EnemyNames = Object.keys(enemies);
@@ -353,6 +547,9 @@
       this.g = g;
       this.template = template;
       this.isPC = false;
+      this.animation = template.animation;
+      this.frame = 0;
+      this.delay = this.animation.delay;
       this.name = template.name;
       this.baseMaxHP = template.maxHP;
       this.baseMaxSP = template.maxSP;
@@ -363,7 +560,6 @@
       this.baseSpirit = template.spirit;
       this.baseDR = template.dr;
       this.actions = template.actions;
-      this.equipment = /* @__PURE__ */ new Map();
       this.attacksInARow = 0;
       this.usedThisTurn = /* @__PURE__ */ new Set();
     }
@@ -391,50 +587,38 @@
     get spirit() {
       return this.getStat("spirit", this.baseSpirit);
     }
+    advanceAnimation(time) {
+      this.delay -= time;
+      if (this.delay < 0) {
+        this.frame = wrap(this.frame + 1, this.animation.frames.length);
+        this.delay += this.animation.delay;
+      }
+    }
+    get object() {
+      return this.animation.frames[this.frame];
+    }
   };
   function spawn(g, name) {
     return new Enemy(g, enemies[name]);
   }
 
-  // src/tools/rng.ts
-  function random(max) {
-    return Math.floor(Math.random() * max);
-  }
-  function oneOf(items) {
-    return items[random(items.length)];
-  }
-  function pickN(items, count) {
-    const left = items.slice();
-    if (count >= items.length)
-      return left;
-    const picked = /* @__PURE__ */ new Set();
-    for (let i = 0; i < count; i++) {
-      const item = oneOf(left);
-      picked.add(item);
-      left.splice(left.indexOf(item), 1);
-    }
-    return Array.from(picked);
-  }
-
-  // src/tools/isDefined.ts
-  function isDefined(item) {
-    return typeof item !== "undefined";
-  }
-
   // src/CombatManager.ts
   var CombatManager = class {
-    constructor(g, enemyInitialDelay = 3e3, enemyTurnDelay = 1e3) {
+    constructor(g, enemyInitialDelay = 3e3, enemyTurnDelay = 1e3, enemyFrameTime = 100) {
       this.g = g;
       this.enemyInitialDelay = enemyInitialDelay;
       this.enemyTurnDelay = enemyTurnDelay;
+      this.enemyFrameTime = enemyFrameTime;
       this.end = () => {
         this.resetEnemies();
         this.inCombat = false;
         this.g.draw();
+        clearInterval(this.enemyAnimationInterval);
+        this.enemyAnimationInterval = void 0;
       };
       this.enemyTick = () => {
         if (!this.inCombat) {
-          this.timeout = void 0;
+          this.enemyTurnTimeout = void 0;
           return;
         }
         const moves = this.allEnemies.flatMap(
@@ -450,28 +634,38 @@
           }).filter(isDefined)
         );
         if (!moves.length) {
-          this.timeout = void 0;
+          this.enemyTurnTimeout = void 0;
           return this.endTurn();
         }
         const { enemy, action, amount, possibilities } = oneOf(moves);
         const targets = pickN(possibilities, amount);
         this.g.act(enemy, action, targets);
-        this.timeout = setTimeout(this.enemyTick, this.enemyTurnDelay);
+        this.enemyTurnTimeout = setTimeout(this.enemyTick, this.enemyTurnDelay);
       };
       this.onKilled = (c) => {
-        if (!c.isPC) {
-          const { dir, distance } = this.getPosition(c);
-          this.enemies[dir].splice(distance, 1);
-          this.g.draw();
+        if (!c.isPC)
+          this.pendingRemoval.push(c);
+      };
+      this.onAfterAction = () => {
+        for (const e of this.pendingRemoval)
+          this.removeEnemy(e);
+        this.pendingRemoval = [];
+      };
+      this.animateEnemies = () => {
+        for (const e of this.allEnemies) {
+          e.advanceAnimation(this.enemyFrameTime);
         }
+        this.g.draw();
       };
       this.effects = [];
       this.resetEnemies();
       this.inCombat = false;
       this.index = 0;
       this.side = "player";
+      this.pendingRemoval = [];
       g.eventHandlers.onKilled.add(({ who }) => this.onKilled(who));
       g.eventHandlers.onCombatOver.add(this.end);
+      g.eventHandlers.onAfterAction.add(this.onAfterAction);
     }
     resetEnemies() {
       this.enemies = { 0: [], 1: [], 2: [], 3: [] };
@@ -510,6 +704,10 @@
       this.inCombat = true;
       this.side = "player";
       this.g.draw();
+      this.enemyAnimationInterval = setInterval(
+        this.animateEnemies,
+        this.enemyFrameTime
+      );
     }
     getFromOffset(dir, offset) {
       return this.enemies[dir][offset - 1];
@@ -539,7 +737,15 @@
           this.g.removeEffect(e);
       }
       if (this.side === "enemy")
-        this.timeout = setTimeout(this.enemyTick, this.enemyInitialDelay);
+        this.enemyTurnTimeout = setTimeout(
+          this.enemyTick,
+          this.enemyInitialDelay
+        );
+      this.g.draw();
+    }
+    removeEnemy(e) {
+      const { dir, distance } = this.getPosition(e);
+      this.enemies[dir].splice(distance, 1);
       this.g.draw();
     }
   };
@@ -868,6 +1074,11 @@
           this.drawImage(cell.ceiling, "ceiling", pos.dx, pos.dz);
         if (cell.floor)
           this.drawImage(cell.floor, "floor", pos.dx, pos.dz);
+      }
+      for (const pos of tiles) {
+        const cell = this.g.getCell(pos.x, pos.y);
+        if (!cell)
+          continue;
         if (cell.object)
           this.drawFrontImage(cell.object, "object", pos.dx, pos.dz);
       }
@@ -1228,6 +1439,10 @@
         "string",
         (index) => getPC(index).name
       );
+      this.addNative("giveItem", ["string"], void 0, (name) => {
+        if (!this.g.addToInventory(name))
+          throw new Error(`Invalid item: ${name}`);
+      });
       this.addNative(
         "isSolid",
         ["number", "number", "number"],
@@ -1777,6 +1992,16 @@
   };
 
   // src/items/cleavesman.ts
+  var cleavesman_exports = {};
+  __export(cleavesman_exports, {
+    ChivalrousMantle: () => ChivalrousMantle,
+    Gambesar: () => Gambesar,
+    GorgothilSword: () => GorgothilSword,
+    Gullark: () => Gullark,
+    Haringplate: () => Haringplate,
+    Jaegerstock: () => Jaegerstock,
+    Varganglia: () => Varganglia
+  });
   var GorgothilSword = {
     name: "Gorgothil Sword",
     restrict: ["Cleavesman"],
@@ -1808,27 +2033,7 @@
     slot: "Hand",
     type: "Shield",
     bonus: { maxHP: 3 },
-    action: {
-      name: "Deflect",
-      tags: ["buff"],
-      sp: 2,
-      targets: onlyMe,
-      act({ g, me }) {
-        g.addEffect((destroy) => ({
-          name: "Deflect",
-          duration: Infinity,
-          affects: [me],
-          onCalculateDamage(e) {
-            if (this.affects.includes(e.target)) {
-              g.addToLog(`${me.name} deflects the blow.`);
-              e.multiplier = 0;
-              destroy();
-              return;
-            }
-          }
-        }));
-      }
-    }
+    action: Deflect
   };
   var Jaegerstock = {
     name: "Jaegerstock",
@@ -1844,33 +2049,7 @@
     slot: "Body",
     type: "Armour",
     bonus: {},
-    action: {
-      name: "Barb",
-      tags: ["counter"],
-      sp: 3,
-      targets: onlyMe,
-      act({ g, me }) {
-        g.addEffect(() => ({
-          name: "Barb",
-          duration: 2,
-          affects: [me],
-          onAfterDamage(e) {
-            if (this.affects.includes(e.target)) {
-              const targets = [
-                g.getOpponent(me, 0),
-                g.getOpponent(me, 1),
-                g.getOpponent(me, 3)
-              ].filter(isDefined);
-              if (targets.length) {
-                const target = oneOf(targets);
-                const amount = g.roll(me);
-                g.applyDamage(me, [target], amount, "hp", "normal");
-              }
-            }
-          }
-        }));
-      }
-    }
+    action: Barb
   };
   var Gambesar = {
     name: "Gambesar",
@@ -1889,6 +2068,30 @@
       }
     }
   };
+  var ChivalrousMantle = {
+    name: "Chivalrous Mantle",
+    restrict: ["Cleavesman"],
+    slot: "Special",
+    bonus: {},
+    action: {
+      name: "Honour",
+      tags: [],
+      sp: 2,
+      targets: allAllies,
+      act({ g, targets }) {
+        g.addEffect(() => ({
+          name: "Honour",
+          duration: 2,
+          affects: targets,
+          buff: true,
+          onCalculateDamage(e) {
+            if (this.affects.includes(e.target) && e.type === "determination")
+              e.multiplier = 0;
+          }
+        }));
+      }
+    }
+  };
   GorgothilSword.lore = `"""May this steel sing the color of heathen blood.""
 
 This phrase has been uttered ever since Gorgothil was liberated from the thralls of Mullanginan during the Lost War. Gorgothil is now an ever devoted ally, paying their debts by smithing weaponry for all cleavesmen under Cherraphy's wing."`;
@@ -1897,25 +2100,114 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
   Varganglia.lore = `Armour that's slithered forth from Telnoth's scars after the Long War ended. Varganglia carcasses have become a common attire for cleavesmen, their pelts covered with thick and venomous barbs that erupt from the carcass when struck, making the wearer difficult to strike.`;
   Gambesar.lore = `"Enchanted by Cherraphy's highest order of sages, gambesars are awarded only to cleavesman that return from battle after sustaining tremendous injury. It's said that wearing one allows the user to shift the environment around them, appearing multiple steps from where they first started in just an instant.`;
 
+  // src/items/farScout.ts
+  var farScout_exports = {};
+  __export(farScout_exports, {
+    AdaloaxPelt: () => AdaloaxPelt,
+    BoltSlinger: () => BoltSlinger,
+    Haversack: () => Haversack,
+    PryingPoleaxe: () => PryingPoleaxe
+  });
+  var BoltSlinger = {
+    name: "Bolt Slinger",
+    restrict: ["Far Scout"],
+    slot: "Hand",
+    type: "Weapon",
+    bonus: {},
+    action: {
+      name: "Arrow",
+      tags: ["attack"],
+      sp: 3,
+      targets: opponents(1, [1, 2, 3]),
+      act({ g, me, targets }) {
+        const amount = g.roll(me) + 2;
+        g.applyDamage(me, targets, amount, "hp", "normal");
+      }
+    }
+  };
+  var AdaloaxPelt = {
+    name: "Adaloax Pelt",
+    restrict: ["Far Scout"],
+    slot: "Body",
+    type: "Armour",
+    bonus: {},
+    action: {
+      name: "Bind",
+      tags: ["duff"],
+      sp: 4,
+      targets: oneOpponent,
+      act({ g, targets }) {
+        g.addEffect(() => ({
+          name: "Bind",
+          duration: 2,
+          affects: targets,
+          onCanAct(e) {
+            if (this.affects.includes(e.who))
+              e.cancel = true;
+          }
+        }));
+      }
+    }
+  };
+  var Haversack = {
+    name: "Haversack",
+    restrict: ["Far Scout"],
+    slot: "Hand",
+    type: "Weapon",
+    bonus: {},
+    action: Sand
+  };
+  var PryingPoleaxe = {
+    name: "Prying Poleaxe",
+    restrict: ["Far Scout"],
+    slot: "Hand",
+    type: "Weapon",
+    bonus: {},
+    action: {
+      name: "Gouge",
+      tags: ["attack", "duff"],
+      sp: 5,
+      targets: oneOpponent,
+      act({ g, me, targets }) {
+        const amount = g.roll(me) + 6;
+        if (g.applyDamage(me, targets, amount, "hp", "normal") > 0) {
+          g.addEffect(() => ({
+            name: "Gouge",
+            duration: 2,
+            affects: targets,
+            onCalculateDR(e) {
+              if (this.affects.includes(e.who))
+                e.multiplier = 0;
+            }
+          }));
+        }
+      }
+    }
+  };
+  BoltSlinger.lore = `A string and stick combo coming in many shapes and sizes. All with the express purpose of expelling sharp objects at blinding speeds. Any far scout worth their salt still opts for a retro-styled bolt slinger; clunky mechanisms and needless gadgets serve only to hinder one's own skills.`;
+  AdaloaxPelt.lore = `Traditional hunter-gatherer and scouting attire, adaloax pelts are often sold and coupled with a set of bolas for trapping prey. The rest of the adaloax is divided up into portions of meat and sold at market value, often a single adaloax can produce upwards of three pelts and enough meat to keep multiple people fed.`;
+  Haversack.lore = `People, creatures, automata and constructs of all kinds find different use for a haversack, but the sand pouch remains the same. Considered a coward's weapon by many, the remainder would disagree as sometimes flight is the only response to a fight. A hasty retreat is far more preferable than a future as carrion.`;
+
   // src/items/flagSinger.ts
+  var flagSinger_exports = {};
+  __export(flagSinger_exports, {
+    CarvingKnife: () => CarvingKnife,
+    CatFacedMasquerade: () => CatFacedMasquerade,
+    DivaDress: () => DivaDress,
+    Fandagger: () => Fandagger,
+    FolkHarp: () => FolkHarp,
+    GrowlingCollar: () => GrowlingCollar,
+    SignedCasque: () => SignedCasque,
+    Storyscroll: () => Storyscroll,
+    WindmillRobe: () => WindmillRobe
+  });
   var CarvingKnife = {
     name: "Carving Knife",
     restrict: ["Flag Singer"],
     slot: "Hand",
     type: "Weapon",
     bonus: {},
-    action: {
-      name: "Scar",
-      tags: ["attack"],
-      sp: 3,
-      targets: oneOpponent,
-      act({ g, me, targets }) {
-        const amount = 4;
-        g.applyDamage(me, targets, amount, "hp", "normal");
-        g.applyDamage(me, targets, amount, "hp", "normal");
-        g.applyDamage(me, targets, amount, "hp", "normal");
-      }
-    }
+    action: Scar
   };
   var SignedCasque = {
     name: "Signed Casque",
@@ -2001,7 +2293,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     bonus: {},
     action: {
       name: "Vox Pop",
-      tags: ["debuff"],
+      tags: ["duff"],
       sp: 4,
       targets: allAllies,
       act({ g, me, targets }) {
@@ -2101,6 +2393,18 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
   WindmillRobe.lore = `A pale blue robe with ultra-long sleeves, slung with diamond-shaped hanging sheets of fabric. Psychic expertise and practise allows you to manipulate these flags and perform intricate displays without so much as moving your arms; the most complicated dances can have a mesmerizing effect.`;
 
   // src/items/loamSeer.ts
+  var loamSeer_exports = {};
+  __export(loamSeer_exports, {
+    BeekeeperBrooch: () => BeekeeperBrooch,
+    Cornucopia: () => Cornucopia,
+    IoliteCross: () => IoliteCross,
+    JacketAndRucksack: () => JacketAndRucksack,
+    MantleOfClay: () => MantleOfClay,
+    Mosscloak: () => Mosscloak,
+    RockringSleeve: () => RockringSleeve,
+    TortoiseFamiliar: () => TortoiseFamiliar,
+    WandOfWorkedFlint: () => WandOfWorkedFlint
+  });
   var Cornucopia = {
     name: "Cornucopia",
     restrict: ["Loam Seer"],
@@ -2265,12 +2569,19 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
   TortoiseFamiliar.lore = `The tortoise is one of the ground's favoured children, fashioned in its image. This one seems to have an interest in your cause.`;
   MantleOfClay.lore = `Pots of runny clay, into which fingers and paintbrushes can be dipped. It grips the skin tight as any tattoo when applied in certain patterns, like veins; so too can the shaman who wears these marks espy the "veins" of the rocks below them and, with a tug, bid them tremble.`;
 
-  // src/tools/sets.ts
-  function intersection(a, b) {
-    return a.filter((item) => b.includes(item));
-  }
-
   // src/items/martialist.ts
+  var martialist_exports = {};
+  __export(martialist_exports, {
+    Halberdigan: () => Halberdigan,
+    HalflightCowl: () => HalflightCowl,
+    HaringleeKasaya: () => HaringleeKasaya,
+    KhakkharaOfGhanju: () => KhakkharaOfGhanju,
+    LastEyeOfRaong: () => LastEyeOfRaong,
+    LoromayHand: () => LoromayHand,
+    NundarialVestments: () => NundarialVestments,
+    Penduchaimmer: () => Penduchaimmer,
+    YamorolMouth: () => YamorolMouth
+  });
   var Penduchaimmer = {
     name: "Penduchaimmer",
     restrict: ["Martialist"],
@@ -2285,29 +2596,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     slot: "Body",
     type: "Armour",
     bonus: {},
-    action: {
-      name: "Parry",
-      tags: ["counter", "buff"],
-      sp: 3,
-      targets: onlyMe,
-      act({ g, me }) {
-        g.addEffect((destroy) => ({
-          name: "Parry",
-          duration: Infinity,
-          affects: [me],
-          onBeforeAction(e) {
-            if (intersection(this.affects, e.targets).length && e.action.tags.includes("attack")) {
-              g.addToLog(`${me.name} counters!`);
-              const amount = g.roll(me);
-              g.applyDamage(me, [e.attacker], amount, "hp", "normal");
-              destroy();
-              e.cancel = true;
-              return;
-            }
-          }
-        }));
-      }
-    }
+    action: Parry
   };
   var KhakkharaOfGhanju = {
     name: "Khakkhara of Ghanju",
@@ -2355,16 +2644,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     restrict: ["Martialist"],
     slot: "Body",
     bonus: {},
-    action: {
-      name: "Flight",
-      tags: ["attack"],
-      sp: 4,
-      targets: opponents(1, [1, 3]),
-      act({ g, me, targets }) {
-        const amount = g.roll(me) + 10;
-        g.applyDamage(me, targets, amount, "hp", "normal");
-      }
-    }
+    action: Flight
   };
   var YamorolMouth = {
     name: "Yamorol's Mouth",
@@ -2392,7 +2672,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     bonus: { spirit: 1 },
     action: {
       name: "Mudra",
-      tags: ["buff", "debuff"],
+      tags: ["buff", "duff"],
       sp: 3,
       targets: onlyMe,
       act({ g, me }) {
@@ -2443,6 +2723,18 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
   LastEyeOfRaong.lore = `In all essence, sense. Sight to view actions, sound to hear verse. All senses are owed to Raong, whom may only witness the world of Telnoth through this lens so viciously plucked from its being in the primordial age.`;
 
   // src/items/warCaller.ts
+  var warCaller_exports = {};
+  __export(warCaller_exports, {
+    BrassHeartInsignia: () => BrassHeartInsignia,
+    CherClaspeGauntlet: () => CherClaspeGauntlet,
+    HairShirt: () => HairShirt,
+    IronFullcase: () => IronFullcase,
+    OwlSkull: () => OwlSkull,
+    PlatesOfWhite: () => PlatesOfWhite,
+    PolishedArenaShield: () => PolishedArenaShield,
+    SaintGong: () => SaintGong,
+    SternMask: () => SternMask
+  });
   var OwlSkull = {
     name: "Owl's Skull",
     restrict: ["War Caller"],
@@ -2544,7 +2836,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     bonus: { determination: 1 },
     action: {
       name: "Kneel",
-      tags: ["debuff"],
+      tags: ["duff"],
       sp: 0,
       targets: onlyMe,
       act({ g, me }) {
@@ -2658,7 +2950,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
   PlatesOfWhite.lore = `An impressive suit of armour, decorated in the colours that the Crusaders of Cherraphy favour. Despite the lavish attention to presentation, it is no ceremonial costume: beneath the inlaid discs of fine metal, steel awaits to contest any oncoming blade.`;
   SternMask.lore = `A full helm, decorated in paint and fine metalwork to resemble the disdainful face of a saint. Each headbutt it delivers communicates severe chastisement.`;
   CherClaspeGauntlet.lore = `A pair of iron gauntlets ensorcelled with a modest enchantment; upon the command of a priest, these matching metal gloves each lock into the shape of a fist and cannot be undone by the bearer; a stricture that War Callers willingly bear, that it may sustain their resolve and dismiss their idle habits.`;
-  SaintGong.lore = `A brass percussive disc mounted on a seven foot bannerpole and hung from hinge-chains, letting it swing freely enough that its shuddering surface rings clean. Most effective when tuned to the frequency of a chosen knight's bellows, allowing it to crash loudly in accompaniment with each war cry.`;
+  SaintGong.lore = `A brass percussive disc mounted on a seven foot banner-pole and hung from hinge-chains, letting it swing freely enough that its shuddering surface rings clean. Most effective when tuned to the frequency of a chosen knight's bellows, allowing it to crash loudly in accompaniment with each war cry.`;
 
   // src/classes.ts
   var classes = {
@@ -2692,12 +2984,12 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       determination: 3,
       camaraderie: 3,
       spirit: 5,
-      items: [],
+      items: [BoltSlinger, AdaloaxPelt],
       skill: "Tamper"
     },
     "War Caller": {
       name: "Silas",
-      lore: `Silas considers himself dutybound to the goddess Cherraphy and exults her name without second thoughts. Blessed with unique conviction, his charmed surety in combat has increased even since his pit-fighting days; he now sees fit to call himself Knight-Enforcer and claim the ancient War Calling title from the old times... from before the wars made sense! Suspecting mischief and irreverence in the party that ventures to the Nightjar, he stubbornly joins, vowing to hold high the goddess's name. Yes, he's a nasty piece of work, but his arrogance serves to draw your enemy's ire away from your friends.`,
+      lore: `Silas considers himself duty-bound to the goddess Cherraphy and exults her name without second thoughts. Blessed with unique conviction, his charmed surety in combat has increased even since his pit-fighting days; he now sees fit to call himself Knight-Enforcer and claim the ancient War Calling title from the old times... from before the wars made sense! Suspecting mischief and irreverence in the party that ventures to the Nightjar, he stubbornly joins, vowing to hold high the goddess's name. Yes, he's a nasty piece of work, but his arrogance serves to draw your enemy's ire away from your friends.`,
       hp: 30,
       sp: 5,
       determination: 5,
@@ -2742,7 +3034,6 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       this.name = classes_default[className].name;
       this.isPC = true;
       this.attacksInARow = 0;
-      this.equipment = /* @__PURE__ */ new Map();
       this.usedThisTurn = /* @__PURE__ */ new Set();
       this.skill = classes_default[className].skill;
       for (const item of items) {
@@ -2762,10 +3053,15 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     get alive() {
       return this.hp > 0;
     }
+    get equipment() {
+      return [this.LeftHand, this.RightHand, this.Body, this.Special].filter(
+        isDefined
+      );
+    }
     getStat(stat, base = 0) {
       var _a;
       let value = base;
-      for (const item of this.equipment.values()) {
+      for (const item of this.equipment) {
         value += (_a = item == null ? void 0 : item.bonus[stat]) != null ? _a : 0;
       }
       return this.g.applyStatModifiers(this, stat, value);
@@ -2799,8 +3095,25 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
         this.sp--;
     }
     equip(item) {
-      if (item.slot)
-        this.equipment.set(item.slot, item);
+      if (!item.slot)
+        return;
+      if (item.slot === "Hand") {
+        if (this.LeftHand && this.RightHand) {
+          this.g.inventory.push(this.LeftHand);
+          this.LeftHand = this.RightHand;
+          this.RightHand = item;
+          return;
+        }
+        if (this.LeftHand)
+          this.RightHand = item;
+        else
+          this.LeftHand = item;
+      } else {
+        const old = this[item.slot];
+        if (old)
+          this.g.inventory.push(old);
+        this[item.slot] = item;
+      }
     }
   };
 
@@ -2996,14 +3309,32 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     }
   };
 
-  // res/atlas/enemies.png
-  var enemies_default = "./enemies-XNAMP7AV.png";
+  // res/atlas/eveScout.png
+  var eveScout_default = "./eveScout-GB6RQXWR.png";
 
-  // res/atlas/enemies.json
-  var enemies_default2 = "./enemies-TKYHHQDG.json";
+  // res/atlas/eveScout.json
+  var eveScout_default2 = "./eveScout-3RSQGX7M.json";
+
+  // res/atlas/martialist.png
+  var martialist_default = "./martialist-KFK3S4GT.png";
+
+  // res/atlas/martialist.json
+  var martialist_default2 = "./martialist-NY4U3XPJ.json";
+
+  // res/atlas/nettleSage.png
+  var nettleSage_default = "./nettleSage-DUNOBTXQ.png";
+
+  // res/atlas/nettleSage.json
+  var nettleSage_default2 = "./nettleSage-FLJBTR3U.json";
+
+  // res/atlas/sneedCrawler.png
+  var sneedCrawler_default = "./sneedCrawler-B5CE42IQ.png";
+
+  // res/atlas/sneedCrawler.json
+  var sneedCrawler_default2 = "./sneedCrawler-5IJWBAV5.json";
 
   // res/map.dscript
-  var map_default = "./map-EG44LPW2.dscript";
+  var map_default = "./map-WPNSCS2W.dscript";
 
   // res/atlas/test1.png
   var test1_default = "./test1-MYU5F6VR.png";
@@ -3013,11 +3344,17 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
 
   // src/resources.ts
   var Resources = {
-    "enemies.png": enemies_default,
-    "enemies.json": enemies_default2,
     "test1.png": test1_default,
     "test1.json": test1_default2,
-    "map.dscript": map_default
+    "map.dscript": map_default,
+    "eveScout.png": eveScout_default,
+    "eveScout.json": eveScout_default2,
+    "martialist.png": martialist_default,
+    "martialist.json": martialist_default2,
+    "nettleSage.png": nettleSage_default,
+    "nettleSage.json": nettleSage_default2,
+    "sneedCrawler.png": sneedCrawler_default,
+    "sneedCrawler.json": sneedCrawler_default2
   };
   function getResourceURL(id2) {
     const value = Resources[id2];
@@ -3045,6 +3382,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
   };
   var GCMapConverter = class {
     constructor(env = {}) {
+      this.atlases = [];
       this.decals = /* @__PURE__ */ new Map();
       this.definitions = new Map(Object.entries(env));
       this.facing = Dir_default.N;
@@ -3089,10 +3427,10 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
           x++;
         }
       }
-      const { atlas, scripts, start, facing } = this;
+      const { atlases, scripts, start, facing } = this;
       const name = `${r.name}:${f.index}`;
       const cells = this.grid.asArray();
-      return { name, atlas, cells, scripts, start, facing };
+      return { name, atlases, cells, scripts, start, facing };
     }
     getTexture(index = 0) {
       const texture = this.textures.get(index);
@@ -3112,10 +3450,10 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     applyCommand(cmd, arg, x, y) {
       switch (cmd) {
         case "#ATLAS":
-          this.atlas = {
+          this.atlases.push({
             image: getResourceURL(arg + ".png"),
             json: getResourceURL(arg + ".json")
-          };
+          });
           return;
         case "#DEFINE": {
           const [key, value] = arg.split(",");
@@ -3539,12 +3877,6 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     return pos.x >= spot.x && pos.y >= spot.y && pos.x < spot.ex && pos.y < spot.ey;
   }
 
-  // src/tools/numbers.ts
-  function wrap(n, max) {
-    const m = n % max;
-    return m < 0 ? m + max : m;
-  }
-
   // src/types/logic.ts
   var matchAll = (predicates) => (item) => {
     for (const p of predicates) {
@@ -3669,6 +4001,12 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       }
     }
   };
+
+  // src/items/index.ts
+  var allItems = __spreadValues(__spreadValues(__spreadValues(__spreadValues(__spreadValues(__spreadValues({}, cleavesman_exports), farScout_exports), flagSinger_exports), loamSeer_exports), martialist_exports), warCaller_exports);
+  function getItem(s) {
+    return allItems[s];
+  }
 
   // src/Engine.ts
   var calculateEventName = {
@@ -3820,17 +4158,17 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
         const combat = new CombatRenderer(this);
         const hud = new HUDRenderer(this);
         const log = new LogRenderer(this);
-        const [atlas, image, enemyAtlas, enemyImage] = yield Promise.all([
-          this.res.loadAtlas(w.atlas.json),
-          this.res.loadImage(w.atlas.image),
-          this.res.loadAtlas(getResourceURL("enemies.json")),
-          this.res.loadImage(getResourceURL("enemies.png")),
-          hud.acquireImages()
-        ]);
-        const dungeon = new DungeonRenderer(this, atlas, image);
-        yield dungeon.addAtlas(atlas.layers, image);
-        yield dungeon.addAtlas(enemyAtlas.layers, enemyImage);
-        dungeon.dungeon.layers.push(...enemyAtlas.layers);
+        const atlasPromises = w.atlases.map((a) => this.res.loadAtlas(a.json));
+        const imagePromises = w.atlases.map((a) => this.res.loadImage(a.image));
+        const atlases = yield Promise.all(atlasPromises);
+        const images = yield Promise.all(imagePromises);
+        yield hud.acquireImages();
+        const dungeon = new DungeonRenderer(this, atlases[0], images[0]);
+        for (let i = 0; i < atlases.length; i++) {
+          yield dungeon.addAtlas(atlases[i].layers, images[i]);
+          if (i > 1)
+            dungeon.dungeon.layers.push(...atlases[i].layers);
+        }
         const visited = this.visited.get(w.name);
         if (visited)
           this.worldVisited = visited;
@@ -3855,8 +4193,8 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       return __async(this, null, function* () {
         this.renderSetup = void 0;
         const map = yield this.res.loadGCMap(jsonUrl);
-        const { atlas, cells, scripts, start, facing, name } = convertGridCartographerMap(map, region, floor, EnemyObjects);
-        if (!atlas)
+        const { atlases, cells, scripts, start, facing, name } = convertGridCartographerMap(map, region, floor, EnemyObjects);
+        if (!atlases.length)
           throw new Error(`${jsonUrl} did not contain #ATLAS`);
         const codeFiles = yield Promise.all(
           scripts.map((url) => this.res.loadScript(url))
@@ -3865,7 +4203,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
           const program = parse(code);
           this.scripting.run(program);
         }
-        return this.loadWorld({ name, atlas, cells, start, facing });
+        return this.loadWorld({ name, atlases, cells, start, facing });
       });
     }
     isVisited(x, y) {
@@ -3883,7 +4221,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
           const enemy = this.combat.getFromOffset(result.dir, result.offset);
           if (enemy) {
             const replaced = src_default(cell);
-            replaced.object = enemy.template.object;
+            replaced.object = enemy.object;
             return replaced;
           }
         }
@@ -4032,6 +4370,8 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       return true;
     }
     canAct(who, action) {
+      if (action === endTurnAction)
+        return true;
       if (!who.alive)
         return false;
       if (who.usedThisTurn.has(action.name))
@@ -4142,14 +4482,20 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
         targets,
         cancel: false
       });
-      if (e.cancel)
-        return;
-      action.act({ g: this, targets, me, x });
-      me.lastAction = action.name;
-      if (action.name === "Attack") {
-        me.attacksInARow++;
-      } else
-        me.attacksInARow = 0;
+      if (!e.cancel) {
+        action.act({ g: this, targets, me, x });
+        me.lastAction = action.name;
+        if (action.name === "Attack") {
+          me.attacksInARow++;
+        } else
+          me.attacksInARow = 0;
+      }
+      this.fire("onAfterAction", {
+        attacker: me,
+        action,
+        targets,
+        cancelled: e.cancel
+      });
     }
     endTurn() {
       this.combat.endTurn();
@@ -4194,7 +4540,8 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     }
     applyStatModifiers(who, stat, value) {
       const event = calculateEventName[stat];
-      return this.fire(event, { who, value }).value;
+      const e = this.fire(event, { who, value, multiplier: 1 });
+      return Math.max(0, Math.floor(e.value * e.multiplier));
     }
     applyDamage(attacker, targets, amount, type, origin) {
       let total = 0;
@@ -4219,6 +4566,9 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
           if (target.hp < 1)
             this.kill(target, attacker);
           this.fire("onAfterDamage", { attacker, target, amount, type, origin });
+        } else {
+          const message = type === "hp" ? `${target.name} ignores the blow.` : `${target.name} ignores the effect.`;
+          this.addToLog(message);
         }
       }
       return total;
@@ -4337,10 +4687,18 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       }
       return false;
     }
+    addToInventory(name) {
+      const item = getItem(name);
+      if (item) {
+        this.inventory.push(item);
+        return true;
+      }
+      return false;
+    }
   };
 
   // res/map.json
-  var map_default2 = "./map-FGDVPJZZ.json";
+  var map_default2 = "./map-I7UKMEE2.json";
 
   // src/index.ts
   function loadEngine(parent) {

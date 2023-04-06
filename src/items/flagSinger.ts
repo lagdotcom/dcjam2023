@@ -1,4 +1,4 @@
-import { Bravery, Defy, allAllies, ally, oneOpponent } from "../actions";
+import { Bravery, Defy, Scar, allAllies, ally, oneOpponent } from "../actions";
 import { oneOf } from "../tools/rng";
 import Item from "../types/Item";
 
@@ -8,18 +8,7 @@ export const CarvingKnife: Item = {
   slot: "Hand",
   type: "Weapon",
   bonus: {},
-  action: {
-    name: "Scar",
-    tags: ["attack"],
-    sp: 3,
-    targets: oneOpponent,
-    act({ g, me, targets }) {
-      const amount = 4;
-      g.applyDamage(me, targets, amount, "hp", "normal");
-      g.applyDamage(me, targets, amount, "hp", "normal");
-      g.applyDamage(me, targets, amount, "hp", "normal");
-    },
-  },
+  action: Scar,
 };
 
 export const SignedCasque: Item = {

@@ -14,21 +14,26 @@ export default class CombatManager {
   inCombat: boolean;
   index: number;
   side: "player" | "enemy";
-  timeout?: ReturnType<typeof setTimeout>;
+  enemyTurnTimeout?: ReturnType<typeof setTimeout>;
+  enemyAnimationInterval?: ReturnType<typeof setInterval>;
+  pendingRemoval: Enemy[];
 
   constructor(
     public g: Engine,
     public enemyInitialDelay = 3000,
-    public enemyTurnDelay = 1000
+    public enemyTurnDelay = 1000,
+    public enemyFrameTime = 100
   ) {
     this.effects = [];
     this.resetEnemies();
     this.inCombat = false;
     this.index = 0;
     this.side = "player";
+    this.pendingRemoval = [];
 
     g.eventHandlers.onKilled.add(({ who }) => this.onKilled(who));
     g.eventHandlers.onCombatOver.add(this.end);
+    g.eventHandlers.onAfterAction.add(this.onAfterAction);
   }
 
   resetEnemies() {
@@ -45,7 +50,7 @@ export default class CombatManager {
     ].filter((c) => c.alive);
   }
 
-  get allEnemies(): Combatant[] {
+  get allEnemies(): Enemy[] {
     return [
       ...this.enemies[0],
       ...this.enemies[1],
@@ -75,12 +80,20 @@ export default class CombatManager {
     this.inCombat = true;
     this.side = "player";
     this.g.draw();
+
+    this.enemyAnimationInterval = setInterval(
+      this.animateEnemies,
+      this.enemyFrameTime
+    );
   }
 
   end = () => {
     this.resetEnemies();
     this.inCombat = false;
     this.g.draw();
+
+    clearInterval(this.enemyAnimationInterval);
+    this.enemyAnimationInterval = undefined;
   };
 
   getFromOffset(dir: Dir, offset: number): Enemy | undefined {
@@ -116,13 +129,16 @@ export default class CombatManager {
     }
 
     if (this.side === "enemy")
-      this.timeout = setTimeout(this.enemyTick, this.enemyInitialDelay);
+      this.enemyTurnTimeout = setTimeout(
+        this.enemyTick,
+        this.enemyInitialDelay
+      );
     this.g.draw();
   }
 
   enemyTick = () => {
     if (!this.inCombat) {
-      this.timeout = undefined;
+      this.enemyTurnTimeout = undefined;
       return;
     }
 
@@ -142,7 +158,7 @@ export default class CombatManager {
         .filter(isDefined)
     );
     if (!moves.length) {
-      this.timeout = undefined;
+      this.enemyTurnTimeout = undefined;
       return this.endTurn();
     }
 
@@ -150,14 +166,29 @@ export default class CombatManager {
     const targets = pickN(possibilities, amount);
     this.g.act(enemy, action, targets);
 
-    this.timeout = setTimeout(this.enemyTick, this.enemyTurnDelay);
+    this.enemyTurnTimeout = setTimeout(this.enemyTick, this.enemyTurnDelay);
   };
 
   onKilled = (c: Combatant) => {
-    if (!c.isPC) {
-      const { dir, distance } = this.getPosition(c);
-      this.enemies[dir].splice(distance, 1);
-      this.g.draw();
+    if (!c.isPC) this.pendingRemoval.push(c as Enemy);
+  };
+
+  onAfterAction = () => {
+    for (const e of this.pendingRemoval) this.removeEnemy(e);
+    this.pendingRemoval = [];
+  };
+
+  private removeEnemy(e: Enemy) {
+    const { dir, distance } = this.getPosition(e);
+    this.enemies[dir].splice(distance, 1);
+    this.g.draw();
+  }
+
+  animateEnemies = () => {
+    for (const e of this.allEnemies) {
+      e.advanceAnimation(this.enemyFrameTime);
     }
+
+    this.g.draw();
   };
 }

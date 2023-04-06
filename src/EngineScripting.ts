@@ -82,6 +82,11 @@ export default class EngineScripting extends DScriptHost {
       (index: number) => getPC(index).name
     );
 
+    this.addNative("giveItem", ["string"], undefined, (name: string) => {
+      if (!this.g.addToInventory(name))
+        throw new Error(`Invalid item: ${name}`);
+    });
+
     this.addNative(
       "isSolid",
       ["number", "number", "number"],

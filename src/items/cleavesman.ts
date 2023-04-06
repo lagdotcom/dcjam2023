@@ -1,13 +1,12 @@
 import {
+  Barb,
   Brace,
+  Deflect,
   DuoStab,
   allAllies,
   oneOpponent,
-  onlyMe,
   opponents,
 } from "../actions";
-import isDefined from "../tools/isDefined";
-import { oneOf } from "../tools/rng";
 import Item from "../types/Item";
 
 export const GorgothilSword: Item = {
@@ -43,27 +42,7 @@ export const Gullark: Item = {
   slot: "Hand",
   type: "Shield",
   bonus: { maxHP: 3 },
-  action: {
-    name: "Deflect",
-    tags: ["buff"],
-    sp: 2,
-    targets: onlyMe,
-    act({ g, me }) {
-      g.addEffect((destroy) => ({
-        name: "Deflect",
-        duration: Infinity,
-        affects: [me],
-        onCalculateDamage(e) {
-          if (this.affects.includes(e.target)) {
-            g.addToLog(`${me.name} deflects the blow.`);
-            e.multiplier = 0;
-            destroy();
-            return;
-          }
-        },
-      }));
-    },
-  },
+  action: Deflect,
 };
 
 export const Jaegerstock: Item = {
@@ -81,35 +60,7 @@ export const Varganglia: Item = {
   slot: "Body",
   type: "Armour",
   bonus: {},
-  action: {
-    name: "Barb",
-    tags: ["counter"],
-    sp: 3,
-    targets: onlyMe,
-    act({ g, me }) {
-      g.addEffect(() => ({
-        name: "Barb",
-        duration: 2,
-        affects: [me],
-        onAfterDamage(e) {
-          if (this.affects.includes(e.target)) {
-            const targets = [
-              g.getOpponent(me, 0),
-              g.getOpponent(me, 1),
-              g.getOpponent(me, 3),
-            ].filter(isDefined);
-
-            if (targets.length) {
-              const target = oneOf(targets);
-              const amount = g.roll(me);
-
-              g.applyDamage(me, [target], amount, "hp", "normal");
-            }
-          }
-        },
-      }));
-    },
-  },
+  action: Barb,
 };
 
 export const Gambesar: Item = {

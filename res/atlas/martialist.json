@@ -1,6 +1,6 @@
 {
   "version": "0.0.1",
-  "generated": "2023-04-03",
+  "generated": "2023-04-06",
   "resolution": { "width": 296, "height": 118 },
   "depth": 5,
   "width": 4,
@@ -8,138 +8,138 @@
     {
       "on": true,
       "index": 4,
-      "name": "Sage REPLACE ME",
+      "name": "Martialist",
       "type": "Object",
-      "id": 100,
-      "scale": { "x": 1, "y": 1 },
+      "id": 130,
+      "scale": { "x": 0.5, "y": 1 },
       "offset": { "x": 0, "y": 0 },
       "tiles": [
         {
           "type": "object",
           "flipped": false,
           "tile": { "x": 0, "z": 0 },
-          "screen": { "x": 90, "y": 0 },
-          "coords": { "x": 16, "y": 0, "w": 126, "h": 118, "fullWidth": 182 }
+          "screen": { "x": 111, "y": 0 },
+          "coords": { "x": 16, "y": 0, "w": 78, "h": 118, "fullWidth": 182 }
         },
         {
           "type": "object",
           "flipped": false,
           "tile": { "x": 0, "z": -1 },
-          "screen": { "x": 114, "y": 16 },
-          "coords": { "x": 0, "y": 136, "w": 71, "h": 75, "fullWidth": 102 }
+          "screen": { "x": 127, "y": 14 },
+          "coords": { "x": 96, "y": 0, "w": 44, "h": 77, "fullWidth": 102 }
         },
         {
           "type": "object",
           "flipped": false,
           "tile": { "x": 0, "z": -2 },
-          "screen": { "x": 129, "y": 27 },
-          "coords": { "x": 73, "y": 136, "w": 40, "h": 41, "fullWidth": 56 }
+          "screen": { "x": 136, "y": 26 },
+          "coords": { "x": 96, "y": 79, "w": 25, "h": 42, "fullWidth": 56 }
         },
         {
           "type": "object",
           "flipped": false,
           "tile": { "x": 0, "z": -3 },
-          "screen": { "x": 135, "y": 32 },
-          "coords": { "x": 115, "y": 136, "w": 27, "h": 28, "fullWidth": 40 }
+          "screen": { "x": 142, "y": 30 },
+          "coords": { "x": 123, "y": 79, "w": 15, "h": 30, "fullWidth": 40 }
         },
         {
           "type": "object",
           "flipped": false,
           "tile": { "x": 0, "z": -4 },
-          "screen": { "x": 138, "y": 33 },
-          "coords": { "x": 73, "y": 179, "w": 21, "h": 22, "fullWidth": 30 }
+          "screen": { "x": 142, "y": 33 },
+          "coords": { "x": 0, "y": 16, "w": 13, "h": 22, "fullWidth": 30 }
         }
       ]
     },
     {
       "on": true,
       "index": 5,
-      "name": "Monk REPLACE ME",
+      "name": "Martialist",
       "type": "Object",
-      "id": 101,
-      "scale": { "x": 1, "y": 1 },
+      "id": 131,
+      "scale": { "x": 0.5, "y": 1 },
       "offset": { "x": 0, "y": 0 },
       "tiles": [
         {
           "type": "object",
           "flipped": false,
           "tile": { "x": 0, "z": 0 },
-          "screen": { "x": 70, "y": 0 },
-          "coords": { "x": 144, "y": 0, "w": 156, "h": 118, "fullWidth": 182 }
+          "screen": { "x": 111, "y": 0 },
+          "coords": { "x": 0, "y": 136, "w": 80, "h": 118, "fullWidth": 182 }
         },
         {
           "type": "object",
           "flipped": false,
           "tile": { "x": 0, "z": -1 },
-          "screen": { "x": 104, "y": 12 },
-          "coords": { "x": 144, "y": 120, "w": 88, "h": 80, "fullWidth": 102 }
+          "screen": { "x": 127, "y": 13 },
+          "coords": { "x": 82, "y": 136, "w": 44, "h": 78, "fullWidth": 102 }
         },
         {
           "type": "object",
           "flipped": false,
           "tile": { "x": 0, "z": -2 },
-          "screen": { "x": 124, "y": 24 },
-          "coords": { "x": 234, "y": 120, "w": 48, "h": 45, "fullWidth": 56 }
+          "screen": { "x": 136, "y": 25 },
+          "coords": { "x": 142, "y": 0, "w": 25, "h": 43, "fullWidth": 56 }
         },
         {
           "type": "object",
           "flipped": false,
           "tile": { "x": 0, "z": -3 },
-          "screen": { "x": 131, "y": 29 },
-          "coords": { "x": 96, "y": 179, "w": 34, "h": 31, "fullWidth": 40 }
+          "screen": { "x": 142, "y": 29 },
+          "coords": { "x": 82, "y": 216, "w": 15, "h": 31, "fullWidth": 40 }
         },
         {
           "type": "object",
           "flipped": false,
           "tile": { "x": 0, "z": -4 },
-          "screen": { "x": 135, "y": 32 },
-          "coords": { "x": 234, "y": 167, "w": 26, "h": 23, "fullWidth": 30 }
+          "screen": { "x": 142, "y": 33 },
+          "coords": { "x": 0, "y": 40, "w": 13, "h": 22, "fullWidth": 30 }
         }
       ]
     },
     {
       "on": true,
       "index": 6,
-      "name": "Rogue REPLACE ME",
+      "name": "Martialist",
       "type": "Object",
-      "id": 102,
-      "scale": { "x": 1, "y": 1 },
+      "id": 132,
+      "scale": { "x": 0.5, "y": 1 },
       "offset": { "x": 0, "y": 0 },
       "tiles": [
         {
           "type": "object",
           "flipped": false,
           "tile": { "x": 0, "z": 0 },
-          "screen": { "x": 90, "y": 0 },
-          "coords": { "x": 0, "y": 213, "w": 119, "h": 118, "fullWidth": 182 }
+          "screen": { "x": 112, "y": 0 },
+          "coords": { "x": 169, "y": 0, "w": 77, "h": 118, "fullWidth": 182 }
         },
         {
           "type": "object",
           "flipped": false,
           "tile": { "x": 0, "z": -1 },
-          "screen": { "x": 115, "y": 13 },
-          "coords": { "x": 121, "y": 213, "w": 67, "h": 78, "fullWidth": 102 }
+          "screen": { "x": 128, "y": 16 },
+          "coords": { "x": 169, "y": 120, "w": 43, "h": 75, "fullWidth": 102 }
         },
         {
           "type": "object",
           "flipped": false,
           "tile": { "x": 0, "z": -2 },
-          "screen": { "x": 130, "y": 25 },
-          "coords": { "x": 262, "y": 167, "w": 37, "h": 43, "fullWidth": 56 }
+          "screen": { "x": 138, "y": 27 },
+          "coords": { "x": 142, "y": 45, "w": 23, "h": 41, "fullWidth": 56 }
         },
         {
           "type": "object",
           "flipped": false,
           "tile": { "x": 0, "z": -3 },
-          "screen": { "x": 135, "y": 29 },
-          "coords": { "x": 121, "y": 293, "w": 25, "h": 31, "fullWidth": 40 }
+          "screen": { "x": 142, "y": 31 },
+          "coords": { "x": 0, "y": 64, "w": 14, "h": 29, "fullWidth": 40 }
         },
         {
           "type": "object",
           "flipped": false,
           "tile": { "x": 0, "z": -4 },
-          "screen": { "x": 138, "y": 32 },
-          "coords": { "x": 148, "y": 293, "w": 19, "h": 23, "fullWidth": 30 }
+          "screen": { "x": 142, "y": 34 },
+          "coords": { "x": 0, "y": 95, "w": 13, "h": 21, "fullWidth": 30 }
         }
       ]
     }

@@ -5,6 +5,7 @@ import { GameEffect } from "./Game";
 import XY from "./XY";
 
 export const GameEventNames = [
+  "onAfterAction",
   "onAfterDamage",
   "onBeforeAction",
   "onCalculateDamage",
@@ -40,6 +41,13 @@ export type GameEvents = {
     targets: Combatant[];
   };
 
+  onAfterAction: {
+    attacker: Combatant;
+    action: CombatAction;
+    cancelled: boolean;
+    targets: Combatant[];
+  };
+
   onCalculateDamage: {
     attacker: Combatant;
     target: Combatant;
@@ -49,12 +57,16 @@ export type GameEvents = {
     origin: "normal" | "magic";
   };
 
-  onCalculateCamaraderie: { who: Combatant; value: number };
-  onCalculateDetermination: { who: Combatant; value: number };
-  onCalculateSpirit: { who: Combatant; value: number };
-  onCalculateDR: { who: Combatant; value: number };
-  onCalculateMaxHP: { who: Combatant; value: number };
-  onCalculateMaxSP: { who: Combatant; value: number };
+  onCalculateCamaraderie: { who: Combatant; value: number; multiplier: number };
+  onCalculateDetermination: {
+    who: Combatant;
+    value: number;
+    multiplier: number;
+  };
+  onCalculateSpirit: { who: Combatant; value: number; multiplier: number };
+  onCalculateDR: { who: Combatant; value: number; multiplier: number };
+  onCalculateMaxHP: { who: Combatant; value: number; multiplier: number };
+  onCalculateMaxSP: { who: Combatant; value: number; multiplier: number };
 
   onCanAct: { who: Combatant; action: CombatAction; cancel: boolean };
 

@@ -25,7 +25,7 @@ export interface AtlasReference {
 
 interface World {
   name: string;
-  atlas: AtlasReference;
+  atlases: AtlasReference[];
   cells: WorldCell[][];
   start: XY;
   facing: Dir;

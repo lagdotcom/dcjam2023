@@ -35,7 +35,6 @@ import XY from "./types/XY";
 import clone from "nanoclone";
 import convertGridCartographerMap from "./convertGridCartographerMap";
 import getCanvasContext from "./tools/getCanvasContext";
-import { getResourceURL } from "./resources";
 import parse from "./DScript/parser";
 import withTextStyle from "./tools/withTextStyle";
 import { pickN, random } from "./tools/rng";
@@ -46,6 +45,8 @@ import Item from "./types/Item";
 import { Predicate, matchAll } from "./types/logic";
 import HasHotspots from "./types/HasHotspots";
 import Jukebox from "./Jukebox";
+import { getItem } from "./items";
+import { endTurnAction } from "./actions";
 
 interface WallType {
   canSeeDoor: boolean;
@@ -227,18 +228,18 @@ export default class Engine implements Game {
     const hud = new HUDRenderer(this);
     const log = new LogRenderer(this);
 
-    const [atlas, image, enemyAtlas, enemyImage] = await Promise.all([
-      this.res.loadAtlas(w.atlas.json),
-      this.res.loadImage(w.atlas.image),
-      this.res.loadAtlas(getResourceURL("enemies.json")),
-      this.res.loadImage(getResourceURL("enemies.png")),
-      hud.acquireImages(),
-    ]);
-    const dungeon = new DungeonRenderer(this, atlas, image);
+    const atlasPromises = w.atlases.map((a) => this.res.loadAtlas(a.json));
+    const imagePromises = w.atlases.map((a) => this.res.loadImage(a.image));
 
-    await dungeon.addAtlas(atlas.layers, image);
-    await dungeon.addAtlas(enemyAtlas.layers, enemyImage);
-    dungeon.dungeon.layers.push(...enemyAtlas.layers);
+    const atlases = await Promise.all(atlasPromises);
+    const images = await Promise.all(imagePromises);
+    await hud.acquireImages();
+
+    const dungeon = new DungeonRenderer(this, atlases[0], images[0]);
+    for (let i = 0; i < atlases.length; i++) {
+      await dungeon.addAtlas(atlases[i].layers, images[i]);
+      if (i > 1) dungeon.dungeon.layers.push(...atlases[i].layers);
+    }
 
     const visited = this.visited.get(w.name);
     if (visited) this.worldVisited = visited;
@@ -265,9 +266,9 @@ export default class Engine implements Game {
     this.renderSetup = undefined;
 
     const map = await this.res.loadGCMap(jsonUrl);
-    const { atlas, cells, scripts, start, facing, name } =
+    const { atlases, cells, scripts, start, facing, name } =
       convertGridCartographerMap(map, region, floor, EnemyObjects);
-    if (!atlas) throw new Error(`${jsonUrl} did not contain #ATLAS`);
+    if (!atlases.length) throw new Error(`${jsonUrl} did not contain #ATLAS`);
 
     // TODO how about clearing old script stuff...?
     const codeFiles = await Promise.all(
@@ -278,7 +279,7 @@ export default class Engine implements Game {
       this.scripting.run(program);
     }
 
-    return this.loadWorld({ name, atlas, cells, start, facing });
+    return this.loadWorld({ name, atlases, cells, start, facing });
   }
 
   isVisited(x: number, y: number) {
@@ -299,7 +300,7 @@ export default class Engine implements Game {
         // show the enemy sprite instead of whatever is there (temporarily)
         if (enemy) {
           const replaced = clone(cell);
-          replaced.object = enemy.template.object;
+          replaced.object = enemy.object;
           return replaced;
         }
       }
@@ -499,6 +500,8 @@ export default class Engine implements Game {
   }
 
   canAct(who: Combatant, action: CombatAction) {
+    if (action === endTurnAction) return true;
+
     if (!who.alive) return false;
     if (who.usedThisTurn.has(action.name)) return false;
 
@@ -632,14 +635,22 @@ export default class Engine implements Game {
       targets,
       cancel: false,
     });
-    if (e.cancel) return;
 
-    action.act({ g: this, targets, me, x });
+    if (!e.cancel) {
+      action.act({ g: this, targets, me, x });
 
-    me.lastAction = action.name;
-    if (action.name === "Attack") {
-      me.attacksInARow++;
-    } else me.attacksInARow = 0;
+      me.lastAction = action.name;
+      if (action.name === "Attack") {
+        me.attacksInARow++;
+      } else me.attacksInARow = 0;
+    }
+
+    this.fire("onAfterAction", {
+      attacker: me,
+      action,
+      targets,
+      cancelled: e.cancel,
+    });
   }
 
   endTurn() {
@@ -697,7 +708,9 @@ export default class Engine implements Game {
 
   applyStatModifiers(who: Combatant, stat: BoostableStat, value: number) {
     const event = calculateEventName[stat];
-    return this.fire(event, { who, value }).value;
+    const e = this.fire(event, { who, value, multiplier: 1 });
+
+    return Math.max(0, Math.floor(e.value * e.multiplier));
   }
 
   applyDamage(
@@ -737,6 +750,12 @@ export default class Engine implements Game {
         if (target.hp < 1) this.kill(target, attacker);
 
         this.fire("onAfterDamage", { attacker, target, amount, type, origin });
+      } else {
+        const message =
+          type === "hp"
+            ? `${target.name} ignores the blow.`
+            : `${target.name} ignores the effect.`;
+        this.addToLog(message);
       }
     }
 
@@ -880,6 +899,15 @@ export default class Engine implements Game {
       return true;
     }
 
+    return false;
+  }
+
+  addToInventory(name: string) {
+    const item = getItem(name);
+    if (item) {
+      this.inventory.push(item);
+      return true;
+    }
     return false;
   }
 }

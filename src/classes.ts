@@ -1,4 +1,5 @@
 import { GorgothilSword, Haringplate } from "./items/cleavesman";
+import { AdaloaxPelt, BoltSlinger } from "./items/farScout";
 import { CarvingKnife, SignedCasque } from "./items/flagSinger";
 import { Cornucopia, JacketAndRucksack } from "./items/loamSeer";
 import { Penduchaimmer, HaringleeKasaya } from "./items/martialist";
@@ -45,7 +46,7 @@ const classes: Record<ClassName, ClassData> = {
     determination: 3,
     camaraderie: 3,
     spirit: 5,
-    items: [],
+    items: [BoltSlinger, AdaloaxPelt],
     skill: "Tamper",
   },
   "War Caller": {
