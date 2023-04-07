@@ -8,5 +8,10 @@ const Colours = {
 
   hp: "rgb(223,113,38)",
   sp: "rgb(99,155,255)",
+
+  currentChosenClass: "rgb(255,255,192)",
+  currentClass: "rgb(160,160,160)",
+  chosenClass: "rgb(192,192,64)",
+  otherClass: "rgb(96,96,96)",
 };
 export default Colours;

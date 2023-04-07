@@ -1,53 +1,54 @@
-import Combatant, { AttackableStat, BoostableStat } from "./types/Combatant";
-import Game, { GameEffect } from "./types/Game";
-import {
-  GameEventListeners,
-  GameEventName,
-  GameEventNames,
-  GameEvents,
-} from "./types/events";
-import { WallTag, wallToTag } from "./tools/wallTags";
-import { XYTag, xyToTag } from "./tools/xyTags";
-import {
-  getCardinalOffset,
-  getDirOffset,
-  move,
-  rotate,
-  xyi,
-} from "./tools/geometry";
-
+import clone from "nanoclone";
 import CombatManager from "./CombatManager";
 import CombatRenderer from "./CombatRenderer";
+import { num } from "./DScript/logic";
+import parse from "./DScript/parser";
 import DefaultControls from "./DefaultControls";
-import Dir from "./types/Dir";
 import DungeonRenderer from "./DungeonRenderer";
-import { EnemyName, EnemyObjects } from "./enemies";
+import DungeonScreen from "./DungeonScreen";
 import EngineScripting from "./EngineScripting";
-import GameInput from "./types/GameInput";
 import HUDRenderer from "./HUDRenderer";
-import CombatAction from "./types/CombatAction";
+import Jukebox from "./Jukebox";
+import LoadingScreen from "./LoadingScreen";
 import LogRenderer from "./LogRenderer";
 import Player from "./Player";
 import ResourceManager from "./ResourceManager";
 import Soon from "./Soon";
+import SplashScreen from "./SplashScreen";
+import { endTurnAction } from "./actions";
+import convertGridCartographerMap from "./convertGridCartographerMap";
+import { EnemyName, EnemyObjects } from "./enemies";
+import { getItem } from "./items";
+import { contains } from "./tools/aabb";
+import {
+  xyi,
+  rotate,
+  getCardinalOffset,
+  move,
+  getDirOffset,
+} from "./tools/geometry";
+import getCanvasContext from "./tools/getCanvasContext";
+import { wrap } from "./tools/numbers";
+import { pickN, random } from "./tools/rng";
+import { WallTag, wallToTag } from "./tools/wallTags";
+import { XYTag, xyToTag } from "./tools/xyTags";
+import CombatAction from "./types/CombatAction";
+import Combatant, { BoostableStat, AttackableStat } from "./types/Combatant";
+import Dir from "./types/Dir";
+import Game, { GameEffect } from "./types/Game";
+import GameInput from "./types/GameInput";
+import { GameScreen } from "./types/GameScreen";
+import HasHotspots from "./types/HasHotspots";
+import Item from "./types/Item";
 import World from "./types/World";
 import XY from "./types/XY";
-import clone from "nanoclone";
-import convertGridCartographerMap from "./convertGridCartographerMap";
-import getCanvasContext from "./tools/getCanvasContext";
-import parse from "./DScript/parser";
-import withTextStyle from "./tools/withTextStyle";
-import { pickN, random } from "./tools/rng";
-import getKeyNames from "./tools/getKeyNames";
-import { contains } from "./tools/aabb";
-import { wrap } from "./tools/numbers";
-import Item from "./types/Item";
+import {
+  GameEventName,
+  GameEventListeners,
+  GameEventNames,
+  GameEvents,
+} from "./types/events";
 import { Predicate, matchAll } from "./types/logic";
-import HasHotspots from "./types/HasHotspots";
-import Jukebox from "./Jukebox";
-import { getItem } from "./items";
-import { endTurnAction } from "./actions";
-import { num } from "./DScript/logic";
 
 interface WallType {
   canSeeDoor: boolean;
@@ -59,13 +60,6 @@ interface TargetPicking {
   pc: Player;
   action: CombatAction;
   possibilities: Combatant[];
-}
-
-interface RenderSetup {
-  dungeon: DungeonRenderer;
-  hud: HUDRenderer;
-  log: LogRenderer;
-  combat: CombatRenderer;
 }
 
 const calculateEventName = {
@@ -94,10 +88,10 @@ export default class Engine implements Game {
   pendingNormalEnemies: EnemyName[];
   position: XY;
   pickingTargets?: TargetPicking;
-  renderSetup?: RenderSetup;
   res: ResourceManager;
-  showLog: boolean;
+  screen: GameScreen;
   scripting: EngineScripting;
+  showLog: boolean;
   spotElements: HasHotspots[];
   visited: Map<string, Set<XYTag>>;
   walls: Map<string, Map<WallTag, WallType>>;
@@ -134,27 +128,11 @@ export default class Engine implements Game {
     this.pendingArenaEnemies = [];
     this.pendingNormalEnemies = [];
     this.spotElements = [];
-    this.party = [
-      new Player(this, "Martialist"),
-      new Player(this, "Cleavesman"),
-      new Player(this, "War Caller"),
-      new Player(this, "Loam Seer"),
-    ];
+    this.party = [];
     this.jukebox = new Jukebox(this);
+    this.screen = new SplashScreen(this);
 
-    canvas.addEventListener("keyup", (e) => {
-      const keys = getKeyNames(e.code, e.shiftKey, e.altKey, e.ctrlKey);
-      for (const key of keys) {
-        const input = this.controls.get(key);
-        if (input) {
-          e.preventDefault();
-
-          for (const check of input) {
-            if (this.processInput(check)) return;
-          }
-        }
-      }
-    });
+    canvas.addEventListener("keyup", (e) => this.screen.onKey(e));
 
     const transform = (e: MouseEvent): XY =>
       xyi(e.offsetX / this.zoomRatio, e.offsetY / this.zoomRatio);
@@ -220,7 +198,7 @@ export default class Engine implements Game {
   }
 
   async loadWorld(w: World, position?: XY) {
-    this.renderSetup = undefined;
+    this.screen = new LoadingScreen(this);
 
     this.world = clone(w);
     this.worldSize = xyi(this.world.cells[0].length, this.world.cells.length);
@@ -261,12 +239,12 @@ export default class Engine implements Game {
     this.markVisited();
 
     this.spotElements = [hud.skills, hud.stats];
-    this.renderSetup = { combat, dungeon, hud, log };
+    this.screen = new DungeonScreen(this, { combat, dungeon, hud, log });
     return this.draw();
   }
 
   async loadGCMap(jsonUrl: string, region: number, floor: number) {
-    this.renderSetup = undefined;
+    this.screen = new LoadingScreen(this);
 
     const map = await this.res.loadGCMap(jsonUrl);
     const { atlases, cells, definitions, scripts, start, facing, name } =
@@ -335,32 +313,13 @@ export default class Engine implements Game {
   }
 
   render = () => {
-    const { ctx, renderSetup } = this;
+    const { ctx, screen } = this;
     const { width, height } = this.canvas;
 
     ctx.fillStyle = "black";
     ctx.fillRect(0, 0, width, height);
 
-    if (!renderSetup) {
-      const { draw } = withTextStyle(ctx, {
-        textAlign: "center",
-        textBaseline: "middle",
-        fillStyle: "white",
-      });
-      draw(
-        `Loading: ${this.res.loaded}/${this.res.loading}`,
-        width / 2,
-        height / 2
-      );
-
-      this.draw();
-      return;
-    }
-
-    renderSetup.dungeon.render();
-    renderSetup.hud.render();
-    if (this.showLog) renderSetup.log.render();
-    if (this.combat.inCombat) renderSetup.combat.render();
+    screen.render();
   };
 
   canMove(dir: Dir) {

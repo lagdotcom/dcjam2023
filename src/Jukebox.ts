@@ -19,7 +19,7 @@ interface Playlist {
   between?: { roll: number; bonus: number };
 }
 
-const PlaylistNames = ["explore", "combat", "arena"] as const;
+const PlaylistNames = ["title", "explore", "combat", "arena"] as const;
 type PlaylistName = (typeof PlaylistNames)[number];
 
 const komfortZone: Track = { name: "komfort zone", url: komfortZoneUrl };
@@ -36,10 +36,8 @@ const ringingSteel: Track = {
 const selume: Track = { name: "selume", url: selumeUrl };
 
 const playlists: Record<PlaylistName, Playlist> = {
-  explore: {
-    tracks: [komfortZone, selume],
-    between: { roll: 20, bonus: 10 },
-  },
+  title: { tracks: [selume] },
+  explore: { tracks: [komfortZone], between: { roll: 20, bonus: 10 } },
   combat: { tracks: [modDotVigor] },
   arena: { tracks: [ringingSteel] },
 };
@@ -153,7 +151,7 @@ export default class Jukebox {
     void this.start();
   };
 
-  private tryPlay = () => {
+  tryPlay = () => {
     if (this.wantToPlay) {
       const name = this.wantToPlay;
       this.wantToPlay = undefined;

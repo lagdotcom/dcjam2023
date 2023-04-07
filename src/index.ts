@@ -1,5 +1,4 @@
 import Engine from "./Engine";
-import mapJson from "../res/map.json";
 
 function loadEngine(parent: HTMLElement) {
   const container = document.createElement("div");
@@ -34,9 +33,6 @@ function loadEngine(parent: HTMLElement) {
   };
   window.addEventListener("resize", onResize);
   onResize();
-
-  void g.loadGCMap(mapJson, 0, -1);
-  void g.jukebox.play("explore");
 }
 
 window.addEventListener("load", () => loadEngine(document.body));

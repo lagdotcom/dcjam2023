@@ -57,107 +57,49 @@
     }
   });
 
-  // src/types/events.ts
-  var GameEventNames = [
-    "onAfterAction",
-    "onAfterDamage",
-    "onBeforeAction",
-    "onCalculateDamage",
-    "onCalculateDR",
-    "onCalculateCamaraderie",
-    "onCalculateDetermination",
-    "onCalculateSpirit",
-    "onCalculateMaxHP",
-    "onCalculateMaxSP",
-    "onCanAct",
-    "onCombatBegin",
-    "onCombatOver",
-    "onKilled",
-    "onPartyMove",
-    "onPartySwap",
-    "onPartyTurn",
-    "onRoll"
-  ];
-
-  // src/tools/wallTags.ts
-  function wallToTag(pos, dir) {
-    return `${pos.x},${pos.y},${dir}`;
-  }
-
-  // src/tools/xyTags.ts
-  function xyToTag(pos) {
-    return `${pos.x},${pos.y}`;
-  }
-
-  // src/types/Dir.ts
-  var Dir = /* @__PURE__ */ ((Dir2) => {
-    Dir2[Dir2["N"] = 0] = "N";
-    Dir2[Dir2["E"] = 1] = "E";
-    Dir2[Dir2["S"] = 2] = "S";
-    Dir2[Dir2["W"] = 3] = "W";
-    return Dir2;
-  })(Dir || {});
-  var Dir_default = Dir;
-
-  // src/tools/geometry.ts
-  var xy = (x, y) => ({ x, y });
-  var xyi = (x, y) => ({
-    x: Math.floor(x),
-    y: Math.floor(y)
-  });
-  function addXY(a, b) {
-    return { x: a.x + b.x, y: a.y + b.y };
-  }
-  var displacements = [xy(0, -1), xy(1, 0), xy(0, 1), xy(-1, 0)];
-  function move(pos, dir) {
-    return addXY(pos, displacements[dir]);
-  }
-  function rotate(dir, clockwise) {
-    return (dir + clockwise + 4) % 4;
-  }
-  function dirFromInitial(initial) {
-    switch (initial) {
-      case "E":
-        return Dir_default.E;
-      case "S":
-        return Dir_default.S;
-      case "W":
-        return Dir_default.W;
-      case "N":
-      default:
-        return Dir_default.N;
+  // node_modules/nanoclone/src/index.js
+  function clone(src, seen = /* @__PURE__ */ new Map()) {
+    if (!src || typeof src !== "object")
+      return src;
+    if (seen.has(src))
+      return seen.get(src);
+    let copy;
+    if (src.nodeType && "cloneNode" in src) {
+      copy = src.cloneNode(true);
+      seen.set(src, copy);
+    } else if (src instanceof Date) {
+      copy = new Date(src.getTime());
+      seen.set(src, copy);
+    } else if (src instanceof RegExp) {
+      copy = new RegExp(src);
+      seen.set(src, copy);
+    } else if (Array.isArray(src)) {
+      copy = new Array(src.length);
+      seen.set(src, copy);
+      for (let i = 0; i < src.length; i++)
+        copy[i] = clone(src[i], seen);
+    } else if (src instanceof Map) {
+      copy = /* @__PURE__ */ new Map();
+      seen.set(src, copy);
+      for (const [k, v] of src.entries())
+        copy.set(k, clone(v, seen));
+    } else if (src instanceof Set) {
+      copy = /* @__PURE__ */ new Set();
+      seen.set(src, copy);
+      for (const v of src)
+        copy.add(clone(v, seen));
+    } else if (src instanceof Object) {
+      copy = {};
+      seen.set(src, copy);
+      for (const [k, v] of Object.entries(src))
+        copy[k] = clone(v, seen);
+    } else {
+      throw Error(`Unable to clone ${src}`);
     }
+    return copy;
   }
-  function getCardinalOffset(start, destination) {
-    const dx = destination.x - start.x;
-    const dy = destination.y - start.y;
-    if (dx && dy)
-      return;
-    if (dy < 0)
-      return { dir: Dir_default.N, offset: -dy };
-    if (dx > 0)
-      return { dir: Dir_default.E, offset: dx };
-    if (dy > 0)
-      return { dir: Dir_default.S, offset: dy };
-    if (dx < 0)
-      return { dir: Dir_default.W, offset: -dx };
-  }
-  var dirOffsets = {
-    [Dir_default.N]: { [Dir_default.N]: 0, [Dir_default.E]: 1, [Dir_default.S]: 2, [Dir_default.W]: 3 },
-    [Dir_default.E]: { [Dir_default.N]: 3, [Dir_default.E]: 0, [Dir_default.S]: 1, [Dir_default.W]: 2 },
-    [Dir_default.S]: { [Dir_default.N]: 2, [Dir_default.E]: 3, [Dir_default.S]: 0, [Dir_default.W]: 1 },
-    [Dir_default.W]: { [Dir_default.N]: 1, [Dir_default.E]: 2, [Dir_default.S]: 3, [Dir_default.W]: 0 }
-  };
-  function getDirOffset(start, end) {
-    return dirOffsets[start][end];
-  }
-  function lerpXY(from, to, ratio) {
-    if (ratio <= 0)
-      return from;
-    if (ratio >= 1)
-      return to;
-    const fr = 1 - ratio;
-    return xy(from.x * fr + to.x * ratio, from.y * fr + to.y * ratio);
+  function src_default(src) {
+    return clone(src, /* @__PURE__ */ new Map());
   }
 
   // src/tools/isDefined.ts
@@ -757,9 +699,84 @@
     minorHighlight: "rgb(48,48,32)",
     mapVisited: "rgb(64,64,64)",
     hp: "rgb(223,113,38)",
-    sp: "rgb(99,155,255)"
+    sp: "rgb(99,155,255)",
+    currentChosenClass: "rgb(255,255,192)",
+    currentClass: "rgb(160,160,160)",
+    chosenClass: "rgb(192,192,64)",
+    otherClass: "rgb(96,96,96)"
   };
   var Colours_default = Colours;
+
+  // src/types/Dir.ts
+  var Dir = /* @__PURE__ */ ((Dir2) => {
+    Dir2[Dir2["N"] = 0] = "N";
+    Dir2[Dir2["E"] = 1] = "E";
+    Dir2[Dir2["S"] = 2] = "S";
+    Dir2[Dir2["W"] = 3] = "W";
+    return Dir2;
+  })(Dir || {});
+  var Dir_default = Dir;
+
+  // src/tools/geometry.ts
+  var xy = (x, y) => ({ x, y });
+  var xyi = (x, y) => ({
+    x: Math.floor(x),
+    y: Math.floor(y)
+  });
+  function addXY(a, b) {
+    return { x: a.x + b.x, y: a.y + b.y };
+  }
+  var displacements = [xy(0, -1), xy(1, 0), xy(0, 1), xy(-1, 0)];
+  function move(pos, dir) {
+    return addXY(pos, displacements[dir]);
+  }
+  function rotate(dir, clockwise) {
+    return (dir + clockwise + 4) % 4;
+  }
+  function dirFromInitial(initial) {
+    switch (initial) {
+      case "E":
+        return Dir_default.E;
+      case "S":
+        return Dir_default.S;
+      case "W":
+        return Dir_default.W;
+      case "N":
+      default:
+        return Dir_default.N;
+    }
+  }
+  function getCardinalOffset(start, destination) {
+    const dx = destination.x - start.x;
+    const dy = destination.y - start.y;
+    if (dx && dy)
+      return;
+    if (dy < 0)
+      return { dir: Dir_default.N, offset: -dy };
+    if (dx > 0)
+      return { dir: Dir_default.E, offset: dx };
+    if (dy > 0)
+      return { dir: Dir_default.S, offset: dy };
+    if (dx < 0)
+      return { dir: Dir_default.W, offset: -dx };
+  }
+  var dirOffsets = {
+    [Dir_default.N]: { [Dir_default.N]: 0, [Dir_default.E]: 1, [Dir_default.S]: 2, [Dir_default.W]: 3 },
+    [Dir_default.E]: { [Dir_default.N]: 3, [Dir_default.E]: 0, [Dir_default.S]: 1, [Dir_default.W]: 2 },
+    [Dir_default.S]: { [Dir_default.N]: 2, [Dir_default.E]: 3, [Dir_default.S]: 0, [Dir_default.W]: 1 },
+    [Dir_default.W]: { [Dir_default.N]: 1, [Dir_default.E]: 2, [Dir_default.S]: 3, [Dir_default.W]: 0 }
+  };
+  function getDirOffset(start, end) {
+    return dirOffsets[start][end];
+  }
+  function lerpXY(from, to, ratio) {
+    if (ratio <= 0)
+      return from;
+    if (ratio >= 1)
+      return to;
+    const fr = 1 - ratio;
+    return xy(from.x * fr + to.x * ratio, from.y * fr + to.y * ratio);
+  }
 
   // src/tools/withTextStyle.ts
   function withTextStyle(ctx, {
@@ -828,325 +845,6 @@
       }
     }
   };
-
-  // src/DefaultControls.ts
-  var DefaultControls = [
-    ["ArrowUp", ["Forward", "MenuUp"]],
-    ["KeyW", ["Forward", "MenuUp"]],
-    ["ArrowRight", ["TurnRight"]],
-    ["KeyE", ["TurnRight"]],
-    ["ArrowDown", ["Back", "MenuDown"]],
-    ["KeyS", ["Back", "MenuDown"]],
-    ["ArrowLeft", ["TurnLeft"]],
-    ["KeyQ", ["TurnLeft"]],
-    ["Shift+ArrowRight", ["SlideRight"]],
-    ["KeyD", ["SlideRight"]],
-    ["Shift+ArrowLeft", ["SlideLeft"]],
-    ["KeyA", ["SlideLeft"]],
-    ["Ctrl+ArrowRight", ["RotateRight"]],
-    ["Ctrl+KeyD", ["RotateRight"]],
-    ["Ctrl+ArrowLeft", ["RotateLeft"]],
-    ["Ctrl+KeyA", ["RotateLeft"]],
-    ["Alt+ArrowRight", ["SwapRight"]],
-    ["Alt+KeyD", ["SwapRight"]],
-    ["Alt+ArrowDown", ["SwapBehind"]],
-    ["Alt+KeyS", ["SwapBehind"]],
-    ["Alt+ArrowLeft", ["SwapLeft"]],
-    ["Alt+KeyA", ["SwapLeft"]],
-    ["Space", ["ToggleLog"]],
-    ["Enter", ["Interact", "MenuChoose"]],
-    ["Return", ["Interact", "MenuChoose"]],
-    ["Escape", ["Cancel"]]
-  ];
-  var DefaultControls_default = DefaultControls;
-
-  // src/tools/getCanvasContext.ts
-  function getCanvasContext(canvas, type, options) {
-    const ctx = canvas.getContext(type, options);
-    if (!ctx)
-      throw new Error(`canvas.getContext(${type})`);
-    return ctx;
-  }
-
-  // src/fov.ts
-  var facingDisplacements = {
-    [Dir_default.E]: [0, 1, -1, 0],
-    [Dir_default.N]: [1, 0, 0, 1],
-    [Dir_default.S]: [-1, 0, 0, -1],
-    [Dir_default.W]: [0, -1, 1, 0]
-  };
-  function getDisplacement(from, to, facing) {
-    const dx = to.x - from.x;
-    const dy = to.y - from.y;
-    const [a, b, c, d] = facingDisplacements[facing];
-    const x = dx * a + dy * b;
-    const y = dx * c + dy * d;
-    return [x, y];
-  }
-  var FovCalculator = class {
-    constructor(g) {
-      this.g = g;
-      this.entries = /* @__PURE__ */ new Map();
-    }
-    calculate(width, depth) {
-      const position = this.g.position;
-      this.propagate(position, width, depth);
-      return [...this.entries.values()].sort((a, b) => {
-        const zd = a.dz - b.dz;
-        if (zd)
-          return zd;
-        const xd = Math.abs(a.dx) - Math.abs(b.dx);
-        return -xd;
-      });
-    }
-    displacement(position) {
-      return getDisplacement(this.g.position, position, this.g.facing);
-    }
-    propagate(position, width, depth) {
-      if (width <= 0 || depth <= 0)
-        return;
-      const { g } = this;
-      const { facing } = g;
-      const tag = xyToTag(position);
-      const old = this.entries.get(tag);
-      if (old) {
-        if (old.width >= width && old.depth >= depth)
-          return;
-      }
-      const { x, y } = position;
-      const cell = g.getCell(x, y);
-      if (!cell)
-        return;
-      const [dx, dz] = this.displacement(position);
-      const leftVisible = dx <= 0;
-      const rightVisible = dx >= 0;
-      this.entries.set(tag, {
-        x,
-        y,
-        dx,
-        dz,
-        width,
-        depth,
-        leftVisible,
-        rightVisible
-      });
-      if (leftVisible) {
-        const leftDir = rotate(facing, 3);
-        const leftWall = cell.sides[leftDir];
-        if (!(leftWall == null ? void 0 : leftWall.wall))
-          this.propagate(move(position, leftDir), width - 1, depth);
-      }
-      if (rightVisible) {
-        const rightDir = rotate(facing, 1);
-        const rightWall = cell.sides[rightDir];
-        if (!(rightWall == null ? void 0 : rightWall.wall))
-          this.propagate(move(position, rightDir), width - 1, depth);
-      }
-      const forwardWall = cell.sides[facing];
-      if (!(forwardWall == null ? void 0 : forwardWall.wall))
-        this.propagate(move(position, facing), width, depth - 1);
-    }
-  };
-  function getFieldOfView(g, width, depth) {
-    const calc = new FovCalculator(g);
-    return calc.calculate(width, depth);
-  }
-
-  // src/DungeonRenderer.ts
-  var tileTag = (id2, type, tile) => `${type}${id2}:${tile.x},${tile.z}`;
-  var DungeonRenderer = class {
-    constructor(g, dungeon, atlasImage, offset = xy(91, 21)) {
-      this.g = g;
-      this.dungeon = dungeon;
-      this.atlasImage = atlasImage;
-      this.offset = offset;
-      this.imageData = /* @__PURE__ */ new Map();
-    }
-    addAtlas(layers, image) {
-      const atlasCanvas = document.createElement("canvas");
-      atlasCanvas.width = image.width;
-      atlasCanvas.height = image.height;
-      const atlasCtx = getCanvasContext(atlasCanvas, "2d", {
-        willReadFrequently: true
-      });
-      atlasCtx.drawImage(image, 0, 0);
-      const promises = [];
-      for (const layer of layers) {
-        for (const entry of layer.tiles) {
-          const imageData = atlasCtx.getImageData(
-            entry.coords.x,
-            entry.coords.y,
-            entry.coords.w,
-            entry.coords.h
-          );
-          const tmpCanvas = document.createElement("canvas");
-          tmpCanvas.width = entry.coords.w;
-          tmpCanvas.height = entry.coords.h;
-          const tmpCtx = getCanvasContext(tmpCanvas, "2d");
-          if (entry.flipped) {
-            const data = this.flipImage(
-              entry.coords.w,
-              entry.coords.h,
-              imageData.data
-            );
-            imageData.data.set(data);
-          }
-          tmpCtx.putImageData(imageData, 0, 0);
-          this.imageData.set(tileTag(layer.id, entry.type, entry.tile), entry);
-          promises.push(
-            createImageBitmap(imageData).then((bmp) => {
-              entry.image = bmp;
-              return entry;
-            })
-          );
-        }
-      }
-      return Promise.all(promises);
-    }
-    getImage(id2, type, x, z) {
-      const tag = tileTag(id2, type, { x, z });
-      return this.imageData.get(tag);
-    }
-    flipImage(w, h, data) {
-      const flippedData = new Uint8Array(w * h * 4);
-      for (let col = 0; col < w; col++) {
-        for (let row = 0; row < h; row++) {
-          const index = (w - 1 - col) * 4 + row * w * 4;
-          const index2 = col * 4 + row * w * 4;
-          flippedData[index2] = data[index];
-          flippedData[index2 + 1] = data[index + 1];
-          flippedData[index2 + 2] = data[index + 2];
-          flippedData[index2 + 3] = data[index + 3];
-        }
-      }
-      return flippedData;
-    }
-    getLayersOfType(type) {
-      return this.dungeon.layers.filter((layer) => layer.type === type);
-    }
-    project(x, z) {
-      const { facing, position } = this.g;
-      switch (facing) {
-        case Dir_default.N:
-          return [position.x + x, position.y + z];
-        case Dir_default.E:
-          return [position.x - z, position.y + x];
-        case Dir_default.S:
-          return [position.x - x, position.y - z];
-        case Dir_default.W:
-          return [position.x + z, position.y - x];
-      }
-    }
-    draw(result) {
-      const dx = result.screen.x - (result.flipped ? result.coords.w : 0);
-      const dy = result.screen.y;
-      this.g.ctx.drawImage(result.image, dx + this.offset.x, dy + this.offset.y);
-    }
-    drawFront(result, x) {
-      const dx = result.screen.x + x * result.coords.fullWidth;
-      const dy = result.screen.y;
-      this.g.ctx.drawImage(result.image, dx + this.offset.x, dy + this.offset.y);
-    }
-    drawImage(id2, type, x, z) {
-      const result = this.getImage(id2, type, x, z);
-      if (result)
-        this.draw(result);
-    }
-    drawFrontImage(id2, type, x, z) {
-      const result = this.getImage(id2, type, 0, z);
-      if (result)
-        this.drawFront(result, x);
-    }
-    render() {
-      const rightSide = rotate(this.g.facing, 1);
-      const leftSide = rotate(this.g.facing, 3);
-      const tiles = getFieldOfView(
-        this.g,
-        this.dungeon.width,
-        this.dungeon.depth
-      );
-      for (const pos of tiles) {
-        const cell = this.g.getCell(pos.x, pos.y);
-        if (!cell)
-          continue;
-        if (cell.ceiling)
-          this.drawImage(cell.ceiling, "ceiling", pos.dx, pos.dz);
-        if (cell.floor)
-          this.drawImage(cell.floor, "floor", pos.dx, pos.dz);
-      }
-      for (const pos of tiles) {
-        const cell = this.g.getCell(pos.x, pos.y);
-        if (!cell)
-          continue;
-        if (pos.leftVisible) {
-          const left = cell.sides[leftSide];
-          if (left == null ? void 0 : left.wall)
-            this.drawImage(left.wall, "side", pos.dx - 1, pos.dz);
-          if (left == null ? void 0 : left.decal)
-            this.drawImage(left.decal, "side", pos.dx - 1, pos.dz);
-        }
-        if (pos.rightVisible) {
-          const right = cell.sides[rightSide];
-          if (right == null ? void 0 : right.wall)
-            this.drawImage(right.wall, "side", pos.dx + 1, pos.dz);
-          if (right == null ? void 0 : right.decal)
-            this.drawImage(right.decal, "side", pos.dx + 1, pos.dz);
-        }
-        const front = cell.sides[this.g.facing];
-        if (front == null ? void 0 : front.wall)
-          this.drawFrontImage(front.wall, "front", pos.dx, pos.dz - 1);
-        if (front == null ? void 0 : front.decal)
-          this.drawFrontImage(front.decal, "front", pos.dx, pos.dz - 1);
-        if (cell.object)
-          this.drawFrontImage(cell.object, "object", pos.dx, pos.dz);
-      }
-    }
-  };
-
-  // node_modules/nanoclone/src/index.js
-  function clone(src, seen = /* @__PURE__ */ new Map()) {
-    if (!src || typeof src !== "object")
-      return src;
-    if (seen.has(src))
-      return seen.get(src);
-    let copy;
-    if (src.nodeType && "cloneNode" in src) {
-      copy = src.cloneNode(true);
-      seen.set(src, copy);
-    } else if (src instanceof Date) {
-      copy = new Date(src.getTime());
-      seen.set(src, copy);
-    } else if (src instanceof RegExp) {
-      copy = new RegExp(src);
-      seen.set(src, copy);
-    } else if (Array.isArray(src)) {
-      copy = new Array(src.length);
-      seen.set(src, copy);
-      for (let i = 0; i < src.length; i++)
-        copy[i] = clone(src[i], seen);
-    } else if (src instanceof Map) {
-      copy = /* @__PURE__ */ new Map();
-      seen.set(src, copy);
-      for (const [k, v] of src.entries())
-        copy.set(k, clone(v, seen));
-    } else if (src instanceof Set) {
-      copy = /* @__PURE__ */ new Set();
-      seen.set(src, copy);
-      for (const v of src)
-        copy.add(clone(v, seen));
-    } else if (src instanceof Object) {
-      copy = {};
-      seen.set(src, copy);
-      for (const [k, v] of Object.entries(src))
-        copy[k] = clone(v, seen);
-    } else {
-      throw Error(`Unable to clone ${src}`);
-    }
-    return copy;
-  }
-  function src_default(src) {
-    return clone(src, /* @__PURE__ */ new Map());
-  }
 
   // src/DScript/logic.ts
   function bool(value, readOnly = false) {
@@ -1406,6 +1104,687 @@
     else
       left.value = binary(opMapping[stmt.op], left, right).value;
   }
+
+  // src/DScript/parser.ts
+  var import_nearley = __toESM(require_nearley());
+
+  // src/tools/leftPad.ts
+  function leftPad(s, n, char = " ") {
+    return Array(n).join(char) + s;
+  }
+
+  // src/DScript/Lexer.ts
+  var wsPattern = /[ \r\n\t]/;
+  var isWhiteSpace = (ch) => wsPattern.test(ch);
+  var nlPattern = /[\r\n]/;
+  var isNewline = (ch) => nlPattern.test(ch);
+  var numberPattern = /^[0-9]+$/;
+  var isNumber = (w) => numberPattern.test(w);
+  var wordPattern = /^[a-zA-Z][a-zA-Z0-9_]*$/;
+  var isWord = (w) => wordPattern.test(w);
+  var keywords = [
+    "and",
+    "any",
+    "bool",
+    "else",
+    "end",
+    "false",
+    "function",
+    "if",
+    "not",
+    "number",
+    "or",
+    "return",
+    "string",
+    "true",
+    "xor"
+  ];
+  var isKeyword = (w) => keywords.includes(w);
+  var punctuation = /* @__PURE__ */ new Set([
+    "=",
+    "+=",
+    "-=",
+    "*=",
+    "/=",
+    "^=",
+    "(",
+    ")",
+    ":",
+    ",",
+    ">",
+    ">=",
+    "<",
+    "<=",
+    "==",
+    "!=",
+    "+",
+    "-",
+    "*",
+    "/",
+    "^"
+  ]);
+  var isPunctuation = (w) => punctuation.has(w);
+  var commentChar = ";";
+  var Lexer = class {
+    constructor() {
+      this.reset("");
+    }
+    get col() {
+      return this.index - this.lastLineBreak + 1;
+    }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    has(_type) {
+      return true;
+    }
+    reset(data, state) {
+      this.buffer = data;
+      this.index = 0;
+      this.line = state ? state.line : 1;
+      this.lastLineBreak = state ? -state.col : 0;
+    }
+    next() {
+      const { line, col, index } = this;
+      const [type, value] = this.getNextToken();
+      if (type === "EOF")
+        return;
+      return { line, col, offset: index, type, value };
+    }
+    save() {
+      const { line, col } = this;
+      return { line, col: col - 1 };
+    }
+    formatError(token, message = "Syntax error") {
+      const lines = this.buffer.replace(/\r/g, "").split("\n");
+      const min = Math.max(0, token.line - 3);
+      const max = Math.min(token.line + 2, lines.length - 1);
+      const lineNoSize = max.toString().length;
+      const context = [];
+      for (let i = min; i < max; i++) {
+        const line = lines[i];
+        const showLineNo = i + 1;
+        const raw = showLineNo.toString();
+        const lineNo = leftPad(raw, lineNoSize - raw.length);
+        context.push(`${lineNo} ${line}`);
+        if (showLineNo === token.line)
+          context.push(leftPad("^", token.col + lineNoSize + 1, "-"));
+      }
+      return [
+        `${message} at line ${token.line} col ${token.col}`,
+        ...context
+      ].join("\n");
+    }
+    isEOF() {
+      return this.index >= this.buffer.length;
+    }
+    peek() {
+      return this.buffer[this.index];
+    }
+    consume() {
+      const ch = this.peek();
+      this.consumed += ch;
+      this.index++;
+      if (ch === "\n") {
+        this.line++;
+        this.lastLineBreak = this.index;
+      }
+      return ch;
+    }
+    repeater(isValid) {
+      this.consume();
+      while (true) {
+        if (this.isEOF())
+          break;
+        const maybe = this.consumed + this.peek();
+        if (!isValid(maybe))
+          break;
+        this.consume();
+      }
+      return this.consumed;
+    }
+    getNextToken() {
+      this.consumed = "";
+      if (this.isEOF())
+        return ["EOF", ""];
+      const ch = this.peek();
+      if (isWhiteSpace(ch)) {
+        while (isWhiteSpace(this.peek()))
+          this.consume();
+        return ["ws", this.consumed];
+      }
+      if (isNumber(ch)) {
+        const number2 = this.repeater(isNumber);
+        return ["number", number2];
+      }
+      if (isWord(ch)) {
+        const word2 = this.repeater(isWord);
+        if (isKeyword(word2))
+          return ["keyword", word2];
+        return ["word", word2];
+      }
+      if (isPunctuation(ch)) {
+        const punctuation2 = this.repeater(isPunctuation);
+        return ["punctuation", punctuation2];
+      }
+      if (ch === '"' || ch === "'") {
+        this.consume();
+        while (true) {
+          if (this.isEOF())
+            return ["UNCLOSED_STRING", ch];
+          const next = this.consume();
+          if (next === ch)
+            return [ch === "'" ? "sqstring" : "dqstring", this.consumed];
+        }
+      }
+      if (ch === commentChar) {
+        this.consume();
+        while (!this.isEOF() && !isNewline(this.peek()))
+          this.consume();
+        return ["comment", this.consumed];
+      }
+      return ["INVALID", ch];
+    }
+  };
+
+  // src/DScript/grammar.ts
+  function id(d) {
+    return d[0];
+  }
+  var always = (value) => () => value;
+  var val = ([tok]) => tok.value;
+  var lexer = new Lexer();
+  var grammar = {
+    Lexer: lexer,
+    ParserRules: [
+      { "name": "document", "symbols": ["_", "program"], "postprocess": ([, prog]) => prog },
+      { "name": "program$ebnf$1", "symbols": [] },
+      { "name": "program$ebnf$1", "symbols": ["program$ebnf$1", "declp"], "postprocess": (d) => d[0].concat([d[1]]) },
+      { "name": "program", "symbols": ["program$ebnf$1"], "postprocess": id },
+      { "name": "declp", "symbols": ["decl", "_"], "postprocess": id },
+      { "name": "decl", "symbols": ["stmt"], "postprocess": id },
+      { "name": "stmt", "symbols": ["assignment"], "postprocess": id },
+      { "name": "stmt", "symbols": ["call"], "postprocess": id },
+      { "name": "stmt", "symbols": ["function_def"], "postprocess": id },
+      { "name": "stmt", "symbols": ["if_stmt"], "postprocess": id },
+      { "name": "stmt", "symbols": ["return_stmt"], "postprocess": id },
+      { "name": "assignment", "symbols": ["name", "_", "assignop", "_", "expr"], "postprocess": ([name, , op, , expr]) => ({ _: "assignment", name, op, expr }) },
+      { "name": "assignop", "symbols": [{ "literal": "=" }], "postprocess": val },
+      { "name": "assignop", "symbols": [{ "literal": "+=" }], "postprocess": val },
+      { "name": "assignop", "symbols": [{ "literal": "-=" }], "postprocess": val },
+      { "name": "assignop", "symbols": [{ "literal": "*=" }], "postprocess": val },
+      { "name": "assignop", "symbols": [{ "literal": "/=" }], "postprocess": val },
+      { "name": "assignop", "symbols": [{ "literal": "^=" }], "postprocess": val },
+      { "name": "function_def$ebnf$1", "symbols": ["function_type_clause"], "postprocess": id },
+      { "name": "function_def$ebnf$1", "symbols": [], "postprocess": () => null },
+      { "name": "function_def", "symbols": [{ "literal": "function" }, "__", "name", { "literal": "(" }, "function_args", { "literal": ")" }, "function_def$ebnf$1", "document", "__", { "literal": "end" }], "postprocess": ([, , name, , args, , type, program]) => ({ _: "function", name, args, type, program }) },
+      { "name": "function_type_clause", "symbols": [{ "literal": ":" }, "_", "vtype"], "postprocess": ([, , type]) => type },
+      { "name": "function_args", "symbols": [], "postprocess": always([]) },
+      { "name": "function_args", "symbols": ["name_with_type"] },
+      { "name": "function_args", "symbols": ["function_args", "_", { "literal": "," }, "_", "name_with_type"], "postprocess": ([list, , , , value]) => list.concat([value]) },
+      { "name": "if_stmt$ebnf$1", "symbols": ["else_clause"], "postprocess": id },
+      { "name": "if_stmt$ebnf$1", "symbols": [], "postprocess": () => null },
+      { "name": "if_stmt", "symbols": [{ "literal": "if" }, "__", "expr", "__", { "literal": "then" }, "document", "if_stmt$ebnf$1", "__", { "literal": "end" }], "postprocess": ([, , expr, , , positive, negative]) => ({ _: "if", expr, positive, negative }) },
+      { "name": "else_clause", "symbols": ["__", { "literal": "else" }, "document"], "postprocess": ([, , clause]) => clause },
+      { "name": "return_stmt$ebnf$1$subexpression$1", "symbols": ["__", "expr"], "postprocess": ([, expr]) => expr },
+      { "name": "return_stmt$ebnf$1", "symbols": ["return_stmt$ebnf$1$subexpression$1"], "postprocess": id },
+      { "name": "return_stmt$ebnf$1", "symbols": [], "postprocess": () => null },
+      { "name": "return_stmt", "symbols": [{ "literal": "return" }, "return_stmt$ebnf$1"], "postprocess": ([, expr]) => ({ _: "return", expr }) },
+      { "name": "expr", "symbols": ["maths"], "postprocess": id },
+      { "name": "maths", "symbols": ["logic"], "postprocess": id },
+      { "name": "logic", "symbols": ["logic", "_", "logicop", "_", "boolean"], "postprocess": ([left, , op, , right]) => ({ _: "binary", left, op, right }) },
+      { "name": "logic", "symbols": ["boolean"], "postprocess": id },
+      { "name": "boolean", "symbols": ["boolean", "_", "boolop", "_", "sum"], "postprocess": ([left, , op, , right]) => ({ _: "binary", left, op, right }) },
+      { "name": "boolean", "symbols": ["sum"], "postprocess": id },
+      { "name": "sum", "symbols": ["sum", "_", "sumop", "_", "product"], "postprocess": ([left, , op, , right]) => ({ _: "binary", left, op, right }) },
+      { "name": "sum", "symbols": ["product"], "postprocess": id },
+      { "name": "product", "symbols": ["product", "_", "mulop", "_", "exp"], "postprocess": ([left, , op, , right]) => ({ _: "binary", left, op, right }) },
+      { "name": "product", "symbols": ["exp"], "postprocess": id },
+      { "name": "exp", "symbols": ["unary", "_", "expop", "_", "exp"], "postprocess": ([left, , op, , right]) => ({ _: "binary", left, op, right }) },
+      { "name": "exp", "symbols": ["unary"], "postprocess": id },
+      { "name": "unary", "symbols": [{ "literal": "-" }, "value"], "postprocess": ([op, value]) => ({ _: "unary", op: op.value, value }) },
+      { "name": "unary", "symbols": [{ "literal": "not" }, "_", "value"], "postprocess": ([op, , value]) => ({ _: "unary", op: op.value, value }) },
+      { "name": "unary", "symbols": ["value"], "postprocess": id },
+      { "name": "logicop", "symbols": [{ "literal": "and" }], "postprocess": val },
+      { "name": "logicop", "symbols": [{ "literal": "or" }], "postprocess": val },
+      { "name": "logicop", "symbols": [{ "literal": "xor" }], "postprocess": val },
+      { "name": "boolop", "symbols": [{ "literal": ">" }], "postprocess": val },
+      { "name": "boolop", "symbols": [{ "literal": ">=" }], "postprocess": val },
+      { "name": "boolop", "symbols": [{ "literal": "<" }], "postprocess": val },
+      { "name": "boolop", "symbols": [{ "literal": "<=" }], "postprocess": val },
+      { "name": "boolop", "symbols": [{ "literal": "==" }], "postprocess": val },
+      { "name": "boolop", "symbols": [{ "literal": "!=" }], "postprocess": val },
+      { "name": "sumop", "symbols": [{ "literal": "+" }], "postprocess": val },
+      { "name": "sumop", "symbols": [{ "literal": "-" }], "postprocess": val },
+      { "name": "mulop", "symbols": [{ "literal": "*" }], "postprocess": val },
+      { "name": "mulop", "symbols": [{ "literal": "/" }], "postprocess": val },
+      { "name": "expop", "symbols": [{ "literal": "^" }], "postprocess": val },
+      { "name": "value", "symbols": ["literal_number"], "postprocess": id },
+      { "name": "value", "symbols": ["literal_boolean"], "postprocess": id },
+      { "name": "value", "symbols": ["literal_string"], "postprocess": id },
+      { "name": "value", "symbols": ["name"], "postprocess": id },
+      { "name": "value", "symbols": ["call"], "postprocess": id },
+      { "name": "call", "symbols": ["name", { "literal": "(" }, "call_args", { "literal": ")" }], "postprocess": ([fn, , args]) => ({ _: "call", fn, args }) },
+      { "name": "call_args", "symbols": [], "postprocess": always([]) },
+      { "name": "call_args", "symbols": ["expr"] },
+      { "name": "call_args", "symbols": ["call_args", "_", { "literal": "," }, "_", "expr"], "postprocess": ([list, , , , value]) => list.concat([value]) },
+      { "name": "literal_number", "symbols": [lexer.has("number") ? { type: "number" } : number], "postprocess": ([tok]) => ({ _: "number", value: Number(tok.value) }) },
+      { "name": "literal_number", "symbols": [lexer.has("number") ? { type: "number" } : number, { "literal": "." }, lexer.has("number") ? { type: "number" } : number], "postprocess": ([whole, , frac]) => ({ _: "number", value: Number(whole.value + "." + frac.value) }) },
+      { "name": "literal_boolean", "symbols": [{ "literal": "true" }], "postprocess": always({ _: "bool", value: true }) },
+      { "name": "literal_boolean", "symbols": [{ "literal": "false" }], "postprocess": always({ _: "bool", value: false }) },
+      { "name": "literal_string", "symbols": [lexer.has("sqstring") ? { type: "sqstring" } : sqstring], "postprocess": ([tok]) => ({ _: "string", value: tok.value.slice(1, -1) }) },
+      { "name": "literal_string", "symbols": [lexer.has("dqstring") ? { type: "dqstring" } : dqstring], "postprocess": ([tok]) => ({ _: "string", value: tok.value.slice(1, -1) }) },
+      { "name": "name_with_type", "symbols": ["name", { "literal": ":" }, "_", "vtype"], "postprocess": ([name, , , type]) => ({ _: "arg", type, name }) },
+      { "name": "vtype", "symbols": [{ "literal": "any" }], "postprocess": val },
+      { "name": "vtype", "symbols": [{ "literal": "bool" }], "postprocess": val },
+      { "name": "vtype", "symbols": [{ "literal": "function" }], "postprocess": val },
+      { "name": "vtype", "symbols": [{ "literal": "number" }], "postprocess": val },
+      { "name": "vtype", "symbols": [{ "literal": "string" }], "postprocess": val },
+      { "name": "name", "symbols": [lexer.has("word") ? { type: "word" } : word], "postprocess": ([tok]) => ({ _: "id", value: tok.value }) },
+      { "name": "_", "symbols": ["ws"], "postprocess": always(null) },
+      { "name": "_", "symbols": ["comment"], "postprocess": always(null) },
+      { "name": "_", "symbols": [], "postprocess": always(null) },
+      { "name": "__", "symbols": ["ws"], "postprocess": always(null) },
+      { "name": "ws", "symbols": [lexer.has("ws") ? { type: "ws" } : ws], "postprocess": always(null) },
+      { "name": "comment", "symbols": ["_", lexer.has("comment") ? { type: "comment" } : comment, "_"], "postprocess": always(null) }
+    ],
+    ParserStart: "document"
+  };
+  var grammar_default = grammar;
+
+  // src/tools/uniq.ts
+  function uniq(items) {
+    const set = new Set(items);
+    return Array.from(set.values());
+  }
+
+  // src/DScript/parser.ts
+  function makeEOFToken(p, src) {
+    var _a, _b, _c, _d;
+    return {
+      col: (_b = (_a = p.lexerState) == null ? void 0 : _a.col) != null ? _b : p.lexer.col,
+      line: (_d = (_c = p.lexerState) == null ? void 0 : _c.line) != null ? _d : p.lexer.line,
+      offset: src.length,
+      type: "EOF",
+      value: ""
+    };
+  }
+  var ParseError = class extends Error {
+    constructor(p, token, src) {
+      super("Syntax error");
+      this.p = p;
+      this.token = token;
+      this.src = src;
+      const col = p.table[p.current];
+      const expected = col.states.map((s) => {
+        const ns = s.rule.symbols[s.dot];
+        if (typeof ns === "object") {
+          if (ns.literal)
+            return `"${ns.literal}"`;
+          if (ns.type)
+            return ns.type;
+        }
+        if (typeof ns === "string")
+          return `(${ns})`;
+      }).filter(isDefined);
+      const message = token.type === "UNCLOSED_STRING" ? "Unclosed string" : `Got ${token.type} token${token.value ? ` "${token.value}"` : ""}, expected one of: ${uniq(expected).sort().join(", ")}`;
+      this.message = [p.lexer.formatError(token), message].join("\n");
+    }
+  };
+  function parse(src) {
+    const p = new import_nearley.Parser(import_nearley.Grammar.fromCompiled(grammar_default));
+    try {
+      p.feed(src.trim());
+    } catch (error) {
+      throw new ParseError(p, error.token, src);
+    }
+    const result = p.results;
+    if (result.length === 0)
+      throw new ParseError(p, makeEOFToken(p, src), src);
+    if (result.length > 1) {
+      for (let i = 0; i < result.length; i++) {
+        console.log(`--- PARSE #${i}`);
+        console.dir(result[0], { depth: Infinity });
+      }
+      throw new Error("Ambiguous parse.");
+    }
+    return result[0];
+  }
+
+  // src/DefaultControls.ts
+  var DefaultControls = [
+    ["ArrowUp", ["Forward", "MenuUp"]],
+    ["KeyW", ["Forward", "MenuUp"]],
+    ["ArrowRight", ["TurnRight"]],
+    ["KeyE", ["TurnRight"]],
+    ["ArrowDown", ["Back", "MenuDown"]],
+    ["KeyS", ["Back", "MenuDown"]],
+    ["ArrowLeft", ["TurnLeft"]],
+    ["KeyQ", ["TurnLeft"]],
+    ["Shift+ArrowRight", ["SlideRight"]],
+    ["KeyD", ["SlideRight"]],
+    ["Shift+ArrowLeft", ["SlideLeft"]],
+    ["KeyA", ["SlideLeft"]],
+    ["Ctrl+ArrowRight", ["RotateRight"]],
+    ["Ctrl+KeyD", ["RotateRight"]],
+    ["Ctrl+ArrowLeft", ["RotateLeft"]],
+    ["Ctrl+KeyA", ["RotateLeft"]],
+    ["Alt+ArrowRight", ["SwapRight"]],
+    ["Alt+KeyD", ["SwapRight"]],
+    ["Alt+ArrowDown", ["SwapBehind"]],
+    ["Alt+KeyS", ["SwapBehind"]],
+    ["Alt+ArrowLeft", ["SwapLeft"]],
+    ["Alt+KeyA", ["SwapLeft"]],
+    ["Space", ["ToggleLog"]],
+    ["Enter", ["Interact", "MenuChoose"]],
+    ["Return", ["Interact", "MenuChoose"]],
+    ["Escape", ["Cancel"]]
+  ];
+  var DefaultControls_default = DefaultControls;
+
+  // src/tools/getCanvasContext.ts
+  function getCanvasContext(canvas, type, options) {
+    const ctx = canvas.getContext(type, options);
+    if (!ctx)
+      throw new Error(`canvas.getContext(${type})`);
+    return ctx;
+  }
+
+  // src/tools/xyTags.ts
+  function xyToTag(pos) {
+    return `${pos.x},${pos.y}`;
+  }
+
+  // src/fov.ts
+  var facingDisplacements = {
+    [Dir_default.E]: [0, 1, -1, 0],
+    [Dir_default.N]: [1, 0, 0, 1],
+    [Dir_default.S]: [-1, 0, 0, -1],
+    [Dir_default.W]: [0, -1, 1, 0]
+  };
+  function getDisplacement(from, to, facing) {
+    const dx = to.x - from.x;
+    const dy = to.y - from.y;
+    const [a, b, c, d] = facingDisplacements[facing];
+    const x = dx * a + dy * b;
+    const y = dx * c + dy * d;
+    return [x, y];
+  }
+  var FovCalculator = class {
+    constructor(g) {
+      this.g = g;
+      this.entries = /* @__PURE__ */ new Map();
+    }
+    calculate(width, depth) {
+      const position = this.g.position;
+      this.propagate(position, width, depth);
+      return [...this.entries.values()].sort((a, b) => {
+        const zd = a.dz - b.dz;
+        if (zd)
+          return zd;
+        const xd = Math.abs(a.dx) - Math.abs(b.dx);
+        return -xd;
+      });
+    }
+    displacement(position) {
+      return getDisplacement(this.g.position, position, this.g.facing);
+    }
+    propagate(position, width, depth) {
+      if (width <= 0 || depth <= 0)
+        return;
+      const { g } = this;
+      const { facing } = g;
+      const tag = xyToTag(position);
+      const old = this.entries.get(tag);
+      if (old) {
+        if (old.width >= width && old.depth >= depth)
+          return;
+      }
+      const { x, y } = position;
+      const cell = g.getCell(x, y);
+      if (!cell)
+        return;
+      const [dx, dz] = this.displacement(position);
+      const leftVisible = dx <= 0;
+      const rightVisible = dx >= 0;
+      this.entries.set(tag, {
+        x,
+        y,
+        dx,
+        dz,
+        width,
+        depth,
+        leftVisible,
+        rightVisible
+      });
+      if (leftVisible) {
+        const leftDir = rotate(facing, 3);
+        const leftWall = cell.sides[leftDir];
+        if (!(leftWall == null ? void 0 : leftWall.wall))
+          this.propagate(move(position, leftDir), width - 1, depth);
+      }
+      if (rightVisible) {
+        const rightDir = rotate(facing, 1);
+        const rightWall = cell.sides[rightDir];
+        if (!(rightWall == null ? void 0 : rightWall.wall))
+          this.propagate(move(position, rightDir), width - 1, depth);
+      }
+      const forwardWall = cell.sides[facing];
+      if (!(forwardWall == null ? void 0 : forwardWall.wall))
+        this.propagate(move(position, facing), width, depth - 1);
+    }
+  };
+  function getFieldOfView(g, width, depth) {
+    const calc = new FovCalculator(g);
+    return calc.calculate(width, depth);
+  }
+
+  // src/DungeonRenderer.ts
+  var tileTag = (id2, type, tile) => `${type}${id2}:${tile.x},${tile.z}`;
+  var DungeonRenderer = class {
+    constructor(g, dungeon, atlasImage, offset = xy(91, 21)) {
+      this.g = g;
+      this.dungeon = dungeon;
+      this.atlasImage = atlasImage;
+      this.offset = offset;
+      this.imageData = /* @__PURE__ */ new Map();
+    }
+    addAtlas(layers, image) {
+      const atlasCanvas = document.createElement("canvas");
+      atlasCanvas.width = image.width;
+      atlasCanvas.height = image.height;
+      const atlasCtx = getCanvasContext(atlasCanvas, "2d", {
+        willReadFrequently: true
+      });
+      atlasCtx.drawImage(image, 0, 0);
+      const promises = [];
+      for (const layer of layers) {
+        for (const entry of layer.tiles) {
+          const imageData = atlasCtx.getImageData(
+            entry.coords.x,
+            entry.coords.y,
+            entry.coords.w,
+            entry.coords.h
+          );
+          const tmpCanvas = document.createElement("canvas");
+          tmpCanvas.width = entry.coords.w;
+          tmpCanvas.height = entry.coords.h;
+          const tmpCtx = getCanvasContext(tmpCanvas, "2d");
+          if (entry.flipped) {
+            const data = this.flipImage(
+              entry.coords.w,
+              entry.coords.h,
+              imageData.data
+            );
+            imageData.data.set(data);
+          }
+          tmpCtx.putImageData(imageData, 0, 0);
+          this.imageData.set(tileTag(layer.id, entry.type, entry.tile), entry);
+          promises.push(
+            createImageBitmap(imageData).then((bmp) => {
+              entry.image = bmp;
+              return entry;
+            })
+          );
+        }
+      }
+      return Promise.all(promises);
+    }
+    getImage(id2, type, x, z) {
+      const tag = tileTag(id2, type, { x, z });
+      return this.imageData.get(tag);
+    }
+    flipImage(w, h, data) {
+      const flippedData = new Uint8Array(w * h * 4);
+      for (let col = 0; col < w; col++) {
+        for (let row = 0; row < h; row++) {
+          const index = (w - 1 - col) * 4 + row * w * 4;
+          const index2 = col * 4 + row * w * 4;
+          flippedData[index2] = data[index];
+          flippedData[index2 + 1] = data[index + 1];
+          flippedData[index2 + 2] = data[index + 2];
+          flippedData[index2 + 3] = data[index + 3];
+        }
+      }
+      return flippedData;
+    }
+    getLayersOfType(type) {
+      return this.dungeon.layers.filter((layer) => layer.type === type);
+    }
+    project(x, z) {
+      const { facing, position } = this.g;
+      switch (facing) {
+        case Dir_default.N:
+          return [position.x + x, position.y + z];
+        case Dir_default.E:
+          return [position.x - z, position.y + x];
+        case Dir_default.S:
+          return [position.x - x, position.y - z];
+        case Dir_default.W:
+          return [position.x + z, position.y - x];
+      }
+    }
+    draw(result) {
+      const dx = result.screen.x - (result.flipped ? result.coords.w : 0);
+      const dy = result.screen.y;
+      this.g.ctx.drawImage(result.image, dx + this.offset.x, dy + this.offset.y);
+    }
+    drawFront(result, x) {
+      const dx = result.screen.x + x * result.coords.fullWidth;
+      const dy = result.screen.y;
+      this.g.ctx.drawImage(result.image, dx + this.offset.x, dy + this.offset.y);
+    }
+    drawImage(id2, type, x, z) {
+      const result = this.getImage(id2, type, x, z);
+      if (result)
+        this.draw(result);
+    }
+    drawFrontImage(id2, type, x, z) {
+      const result = this.getImage(id2, type, 0, z);
+      if (result)
+        this.drawFront(result, x);
+    }
+    render() {
+      const rightSide = rotate(this.g.facing, 1);
+      const leftSide = rotate(this.g.facing, 3);
+      const tiles = getFieldOfView(
+        this.g,
+        this.dungeon.width,
+        this.dungeon.depth
+      );
+      for (const pos of tiles) {
+        const cell = this.g.getCell(pos.x, pos.y);
+        if (!cell)
+          continue;
+        if (cell.ceiling)
+          this.drawImage(cell.ceiling, "ceiling", pos.dx, pos.dz);
+        if (cell.floor)
+          this.drawImage(cell.floor, "floor", pos.dx, pos.dz);
+      }
+      for (const pos of tiles) {
+        const cell = this.g.getCell(pos.x, pos.y);
+        if (!cell)
+          continue;
+        if (pos.leftVisible) {
+          const left = cell.sides[leftSide];
+          if (left == null ? void 0 : left.wall)
+            this.drawImage(left.wall, "side", pos.dx - 1, pos.dz);
+          if (left == null ? void 0 : left.decal)
+            this.drawImage(left.decal, "side", pos.dx - 1, pos.dz);
+        }
+        if (pos.rightVisible) {
+          const right = cell.sides[rightSide];
+          if (right == null ? void 0 : right.wall)
+            this.drawImage(right.wall, "side", pos.dx + 1, pos.dz);
+          if (right == null ? void 0 : right.decal)
+            this.drawImage(right.decal, "side", pos.dx + 1, pos.dz);
+        }
+        const front = cell.sides[this.g.facing];
+        if (front == null ? void 0 : front.wall)
+          this.drawFrontImage(front.wall, "front", pos.dx, pos.dz - 1);
+        if (front == null ? void 0 : front.decal)
+          this.drawFrontImage(front.decal, "front", pos.dx, pos.dz - 1);
+        if (cell.object)
+          this.drawFrontImage(cell.object, "object", pos.dx, pos.dz);
+      }
+    }
+  };
+
+  // src/tools/getKeyNames.ts
+  function getKeyNames(key, shift, alt, ctrl) {
+    const names = [key];
+    if (shift)
+      names.unshift("Shift+" + key);
+    if (alt)
+      names.unshift("Alt+" + key);
+    if (ctrl)
+      names.unshift("Ctrl+" + key);
+    return names;
+  }
+
+  // src/DungeonScreen.ts
+  var DungeonScreen = class {
+    constructor(g, renderSetup) {
+      this.g = g;
+      this.renderSetup = renderSetup;
+      void g.jukebox.play("explore");
+    }
+    onKey(e) {
+      const keys = getKeyNames(e.code, e.shiftKey, e.altKey, e.ctrlKey);
+      for (const key of keys) {
+        const input = this.g.controls.get(key);
+        if (input) {
+          e.preventDefault();
+          for (const check of input) {
+            if (this.g.processInput(check))
+              return;
+          }
+        }
+      }
+    }
+    render() {
+      const { renderSetup } = this;
+      const { canvas, ctx, res } = this.g;
+      if (!renderSetup) {
+        const { draw } = withTextStyle(ctx, {
+          textAlign: "center",
+          textBaseline: "middle",
+          fillStyle: "white"
+        });
+        draw(
+          `Loading: ${res.loaded}/${res.loading}`,
+          canvas.width / 2,
+          canvas.height / 2
+        );
+        this.g.draw();
+        return;
+      }
+      renderSetup.dungeon.render();
+      renderSetup.hud.render();
+      if (this.g.showLog)
+        renderSetup.log.render();
+      if (this.g.combat.inCombat)
+        renderSetup.combat.render();
+    }
+  };
 
   // src/DScript/host.ts
   var DScriptHost = class {
@@ -2079,6 +2458,176 @@
     }
   };
 
+  // res/music/komfort-zone.ogg
+  var komfort_zone_default = "./komfort-zone-GXVCNDIF.ogg";
+
+  // res/music/mod-dot-vigor.ogg
+  var mod_dot_vigor_default = "./mod-dot-vigor-OULMZ74T.ogg";
+
+  // res/music/ringing-steel.ogg
+  var ringing_steel_default = "./ringing-steel-7SYI4FL5.ogg";
+
+  // res/music/selume.ogg
+  var selume_default = "./selume-SBU4SIT3.ogg";
+
+  // src/Jukebox.ts
+  var komfortZone = { name: "komfort zone", url: komfort_zone_default };
+  var modDotVigor = {
+    name: "mod dot vigor",
+    url: mod_dot_vigor_default,
+    loop: true
+  };
+  var ringingSteel = {
+    name: "ringing steel",
+    url: ringing_steel_default,
+    loop: true
+  };
+  var selume = { name: "selume", url: selume_default };
+  var playlists = {
+    title: { tracks: [selume] },
+    explore: { tracks: [komfortZone], between: { roll: 20, bonus: 10 } },
+    combat: { tracks: [modDotVigor] },
+    arena: { tracks: [ringingSteel] }
+  };
+  var Jukebox = class {
+    constructor(g) {
+      this.g = g;
+      this.trackEnded = () => {
+        const { playlist } = this;
+        if (!playlist)
+          return;
+        if (playlist.between) {
+          const delay = random(playlist.between.roll) + playlist.between.bonus;
+          if (delay) {
+            this.delayTimer = setTimeout(this.next, delay * 1e3);
+            return;
+          }
+        }
+        this.next();
+      };
+      this.next = () => {
+        const { index, playlist } = this;
+        if (!playlist)
+          return;
+        this.cancelDelay();
+        this.index = wrap(index + 1, playlist.tracks.length);
+        void this.start();
+      };
+      this.tryPlay = () => {
+        if (this.wantToPlay) {
+          const name = this.wantToPlay;
+          this.wantToPlay = void 0;
+          void this.play(name).then((success) => {
+            if (success) {
+              this.g.eventHandlers.onPartyMove.delete(this.tryPlay);
+              this.g.eventHandlers.onPartySwap.delete(this.tryPlay);
+              this.g.eventHandlers.onPartyTurn.delete(this.tryPlay);
+            }
+            return success;
+          });
+        }
+      };
+      this.index = 0;
+      g.eventHandlers.onPartyMove.add(this.tryPlay);
+      g.eventHandlers.onPartySwap.add(this.tryPlay);
+      g.eventHandlers.onPartyTurn.add(this.tryPlay);
+      g.eventHandlers.onCombatBegin.add(
+        ({ type }) => void this.play(type === "normal" ? "combat" : "arena")
+      );
+      g.eventHandlers.onCombatOver.add(() => void this.play("explore"));
+    }
+    acquire(track) {
+      return __async(this, null, function* () {
+        if (!track.audio) {
+          const audio = yield this.g.res.loadAudio(track.url);
+          audio.addEventListener("ended", this.trackEnded);
+          track.audio = audio;
+          if (track.loop)
+            audio.loop = true;
+        }
+        return track;
+      });
+    }
+    get status() {
+      if (this.delayTimer)
+        return "between tracks";
+      if (!this.playing)
+        return "idle";
+      return `playing: ${this.playing.name}`;
+    }
+    cancelDelay() {
+      if (this.delayTimer) {
+        clearTimeout(this.delayTimer);
+        this.delayTimer = void 0;
+      }
+    }
+    play(p) {
+      return __async(this, null, function* () {
+        var _a, _b;
+        this.cancelDelay();
+        this.wantToPlay = p;
+        (_b = (_a = this.playing) == null ? void 0 : _a.audio) == null ? void 0 : _b.pause();
+        const playlist = playlists[p];
+        this.playlist = playlist;
+        this.index = random(playlist.tracks.length);
+        return this.start();
+      });
+    }
+    start() {
+      return __async(this, null, function* () {
+        if (!this.playlist)
+          return false;
+        this.cancelDelay();
+        const track = this.playlist.tracks[this.index];
+        this.playing = yield this.acquire(track);
+        if (!this.playing.audio)
+          throw Error(`Acquire ${track.name} failed`);
+        try {
+          this.playing.audio.currentTime = 0;
+          yield this.playing.audio.play();
+          this.playing = track;
+          this.wantToPlay = void 0;
+          return true;
+        } catch (e) {
+          console.warn(e);
+          this.playing = void 0;
+          return false;
+        }
+      });
+    }
+    stop() {
+      if (this.playing) {
+        this.playing.audio.pause();
+        this.playing = void 0;
+      }
+    }
+  };
+
+  // src/LoadingScreen.ts
+  var LoadingScreen = class {
+    constructor(g) {
+      this.g = g;
+      g.draw();
+    }
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
+    onKey() {
+    }
+    render() {
+      const { canvas, ctx, res } = this.g;
+      const { draw } = withTextStyle(ctx, {
+        textAlign: "center",
+        textBaseline: "middle",
+        fillStyle: "white"
+      });
+      draw(
+        `Loading: ${res.loaded}/${res.loading}`,
+        canvas.width / 2,
+        canvas.height / 2
+      );
+      this.g.draw();
+    }
+  };
+
   // src/tools/textWrap.ts
   function splitWords(s) {
     const words = [];
@@ -2159,6 +2708,121 @@
       }
     }
   };
+
+  // src/ResourceManager.ts
+  var ResourceManager = class {
+    constructor() {
+      this.promises = /* @__PURE__ */ new Map();
+      this.loaders = [];
+      this.atlases = {};
+      this.audio = {};
+      this.images = {};
+      this.maps = {};
+      this.scripts = {};
+      this.loaded = 0;
+      this.loading = 0;
+    }
+    start(src, promise) {
+      this.loading++;
+      this.promises.set(src, promise);
+      this.loaders.push(
+        promise.then((arg) => {
+          this.loaded++;
+          return arg;
+        })
+      );
+      return promise;
+    }
+    loadImage(src) {
+      const res = this.promises.get(src);
+      if (res)
+        return res;
+      return this.start(
+        src,
+        new Promise((resolve) => {
+          const img = new Image();
+          img.src = src;
+          img.addEventListener("load", () => {
+            this.images[src] = img;
+            resolve(img);
+          });
+        })
+      );
+    }
+    loadAtlas(src) {
+      const res = this.promises.get(src);
+      if (res)
+        return res;
+      return this.start(
+        src,
+        fetch(src).then((r) => r.json()).then((atlas) => {
+          this.atlases[src] = atlas;
+          return atlas;
+        })
+      );
+    }
+    loadGCMap(src) {
+      const res = this.promises.get(src);
+      if (res)
+        return res;
+      return this.start(
+        src,
+        fetch(src).then((r) => r.json()).then((map) => {
+          this.maps[src] = map;
+          return map;
+        })
+      );
+    }
+    loadScript(src) {
+      const res = this.promises.get(src);
+      if (res)
+        return res;
+      return this.start(
+        src,
+        fetch(src).then((r) => r.text()).then((script) => {
+          this.scripts[src] = script;
+          return script;
+        })
+      );
+    }
+    loadAudio(src) {
+      const res = this.promises.get(src);
+      if (res)
+        return res;
+      return this.start(
+        src,
+        new Promise((resolve) => {
+          const audio = new Audio();
+          audio.src = src;
+          audio.addEventListener("canplaythrough", () => {
+            this.audio[src] = audio;
+            resolve(audio);
+          });
+        })
+      );
+    }
+  };
+
+  // src/Soon.ts
+  var Soon = class {
+    constructor(callback) {
+      this.callback = callback;
+      this.call = () => {
+        this.timeout = void 0;
+        this.callback();
+      };
+    }
+    schedule() {
+      if (!this.timeout)
+        this.timeout = requestAnimationFrame(this.call);
+    }
+  };
+
+  // res/sad-folks.png
+  var sad_folks_default = "./sad-folks-WT2RUZAU.png";
+
+  // res/map.json
+  var map_default = "./map-SBCEGOBP.json";
 
   // src/items/cleavesman.ts
   var cleavesman_exports = {};
@@ -3126,6 +3790,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     Martialist: {
       name: "Kirkwin",
       lore: `From birth, Kirkwin trained his body as a weapon, studying under the most brutal martialist sects that were allowed in Haringlee, and some that weren't. So it was to great surprise when Cherraphy appointed Kirkwin as the leader of Haringlee's guard; protector of the weak, defender of the pathetic as he saw it. Zealotry never suited Kirkwin, and rather than play his role as a coward soldier sitting idle, he abandons his post to join the assault on Nightjar, and in doing so vows to Cherraphy and Mullanginan both that they too will someday bleed and bow low.`,
+      deathQuote: `Kirkwin's body sagged in the face of extreme odds, and he knew that his discipline had finally failed. His greatest fear was that his lifelong practises had served only to transform his youth into a carved body, a merciless expression and little else besides. Robbed of his strength, he found it easy to part with the remainder of his spirit.`,
       hp: 21,
       sp: 7,
       determination: 6,
@@ -3137,6 +3802,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     Cleavesman: {
       name: "Mogrigg",
       lore: `The village's headsman, a role instigated by Cherraphy and chosen at random. Considered a luckless man, not blamed for the three lives he's taken at his god's behest. Was previously a loyal soldier and pikeman at a time when his lord was just and interested in protecting the border villages, before the man's personality crumbled into rote righteousness. Mogrigg still has the scars, but none of the respect he earned. Of course he volunteered to brave the Nightjar! His hand was the first to rise!`,
+      deathQuote: `Somewhere behind the whirlwind of resentment and a deafening rush of blood hid Mogrigg's thoughts. Ever had they been on the topic of death, even when his party mates had made him cackle with laughter or introduced to him new ways of thinking. The death wish was just too much. He rushed gleefully towards his doom, as he had in every previous battle. This time, he met it.`,
       hp: 25,
       sp: 6,
       determination: 4,
@@ -3148,6 +3814,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     "Far Scout": {
       name: "Tam",
       lore: `The surest bow in Haringlee. Favouring high cliffs above the treetops, she is a very fine huntress who's found that her place in the village of her birth has become slowly less secure. Tam worships only as far as socially necessary, excusing herself more and more from the mania overtaking the populace. Still, that does leave more time to practise her woodscraft, her acrobacy and her deadly aim. Sensing the opportunity for change in the expedition to the Nightjar, she signs up, explaining that she already knows the best route over the river.`,
+      deathQuote: `Tam knew she'd made a terrible error as she watched her comrades be dashed to the ground, fearing that her body was soon to join theirs. Yet it hadn't been a tactical mistake; she hadn't simply been tricked by Mullanginan's men. Instead, it had been an elementary failure from the onset: leaving the high ground? Voluntarily straying into the beast's lair? A huntress who ignored her instincts was a doomed one indeed.`,
       hp: 18,
       sp: 7,
       determination: 3,
@@ -3159,6 +3826,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     "War Caller": {
       name: "Silas",
       lore: `Silas considers himself duty-bound to the goddess Cherraphy and exults her name without second thoughts. Blessed with unique conviction, his charmed surety in combat has increased even since his pit-fighting days; he now sees fit to call himself Knight-Enforcer and claim the ancient War Calling title from the old times... from before the wars made sense! Suspecting mischief and irreverence in the party that ventures to the Nightjar, he stubbornly joins, vowing to hold high the goddess's name. Yes, he's a nasty piece of work, but his arrogance serves to draw your enemy's ire away from your friends.`,
+      deathQuote: `Silas stared at his hands, both of them stained with his life's blood, and found it all too much to believe. He had dedicated himself to the service of Cherraphy and had ultimately been spurned, receiving no divine intervention that might justify his devotion. No god appeared to witness Silas's final moments. The only reward granted to the man was a fool's death.`,
       hp: 30,
       sp: 5,
       determination: 5,
@@ -3170,6 +3838,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     "Flag Singer": {
       name: "Belsome",
       lore: `A travelling auteur, stranded in Haringlee, their stagecoach impounded under the most arbitrary of Cherraphic laws. Before that, a bard, and before that, a wanted street thief. Now reformed as an entertainer, their reflexes remain true. Belsome has the instinct and the presence of mind needed to size up a dangerous situation, the savvy required to navigate it without incident and the compassion that also steers those around them to safety. Belsome doesn't know how vital their skills of performance, of misdirection and of psychic intuition will be inside the Fortress Nightjar, but this isn't exactly the first time they've performed without rehearsal.`,
+      deathQuote: `Belsome dropped to their knees, knowing they'd been dealt a killing blow. Fitting enough; such a commanding performance should always end with a convincing death. Projecting all their passion and spite into one last speech, Belsome howled: "Curse the gods!" and keeled over into oblivion, their epitaph still resounding in the air.`,
       hp: 21,
       sp: 6,
       determination: 2,
@@ -3181,6 +3850,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     "Loam Seer": {
       name: "Chiteri",
       lore: `Chiteri is a beetle-like humanoid who observes human activity from safety, where the river meets the wood. Sad at the many recent upheavals in Haringlee culture, Chiteri reveals her existence to the dumbfounded villagers and, furthermore, offers her magical assistance in their trip to the Nightjar, secretly planning to defame the goddess Cherraphy, thereby salvaging the lives of the people. Able to call on the magic dwelling deep within the earth, Chiteri is a canny healer and is also able to bestow curious magickal toughness to her quick new friends, even if she doesn't share their cause.`,
+      deathQuote: `Her carapace smashed to pieces, Chiteri found herself slipping into a place of inward calm. It had been an ordeal to maintain her friendships with her human companions; now, she was glad for it to be over. Chiteri dispassionately transmitted her final verdicts to her many hive sisters, gladdened by glimpses of the Nightjar's primitive insects that quickly surrounded her body as she expired.`,
       hp: 18,
       sp: 5,
       determination: 2,
@@ -3286,112 +3956,132 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     }
   };
 
-  // src/ResourceManager.ts
-  var ResourceManager = class {
-    constructor() {
-      this.promises = /* @__PURE__ */ new Map();
-      this.loaders = [];
-      this.atlases = {};
-      this.audio = {};
-      this.images = {};
-      this.maps = {};
-      this.scripts = {};
-      this.loaded = 0;
-      this.loading = 0;
+  // src/types/ClassName.ts
+  var ClassNames = [
+    "Martialist",
+    "Cleavesman",
+    "Far Scout",
+    "War Caller",
+    "Flag Singer",
+    "Loam Seer"
+  ];
+
+  // src/TitleScreen.ts
+  var TitleScreen = class {
+    constructor(g) {
+      this.g = g;
+      g.draw();
+      void g.jukebox.play("title");
+      this.index = 0;
+      this.selected = /* @__PURE__ */ new Set();
     }
-    start(src, promise) {
-      this.loading++;
-      this.promises.set(src, promise);
-      this.loaders.push(
-        promise.then((arg) => {
-          this.loaded++;
-          return arg;
-        })
-      );
-      return promise;
+    onKey(e) {
+      this.g.jukebox.tryPlay();
+      switch (e.code) {
+        case "ArrowUp":
+          this.g.draw();
+          this.index = wrap(this.index - 1, ClassNames.length);
+          break;
+        case "ArrowDown":
+          this.g.draw();
+          this.index = wrap(this.index + 1, ClassNames.length);
+          break;
+        case "Enter":
+        case "Return": {
+          this.g.draw();
+          const cn = ClassNames[this.index];
+          if (this.selected.has(cn))
+            this.selected.delete(cn);
+          else if (this.selected.size < 4)
+            this.selected.add(cn);
+          break;
+        }
+        case "Space":
+          if (this.selected.size === 4) {
+            this.g.party = [];
+            for (const cn of this.selected)
+              this.g.party.push(new Player(this.g, cn));
+            void this.g.loadGCMap(map_default, 0, -1);
+          }
+          break;
+      }
     }
-    loadImage(src) {
-      const res = this.promises.get(src);
-      if (res)
-        return res;
-      return this.start(
-        src,
-        new Promise((resolve) => {
-          const img = new Image();
-          img.src = src;
-          img.addEventListener("load", () => {
-            this.images[src] = img;
-            resolve(img);
-          });
-        })
-      );
-    }
-    loadAtlas(src) {
-      const res = this.promises.get(src);
-      if (res)
-        return res;
-      return this.start(
-        src,
-        fetch(src).then((r) => r.json()).then((atlas) => {
-          this.atlases[src] = atlas;
-          return atlas;
-        })
-      );
-    }
-    loadGCMap(src) {
-      const res = this.promises.get(src);
-      if (res)
-        return res;
-      return this.start(
-        src,
-        fetch(src).then((r) => r.json()).then((map) => {
-          this.maps[src] = map;
-          return map;
-        })
-      );
-    }
-    loadScript(src) {
-      const res = this.promises.get(src);
-      if (res)
-        return res;
-      return this.start(
-        src,
-        fetch(src).then((r) => r.text()).then((script) => {
-          this.scripts[src] = script;
-          return script;
-        })
-      );
-    }
-    loadAudio(src) {
-      const res = this.promises.get(src);
-      if (res)
-        return res;
-      return this.start(
-        src,
-        new Promise((resolve) => {
-          const audio = new Audio();
-          audio.src = src;
-          audio.addEventListener("canplaythrough", () => {
-            this.audio[src] = audio;
-            resolve(audio);
-          });
-        })
-      );
+    render() {
+      const { index, selected } = this;
+      const { canvas, ctx } = this.g;
+      {
+        const { draw } = withTextStyle(ctx, {
+          textAlign: "center",
+          textBaseline: "middle",
+          fillStyle: "white",
+          fontSize: 20
+        });
+        draw("Poisoned Daggers", canvas.width / 2, 20);
+        if (selected.size === 4)
+          draw("Press Space to begin", canvas.width / 2, canvas.height - 20);
+      }
+      {
+        const { draw, lineHeight, measure } = withTextStyle(ctx, {
+          textAlign: "left",
+          textBaseline: "middle",
+          fillStyle: "white"
+        });
+        let y = 60;
+        for (let i = 0; i < ClassNames.length; i++) {
+          const cn2 = ClassNames[i];
+          ctx.fillStyle = i === index ? selected.has(cn2) ? Colours_default.currentChosenClass : Colours_default.currentClass : selected.has(cn2) ? Colours_default.chosenClass : Colours_default.otherClass;
+          draw(cn2, 20, y);
+          y += lineHeight * 2;
+        }
+        const cn = ClassNames[this.index];
+        const cl = classes_default[cn];
+        ctx.fillStyle = "white";
+        draw(cl.name, 100, 60);
+        y = 60 + lineHeight * 2;
+        for (const line of textWrap(cl.lore, canvas.width - 120, measure).lines) {
+          draw(line, 100, y);
+          y += lineHeight;
+        }
+      }
     }
   };
 
-  // src/Soon.ts
-  var Soon = class {
-    constructor(callback) {
-      this.callback = callback;
-      this.call = () => {
-        this.timeout = void 0;
-        this.callback();
+  // src/SplashScreen.ts
+  var SplashScreen = class {
+    constructor(g) {
+      this.g = g;
+      this.next = () => {
+        clearTimeout(this.timeout);
+        this.g.screen = new TitleScreen(this.g);
       };
+      g.draw();
+      this.position = xyi(g.canvas.width / 2, g.canvas.height / 2);
+      this.timeout = setTimeout(this.next, 4e3);
+      void g.res.loadImage(sad_folks_default).then((img) => {
+        this.image = img;
+        this.position = xyi(
+          g.canvas.width / 2 - img.width / 2,
+          g.canvas.height / 2 - img.height / 2
+        );
+        g.draw();
+        return img;
+      });
     }
-    schedule() {
-      if (!this.timeout)
-        this.timeout = requestAnimationFrame(this.call);
+    onKey() {
+      this.next();
+    }
+    render() {
+      if (!this.image) {
+        const { draw } = withTextStyle(this.g.ctx, {
+          textAlign: "center",
+          textBaseline: "middle",
+          fontSize: 24,
+          fillStyle: "white"
+        });
+        draw("Loading...", this.position.x, this.position.y);
+        return;
+      }
+      this.g.ctx.drawImage(this.image, this.position.x, this.position.y);
     }
   };
 
@@ -3434,7 +4124,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
   };
 
   // res/map.dscript
-  var map_default = "./map-HIKFSW33.dscript";
+  var map_default2 = "./map-HIKFSW33.dscript";
 
   // res/atlas/flats.png
   var flats_default = "./flats-HZYMJUF6.png";
@@ -3468,7 +4158,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
 
   // src/resources.ts
   var Resources = {
-    "map.dscript": map_default,
+    "map.dscript": map_default2,
     "flats.png": flats_default,
     "flats.json": flats_default2,
     "eveScout.png": eveScout_default,
@@ -3712,523 +4402,6 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     return converter.convert(j, region, floor);
   }
 
-  // src/DScript/parser.ts
-  var import_nearley = __toESM(require_nearley());
-
-  // src/tools/leftPad.ts
-  function leftPad(s, n, char = " ") {
-    return Array(n).join(char) + s;
-  }
-
-  // src/DScript/Lexer.ts
-  var wsPattern = /[ \r\n\t]/;
-  var isWhiteSpace = (ch) => wsPattern.test(ch);
-  var nlPattern = /[\r\n]/;
-  var isNewline = (ch) => nlPattern.test(ch);
-  var numberPattern = /^[0-9]+$/;
-  var isNumber = (w) => numberPattern.test(w);
-  var wordPattern = /^[a-zA-Z][a-zA-Z0-9_]*$/;
-  var isWord = (w) => wordPattern.test(w);
-  var keywords = [
-    "and",
-    "any",
-    "bool",
-    "else",
-    "end",
-    "false",
-    "function",
-    "if",
-    "not",
-    "number",
-    "or",
-    "return",
-    "string",
-    "true",
-    "xor"
-  ];
-  var isKeyword = (w) => keywords.includes(w);
-  var punctuation = /* @__PURE__ */ new Set([
-    "=",
-    "+=",
-    "-=",
-    "*=",
-    "/=",
-    "^=",
-    "(",
-    ")",
-    ":",
-    ",",
-    ">",
-    ">=",
-    "<",
-    "<=",
-    "==",
-    "!=",
-    "+",
-    "-",
-    "*",
-    "/",
-    "^"
-  ]);
-  var isPunctuation = (w) => punctuation.has(w);
-  var commentChar = ";";
-  var Lexer = class {
-    constructor() {
-      this.reset("");
-    }
-    get col() {
-      return this.index - this.lastLineBreak + 1;
-    }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    has(_type) {
-      return true;
-    }
-    reset(data, state) {
-      this.buffer = data;
-      this.index = 0;
-      this.line = state ? state.line : 1;
-      this.lastLineBreak = state ? -state.col : 0;
-    }
-    next() {
-      const { line, col, index } = this;
-      const [type, value] = this.getNextToken();
-      if (type === "EOF")
-        return;
-      return { line, col, offset: index, type, value };
-    }
-    save() {
-      const { line, col } = this;
-      return { line, col: col - 1 };
-    }
-    formatError(token, message = "Syntax error") {
-      const lines = this.buffer.replace(/\r/g, "").split("\n");
-      const min = Math.max(0, token.line - 3);
-      const max = Math.min(token.line + 2, lines.length - 1);
-      const lineNoSize = max.toString().length;
-      const context = [];
-      for (let i = min; i < max; i++) {
-        const line = lines[i];
-        const showLineNo = i + 1;
-        const raw = showLineNo.toString();
-        const lineNo = leftPad(raw, lineNoSize - raw.length);
-        context.push(`${lineNo} ${line}`);
-        if (showLineNo === token.line)
-          context.push(leftPad("^", token.col + lineNoSize + 1, "-"));
-      }
-      return [
-        `${message} at line ${token.line} col ${token.col}`,
-        ...context
-      ].join("\n");
-    }
-    isEOF() {
-      return this.index >= this.buffer.length;
-    }
-    peek() {
-      return this.buffer[this.index];
-    }
-    consume() {
-      const ch = this.peek();
-      this.consumed += ch;
-      this.index++;
-      if (ch === "\n") {
-        this.line++;
-        this.lastLineBreak = this.index;
-      }
-      return ch;
-    }
-    repeater(isValid) {
-      this.consume();
-      while (true) {
-        if (this.isEOF())
-          break;
-        const maybe = this.consumed + this.peek();
-        if (!isValid(maybe))
-          break;
-        this.consume();
-      }
-      return this.consumed;
-    }
-    getNextToken() {
-      this.consumed = "";
-      if (this.isEOF())
-        return ["EOF", ""];
-      const ch = this.peek();
-      if (isWhiteSpace(ch)) {
-        while (isWhiteSpace(this.peek()))
-          this.consume();
-        return ["ws", this.consumed];
-      }
-      if (isNumber(ch)) {
-        const number2 = this.repeater(isNumber);
-        return ["number", number2];
-      }
-      if (isWord(ch)) {
-        const word2 = this.repeater(isWord);
-        if (isKeyword(word2))
-          return ["keyword", word2];
-        return ["word", word2];
-      }
-      if (isPunctuation(ch)) {
-        const punctuation2 = this.repeater(isPunctuation);
-        return ["punctuation", punctuation2];
-      }
-      if (ch === '"' || ch === "'") {
-        this.consume();
-        while (true) {
-          if (this.isEOF())
-            return ["UNCLOSED_STRING", ch];
-          const next = this.consume();
-          if (next === ch)
-            return [ch === "'" ? "sqstring" : "dqstring", this.consumed];
-        }
-      }
-      if (ch === commentChar) {
-        this.consume();
-        while (!this.isEOF() && !isNewline(this.peek()))
-          this.consume();
-        return ["comment", this.consumed];
-      }
-      return ["INVALID", ch];
-    }
-  };
-
-  // src/DScript/grammar.ts
-  function id(d) {
-    return d[0];
-  }
-  var always = (value) => () => value;
-  var val = ([tok]) => tok.value;
-  var lexer = new Lexer();
-  var grammar = {
-    Lexer: lexer,
-    ParserRules: [
-      { "name": "document", "symbols": ["_", "program"], "postprocess": ([, prog]) => prog },
-      { "name": "program$ebnf$1", "symbols": [] },
-      { "name": "program$ebnf$1", "symbols": ["program$ebnf$1", "declp"], "postprocess": (d) => d[0].concat([d[1]]) },
-      { "name": "program", "symbols": ["program$ebnf$1"], "postprocess": id },
-      { "name": "declp", "symbols": ["decl", "_"], "postprocess": id },
-      { "name": "decl", "symbols": ["stmt"], "postprocess": id },
-      { "name": "stmt", "symbols": ["assignment"], "postprocess": id },
-      { "name": "stmt", "symbols": ["call"], "postprocess": id },
-      { "name": "stmt", "symbols": ["function_def"], "postprocess": id },
-      { "name": "stmt", "symbols": ["if_stmt"], "postprocess": id },
-      { "name": "stmt", "symbols": ["return_stmt"], "postprocess": id },
-      { "name": "assignment", "symbols": ["name", "_", "assignop", "_", "expr"], "postprocess": ([name, , op, , expr]) => ({ _: "assignment", name, op, expr }) },
-      { "name": "assignop", "symbols": [{ "literal": "=" }], "postprocess": val },
-      { "name": "assignop", "symbols": [{ "literal": "+=" }], "postprocess": val },
-      { "name": "assignop", "symbols": [{ "literal": "-=" }], "postprocess": val },
-      { "name": "assignop", "symbols": [{ "literal": "*=" }], "postprocess": val },
-      { "name": "assignop", "symbols": [{ "literal": "/=" }], "postprocess": val },
-      { "name": "assignop", "symbols": [{ "literal": "^=" }], "postprocess": val },
-      { "name": "function_def$ebnf$1", "symbols": ["function_type_clause"], "postprocess": id },
-      { "name": "function_def$ebnf$1", "symbols": [], "postprocess": () => null },
-      { "name": "function_def", "symbols": [{ "literal": "function" }, "__", "name", { "literal": "(" }, "function_args", { "literal": ")" }, "function_def$ebnf$1", "document", "__", { "literal": "end" }], "postprocess": ([, , name, , args, , type, program]) => ({ _: "function", name, args, type, program }) },
-      { "name": "function_type_clause", "symbols": [{ "literal": ":" }, "_", "vtype"], "postprocess": ([, , type]) => type },
-      { "name": "function_args", "symbols": [], "postprocess": always([]) },
-      { "name": "function_args", "symbols": ["name_with_type"] },
-      { "name": "function_args", "symbols": ["function_args", "_", { "literal": "," }, "_", "name_with_type"], "postprocess": ([list, , , , value]) => list.concat([value]) },
-      { "name": "if_stmt$ebnf$1", "symbols": ["else_clause"], "postprocess": id },
-      { "name": "if_stmt$ebnf$1", "symbols": [], "postprocess": () => null },
-      { "name": "if_stmt", "symbols": [{ "literal": "if" }, "__", "expr", "__", { "literal": "then" }, "document", "if_stmt$ebnf$1", "__", { "literal": "end" }], "postprocess": ([, , expr, , , positive, negative]) => ({ _: "if", expr, positive, negative }) },
-      { "name": "else_clause", "symbols": ["__", { "literal": "else" }, "document"], "postprocess": ([, , clause]) => clause },
-      { "name": "return_stmt$ebnf$1$subexpression$1", "symbols": ["__", "expr"], "postprocess": ([, expr]) => expr },
-      { "name": "return_stmt$ebnf$1", "symbols": ["return_stmt$ebnf$1$subexpression$1"], "postprocess": id },
-      { "name": "return_stmt$ebnf$1", "symbols": [], "postprocess": () => null },
-      { "name": "return_stmt", "symbols": [{ "literal": "return" }, "return_stmt$ebnf$1"], "postprocess": ([, expr]) => ({ _: "return", expr }) },
-      { "name": "expr", "symbols": ["maths"], "postprocess": id },
-      { "name": "maths", "symbols": ["logic"], "postprocess": id },
-      { "name": "logic", "symbols": ["logic", "_", "logicop", "_", "boolean"], "postprocess": ([left, , op, , right]) => ({ _: "binary", left, op, right }) },
-      { "name": "logic", "symbols": ["boolean"], "postprocess": id },
-      { "name": "boolean", "symbols": ["boolean", "_", "boolop", "_", "sum"], "postprocess": ([left, , op, , right]) => ({ _: "binary", left, op, right }) },
-      { "name": "boolean", "symbols": ["sum"], "postprocess": id },
-      { "name": "sum", "symbols": ["sum", "_", "sumop", "_", "product"], "postprocess": ([left, , op, , right]) => ({ _: "binary", left, op, right }) },
-      { "name": "sum", "symbols": ["product"], "postprocess": id },
-      { "name": "product", "symbols": ["product", "_", "mulop", "_", "exp"], "postprocess": ([left, , op, , right]) => ({ _: "binary", left, op, right }) },
-      { "name": "product", "symbols": ["exp"], "postprocess": id },
-      { "name": "exp", "symbols": ["unary", "_", "expop", "_", "exp"], "postprocess": ([left, , op, , right]) => ({ _: "binary", left, op, right }) },
-      { "name": "exp", "symbols": ["unary"], "postprocess": id },
-      { "name": "unary", "symbols": [{ "literal": "-" }, "value"], "postprocess": ([op, value]) => ({ _: "unary", op: op.value, value }) },
-      { "name": "unary", "symbols": [{ "literal": "not" }, "_", "value"], "postprocess": ([op, , value]) => ({ _: "unary", op: op.value, value }) },
-      { "name": "unary", "symbols": ["value"], "postprocess": id },
-      { "name": "logicop", "symbols": [{ "literal": "and" }], "postprocess": val },
-      { "name": "logicop", "symbols": [{ "literal": "or" }], "postprocess": val },
-      { "name": "logicop", "symbols": [{ "literal": "xor" }], "postprocess": val },
-      { "name": "boolop", "symbols": [{ "literal": ">" }], "postprocess": val },
-      { "name": "boolop", "symbols": [{ "literal": ">=" }], "postprocess": val },
-      { "name": "boolop", "symbols": [{ "literal": "<" }], "postprocess": val },
-      { "name": "boolop", "symbols": [{ "literal": "<=" }], "postprocess": val },
-      { "name": "boolop", "symbols": [{ "literal": "==" }], "postprocess": val },
-      { "name": "boolop", "symbols": [{ "literal": "!=" }], "postprocess": val },
-      { "name": "sumop", "symbols": [{ "literal": "+" }], "postprocess": val },
-      { "name": "sumop", "symbols": [{ "literal": "-" }], "postprocess": val },
-      { "name": "mulop", "symbols": [{ "literal": "*" }], "postprocess": val },
-      { "name": "mulop", "symbols": [{ "literal": "/" }], "postprocess": val },
-      { "name": "expop", "symbols": [{ "literal": "^" }], "postprocess": val },
-      { "name": "value", "symbols": ["literal_number"], "postprocess": id },
-      { "name": "value", "symbols": ["literal_boolean"], "postprocess": id },
-      { "name": "value", "symbols": ["literal_string"], "postprocess": id },
-      { "name": "value", "symbols": ["name"], "postprocess": id },
-      { "name": "value", "symbols": ["call"], "postprocess": id },
-      { "name": "call", "symbols": ["name", { "literal": "(" }, "call_args", { "literal": ")" }], "postprocess": ([fn, , args]) => ({ _: "call", fn, args }) },
-      { "name": "call_args", "symbols": [], "postprocess": always([]) },
-      { "name": "call_args", "symbols": ["expr"] },
-      { "name": "call_args", "symbols": ["call_args", "_", { "literal": "," }, "_", "expr"], "postprocess": ([list, , , , value]) => list.concat([value]) },
-      { "name": "literal_number", "symbols": [lexer.has("number") ? { type: "number" } : number], "postprocess": ([tok]) => ({ _: "number", value: Number(tok.value) }) },
-      { "name": "literal_number", "symbols": [lexer.has("number") ? { type: "number" } : number, { "literal": "." }, lexer.has("number") ? { type: "number" } : number], "postprocess": ([whole, , frac]) => ({ _: "number", value: Number(whole.value + "." + frac.value) }) },
-      { "name": "literal_boolean", "symbols": [{ "literal": "true" }], "postprocess": always({ _: "bool", value: true }) },
-      { "name": "literal_boolean", "symbols": [{ "literal": "false" }], "postprocess": always({ _: "bool", value: false }) },
-      { "name": "literal_string", "symbols": [lexer.has("sqstring") ? { type: "sqstring" } : sqstring], "postprocess": ([tok]) => ({ _: "string", value: tok.value.slice(1, -1) }) },
-      { "name": "literal_string", "symbols": [lexer.has("dqstring") ? { type: "dqstring" } : dqstring], "postprocess": ([tok]) => ({ _: "string", value: tok.value.slice(1, -1) }) },
-      { "name": "name_with_type", "symbols": ["name", { "literal": ":" }, "_", "vtype"], "postprocess": ([name, , , type]) => ({ _: "arg", type, name }) },
-      { "name": "vtype", "symbols": [{ "literal": "any" }], "postprocess": val },
-      { "name": "vtype", "symbols": [{ "literal": "bool" }], "postprocess": val },
-      { "name": "vtype", "symbols": [{ "literal": "function" }], "postprocess": val },
-      { "name": "vtype", "symbols": [{ "literal": "number" }], "postprocess": val },
-      { "name": "vtype", "symbols": [{ "literal": "string" }], "postprocess": val },
-      { "name": "name", "symbols": [lexer.has("word") ? { type: "word" } : word], "postprocess": ([tok]) => ({ _: "id", value: tok.value }) },
-      { "name": "_", "symbols": ["ws"], "postprocess": always(null) },
-      { "name": "_", "symbols": ["comment"], "postprocess": always(null) },
-      { "name": "_", "symbols": [], "postprocess": always(null) },
-      { "name": "__", "symbols": ["ws"], "postprocess": always(null) },
-      { "name": "ws", "symbols": [lexer.has("ws") ? { type: "ws" } : ws], "postprocess": always(null) },
-      { "name": "comment", "symbols": ["_", lexer.has("comment") ? { type: "comment" } : comment, "_"], "postprocess": always(null) }
-    ],
-    ParserStart: "document"
-  };
-  var grammar_default = grammar;
-
-  // src/tools/uniq.ts
-  function uniq(items) {
-    const set = new Set(items);
-    return Array.from(set.values());
-  }
-
-  // src/DScript/parser.ts
-  function makeEOFToken(p, src) {
-    var _a, _b, _c, _d;
-    return {
-      col: (_b = (_a = p.lexerState) == null ? void 0 : _a.col) != null ? _b : p.lexer.col,
-      line: (_d = (_c = p.lexerState) == null ? void 0 : _c.line) != null ? _d : p.lexer.line,
-      offset: src.length,
-      type: "EOF",
-      value: ""
-    };
-  }
-  var ParseError = class extends Error {
-    constructor(p, token, src) {
-      super("Syntax error");
-      this.p = p;
-      this.token = token;
-      this.src = src;
-      const col = p.table[p.current];
-      const expected = col.states.map((s) => {
-        const ns = s.rule.symbols[s.dot];
-        if (typeof ns === "object") {
-          if (ns.literal)
-            return `"${ns.literal}"`;
-          if (ns.type)
-            return ns.type;
-        }
-        if (typeof ns === "string")
-          return `(${ns})`;
-      }).filter(isDefined);
-      const message = token.type === "UNCLOSED_STRING" ? "Unclosed string" : `Got ${token.type} token${token.value ? ` "${token.value}"` : ""}, expected one of: ${uniq(expected).sort().join(", ")}`;
-      this.message = [p.lexer.formatError(token), message].join("\n");
-    }
-  };
-  function parse(src) {
-    const p = new import_nearley.Parser(import_nearley.Grammar.fromCompiled(grammar_default));
-    try {
-      p.feed(src.trim());
-    } catch (error) {
-      throw new ParseError(p, error.token, src);
-    }
-    const result = p.results;
-    if (result.length === 0)
-      throw new ParseError(p, makeEOFToken(p, src), src);
-    if (result.length > 1) {
-      for (let i = 0; i < result.length; i++) {
-        console.log(`--- PARSE #${i}`);
-        console.dir(result[0], { depth: Infinity });
-      }
-      throw new Error("Ambiguous parse.");
-    }
-    return result[0];
-  }
-
-  // src/tools/getKeyNames.ts
-  function getKeyNames(key, shift, alt, ctrl) {
-    const names = [key];
-    if (shift)
-      names.unshift("Shift+" + key);
-    if (alt)
-      names.unshift("Alt+" + key);
-    if (ctrl)
-      names.unshift("Ctrl+" + key);
-    return names;
-  }
-
-  // src/tools/aabb.ts
-  function contains(spot, pos) {
-    return pos.x >= spot.x && pos.y >= spot.y && pos.x < spot.ex && pos.y < spot.ey;
-  }
-
-  // src/types/logic.ts
-  var matchAll = (predicates) => (item) => {
-    for (const p of predicates) {
-      if (!p(item))
-        return false;
-    }
-    return true;
-  };
-
-  // res/music/komfort-zone.ogg
-  var komfort_zone_default = "./komfort-zone-GXVCNDIF.ogg";
-
-  // res/music/mod-dot-vigor.ogg
-  var mod_dot_vigor_default = "./mod-dot-vigor-OULMZ74T.ogg";
-
-  // res/music/ringing-steel.ogg
-  var ringing_steel_default = "./ringing-steel-7SYI4FL5.ogg";
-
-  // res/music/selume.ogg
-  var selume_default = "./selume-SBU4SIT3.ogg";
-
-  // src/Jukebox.ts
-  var komfortZone = { name: "komfort zone", url: komfort_zone_default };
-  var modDotVigor = {
-    name: "mod dot vigor",
-    url: mod_dot_vigor_default,
-    loop: true
-  };
-  var ringingSteel = {
-    name: "ringing steel",
-    url: ringing_steel_default,
-    loop: true
-  };
-  var selume = { name: "selume", url: selume_default };
-  var playlists = {
-    explore: {
-      tracks: [komfortZone, selume],
-      between: { roll: 20, bonus: 10 }
-    },
-    combat: { tracks: [modDotVigor] },
-    arena: { tracks: [ringingSteel] }
-  };
-  var Jukebox = class {
-    constructor(g) {
-      this.g = g;
-      this.trackEnded = () => {
-        const { playlist } = this;
-        if (!playlist)
-          return;
-        if (playlist.between) {
-          const delay = random(playlist.between.roll) + playlist.between.bonus;
-          if (delay) {
-            this.delayTimer = setTimeout(this.next, delay * 1e3);
-            return;
-          }
-        }
-        this.next();
-      };
-      this.next = () => {
-        const { index, playlist } = this;
-        if (!playlist)
-          return;
-        this.cancelDelay();
-        this.index = wrap(index + 1, playlist.tracks.length);
-        void this.start();
-      };
-      this.tryPlay = () => {
-        if (this.wantToPlay) {
-          const name = this.wantToPlay;
-          this.wantToPlay = void 0;
-          void this.play(name).then((success) => {
-            if (success) {
-              this.g.eventHandlers.onPartyMove.delete(this.tryPlay);
-              this.g.eventHandlers.onPartySwap.delete(this.tryPlay);
-              this.g.eventHandlers.onPartyTurn.delete(this.tryPlay);
-            }
-            return success;
-          });
-        }
-      };
-      this.index = 0;
-      g.eventHandlers.onPartyMove.add(this.tryPlay);
-      g.eventHandlers.onPartySwap.add(this.tryPlay);
-      g.eventHandlers.onPartyTurn.add(this.tryPlay);
-      g.eventHandlers.onCombatBegin.add(
-        ({ type }) => void this.play(type === "normal" ? "combat" : "arena")
-      );
-      g.eventHandlers.onCombatOver.add(() => void this.play("explore"));
-    }
-    acquire(track) {
-      return __async(this, null, function* () {
-        if (!track.audio) {
-          const audio = yield this.g.res.loadAudio(track.url);
-          audio.addEventListener("ended", this.trackEnded);
-          track.audio = audio;
-          if (track.loop)
-            audio.loop = true;
-        }
-        return track;
-      });
-    }
-    get status() {
-      if (this.delayTimer)
-        return "between tracks";
-      if (!this.playing)
-        return "idle";
-      return `playing: ${this.playing.name}`;
-    }
-    cancelDelay() {
-      if (this.delayTimer) {
-        clearTimeout(this.delayTimer);
-        this.delayTimer = void 0;
-      }
-    }
-    play(p) {
-      return __async(this, null, function* () {
-        var _a, _b;
-        this.cancelDelay();
-        this.wantToPlay = p;
-        (_b = (_a = this.playing) == null ? void 0 : _a.audio) == null ? void 0 : _b.pause();
-        const playlist = playlists[p];
-        this.playlist = playlist;
-        this.index = random(playlist.tracks.length);
-        return this.start();
-      });
-    }
-    start() {
-      return __async(this, null, function* () {
-        if (!this.playlist)
-          return false;
-        this.cancelDelay();
-        const track = this.playlist.tracks[this.index];
-        this.playing = yield this.acquire(track);
-        if (!this.playing.audio)
-          throw Error(`Acquire ${track.name} failed`);
-        try {
-          this.playing.audio.currentTime = 0;
-          yield this.playing.audio.play();
-          this.playing = track;
-          this.wantToPlay = void 0;
-          return true;
-        } catch (e) {
-          console.warn(e);
-          this.playing = void 0;
-          return false;
-        }
-      });
-    }
-    stop() {
-      if (this.playing) {
-        this.playing.audio.pause();
-        this.playing = void 0;
-      }
-    }
-  };
-
   // src/items/index.ts
   var allItems = Object.fromEntries(
     [cleavesman_exports, farScout_exports, flagSinger_exports, loamSeer_exports, martialist_exports, warCaller_exports].flatMap(
@@ -4238,6 +4411,47 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
   function getItem(s) {
     return allItems[s];
   }
+
+  // src/tools/aabb.ts
+  function contains(spot, pos) {
+    return pos.x >= spot.x && pos.y >= spot.y && pos.x < spot.ex && pos.y < spot.ey;
+  }
+
+  // src/tools/wallTags.ts
+  function wallToTag(pos, dir) {
+    return `${pos.x},${pos.y},${dir}`;
+  }
+
+  // src/types/events.ts
+  var GameEventNames = [
+    "onAfterAction",
+    "onAfterDamage",
+    "onBeforeAction",
+    "onCalculateDamage",
+    "onCalculateDR",
+    "onCalculateCamaraderie",
+    "onCalculateDetermination",
+    "onCalculateSpirit",
+    "onCalculateMaxHP",
+    "onCalculateMaxSP",
+    "onCanAct",
+    "onCombatBegin",
+    "onCombatOver",
+    "onKilled",
+    "onPartyMove",
+    "onPartySwap",
+    "onPartyTurn",
+    "onRoll"
+  ];
+
+  // src/types/logic.ts
+  var matchAll = (predicates) => (item) => {
+    for (const p of predicates) {
+      if (!p(item))
+        return false;
+    }
+    return true;
+  };
 
   // src/Engine.ts
   var calculateEventName = {
@@ -4253,30 +4467,11 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     constructor(canvas) {
       this.canvas = canvas;
       this.render = () => {
-        const { ctx, renderSetup } = this;
+        const { ctx, screen } = this;
         const { width, height } = this.canvas;
         ctx.fillStyle = "black";
         ctx.fillRect(0, 0, width, height);
-        if (!renderSetup) {
-          const { draw } = withTextStyle(ctx, {
-            textAlign: "center",
-            textBaseline: "middle",
-            fillStyle: "white"
-          });
-          draw(
-            `Loading: ${this.res.loaded}/${this.res.loading}`,
-            width / 2,
-            height / 2
-          );
-          this.draw();
-          return;
-        }
-        renderSetup.dungeon.render();
-        renderSetup.hud.render();
-        if (this.showLog)
-          renderSetup.log.render();
-        if (this.combat.inCombat)
-          renderSetup.combat.render();
+        screen.render();
       };
       this.ctx = getCanvasContext(canvas, "2d");
       this.eventHandlers = Object.fromEntries(
@@ -4301,26 +4496,10 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       this.pendingArenaEnemies = [];
       this.pendingNormalEnemies = [];
       this.spotElements = [];
-      this.party = [
-        new Player(this, "Martialist"),
-        new Player(this, "Cleavesman"),
-        new Player(this, "War Caller"),
-        new Player(this, "Loam Seer")
-      ];
+      this.party = [];
       this.jukebox = new Jukebox(this);
-      canvas.addEventListener("keyup", (e) => {
-        const keys = getKeyNames(e.code, e.shiftKey, e.altKey, e.ctrlKey);
-        for (const key of keys) {
-          const input = this.controls.get(key);
-          if (input) {
-            e.preventDefault();
-            for (const check of input) {
-              if (this.processInput(check))
-                return;
-            }
-          }
-        }
-      });
+      this.screen = new SplashScreen(this);
+      canvas.addEventListener("keyup", (e) => this.screen.onKey(e));
       const transform = (e) => xyi(e.offsetX / this.zoomRatio, e.offsetY / this.zoomRatio);
       canvas.addEventListener("mousemove", (e) => this.onMouseMove(transform(e)));
       canvas.addEventListener("click", (e) => this.onClick(transform(e)));
@@ -4382,7 +4561,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     }
     loadWorld(w, position) {
       return __async(this, null, function* () {
-        this.renderSetup = void 0;
+        this.screen = new LoadingScreen(this);
         this.world = src_default(w);
         this.worldSize = xyi(this.world.cells[0].length, this.world.cells.length);
         this.position = position != null ? position : w.start;
@@ -4417,13 +4596,13 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
         }
         this.markVisited();
         this.spotElements = [hud.skills, hud.stats];
-        this.renderSetup = { combat, dungeon, hud, log };
+        this.screen = new DungeonScreen(this, { combat, dungeon, hud, log });
         return this.draw();
       });
     }
     loadGCMap(jsonUrl, region, floor) {
       return __async(this, null, function* () {
-        this.renderSetup = void 0;
+        this.screen = new LoadingScreen(this);
         const map = yield this.res.loadGCMap(jsonUrl);
         const { atlases, cells, definitions, scripts, start, facing, name } = convertGridCartographerMap(map, region, floor, EnemyObjects);
         if (!atlases.length)
@@ -4927,9 +5106,6 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     }
   };
 
-  // res/map.json
-  var map_default2 = "./map-SBCEGOBP.json";
-
   // src/index.ts
   function loadEngine(parent) {
     const container = document.createElement("div");
@@ -4957,8 +5133,6 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     };
     window.addEventListener("resize", onResize);
     onResize();
-    void g.loadGCMap(map_default2, 0, -1);
-    void g.jukebox.play("explore");
   }
   window.addEventListener("load", () => loadEngine(document.body));
 })();
