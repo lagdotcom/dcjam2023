@@ -284,6 +284,8 @@ export default class EngineScripting extends DScriptHost {
     this.env.set("partyX", num(this.g.position.x, true));
     this.env.set("partyY", num(this.g.position.y, true));
     this.env.set("partyDir", num(this.g.facing, true));
+    this.env.delete("selectedX");
+    this.env.delete("selectedY");
 
     if (fn._ === "function")
       return callFunction(this, fn, args.slice(0, fn.args.length));
