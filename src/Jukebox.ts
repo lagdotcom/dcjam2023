@@ -2,6 +2,7 @@ import Engine from "./Engine";
 
 import komfortZoneUrl from "../res/music/komfort-zone.ogg";
 import modDotVigorUrl from "../res/music/mod-dot-vigor.ogg";
+import ringingSteelUrl from "../res/music/ringing-steel.ogg";
 import selumeUrl from "../res/music/selume.ogg";
 import { random } from "./tools/rng";
 import { wrap } from "./tools/numbers";
@@ -10,6 +11,7 @@ interface Track {
   url: string;
   name: string;
   audio?: HTMLAudioElement;
+  loop?: true;
 }
 
 interface Playlist {
@@ -17,11 +19,20 @@ interface Playlist {
   between?: { roll: number; bonus: number };
 }
 
-const PlaylistNames = ["explore", "combat"] as const;
+const PlaylistNames = ["explore", "combat", "arena"] as const;
 type PlaylistName = (typeof PlaylistNames)[number];
 
 const komfortZone: Track = { name: "komfort zone", url: komfortZoneUrl };
-const modDotVigor: Track = { name: "mod dot vigor", url: modDotVigorUrl };
+const modDotVigor: Track = {
+  name: "mod dot vigor",
+  url: modDotVigorUrl,
+  loop: true,
+};
+const ringingSteel: Track = {
+  name: "ringing steel",
+  url: ringingSteelUrl,
+  loop: true,
+};
 const selume: Track = { name: "selume", url: selumeUrl };
 
 const playlists: Record<PlaylistName, Playlist> = {
@@ -30,6 +41,7 @@ const playlists: Record<PlaylistName, Playlist> = {
     between: { roll: 20, bonus: 10 },
   },
   combat: { tracks: [modDotVigor] },
+  arena: { tracks: [ringingSteel] },
 };
 
 export default class Jukebox {
@@ -45,6 +57,11 @@ export default class Jukebox {
     g.eventHandlers.onPartyMove.add(this.tryPlay);
     g.eventHandlers.onPartySwap.add(this.tryPlay);
     g.eventHandlers.onPartyTurn.add(this.tryPlay);
+
+    g.eventHandlers.onCombatBegin.add(
+      ({ type }) => void this.play(type === "normal" ? "combat" : "arena")
+    );
+    g.eventHandlers.onCombatOver.add(() => void this.play("explore"));
   }
 
   private async acquire(track: Track) {
@@ -52,6 +69,8 @@ export default class Jukebox {
       const audio = await this.g.res.loadAudio(track.url);
       audio.addEventListener("ended", this.trackEnded);
       track.audio = audio;
+
+      if (track.loop) audio.loop = true;
     }
 
     return track;
@@ -78,11 +97,11 @@ export default class Jukebox {
     const playlist = playlists[p];
     this.playlist = playlist;
     this.index = random(playlist.tracks.length);
-    await this.start();
+    return this.start();
   }
 
   async start() {
-    if (!this.playlist) return;
+    if (!this.playlist) return false;
 
     this.cancelDelay();
     const track = this.playlist.tracks[this.index];
@@ -92,9 +111,11 @@ export default class Jukebox {
       await this.playing.audio!.play();
       this.playing = track;
       this.wantToPlay = undefined;
+      return true;
     } catch (e) {
       console.warn(e);
       this.playing = undefined;
+      return false;
     }
   }
 
@@ -134,7 +155,15 @@ export default class Jukebox {
     if (this.wantToPlay) {
       const name = this.wantToPlay;
       this.wantToPlay = undefined;
-      void this.play(name);
+      void this.play(name).then((success) => {
+        if (success) {
+          this.g.eventHandlers.onPartyMove.delete(this.tryPlay);
+          this.g.eventHandlers.onPartySwap.delete(this.tryPlay);
+          this.g.eventHandlers.onPartyTurn.delete(this.tryPlay);
+        }
+
+        return success;
+      });
     }
   };
 }

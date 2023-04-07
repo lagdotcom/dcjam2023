@@ -30,7 +30,8 @@ All the boring normal stuff:
 - `NORTH`/`EAST`/`SOUTH`/`WEST` symbolic constants for directions
 - `partyX`/`partyY`/`partyDir` constants for party position/facing
 - `pcIndex` the interacting PC (facing / skill use)
-- `addEnemy(name)` now follows party
+- `addArenaEnemy(name)` now follows party
+- `addNormalEnemy(name)` preparation for calling `startNormalFight`
 - `damagePC(number, stat, amount)`
 - `debug(any)` prints to console
 - `getPCName(number): string`
@@ -47,5 +48,6 @@ All the boring normal stuff:
 - `removeTag(x: number, y:number, tag: string)`
 - `skillCheck(stat, difficulty): bool` makes the active PC roll a d10 skill check
 - `startArenaFight(): bool` returns false if there's no enemies waiting
+- `startNormalFight(): bool` returns false if there's no enemies waiting
 - `tileHasTag(x: number, y: number, tag: string): bool`
 - `unlock(x: number, y: number, dir)` makes a wall not solid

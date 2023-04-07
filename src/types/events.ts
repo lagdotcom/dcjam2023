@@ -16,6 +16,7 @@ export const GameEventNames = [
   "onCalculateMaxHP",
   "onCalculateMaxSP",
   "onCanAct",
+  "onCombatBegin",
   "onCombatOver",
   "onKilled",
   "onPartyMove",
@@ -70,6 +71,7 @@ export type GameEvents = {
 
   onCanAct: { who: Combatant; action: CombatAction; cancel: boolean };
 
+  onCombatBegin: { type: "normal" | "arena" };
   onCombatOver: { winners: "party" | "enemies" };
 
   onKilled: { who: Combatant; attacker: Combatant };

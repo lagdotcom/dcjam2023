@@ -89,7 +89,8 @@ export default class Engine implements Game {
   jukebox: Jukebox;
   log: string[];
   party: Player[];
-  pendingEnemies: EnemyName[];
+  pendingArenaEnemies: EnemyName[];
+  pendingNormalEnemies: EnemyName[];
   position: XY;
   pickingTargets?: TargetPicking;
   renderSetup?: RenderSetup;
@@ -129,7 +130,8 @@ export default class Engine implements Game {
     this.worldVisited = new Set();
     this.worldWalls = new Map();
     this.inventory = [];
-    this.pendingEnemies = [];
+    this.pendingArenaEnemies = [];
+    this.pendingNormalEnemies = [];
     this.spotElements = [];
     this.party = [
       new Player(this, "Martialist"),

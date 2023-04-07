@@ -84,6 +84,7 @@
     "onCalculateMaxHP",
     "onCalculateMaxSP",
     "onCanAct",
+    "onCombatBegin",
     "onCombatOver",
     "onKilled",
     "onPartyMove",
@@ -687,7 +688,7 @@
         ...this.enemies[3]
       ];
     }
-    begin(enemies2) {
+    begin(enemies2, type) {
       for (const e of this.effects.slice())
         if (!e.permanent)
           this.g.removeEffect(e);
@@ -703,6 +704,7 @@
       }
       this.inCombat = true;
       this.side = "player";
+      this.g.fire("onCombatBegin", { type });
       this.g.draw();
       this.enemyAnimationInterval = setInterval(
         this.animateEnemies,
@@ -1424,9 +1426,13 @@
           throw new Error(`Invalid enemy: ${name}`);
         return name;
       };
-      this.addNative("addEnemy", ["string"], void 0, (name) => {
+      this.addNative("addArenaEnemy", ["string"], void 0, (name) => {
         const enemy = getEnemy(name);
-        g.pendingEnemies.push(enemy);
+        g.pendingArenaEnemies.push(enemy);
+      });
+      this.addNative("addNormalEnemy", ["string"], void 0, (name) => {
+        const enemy = getEnemy(name);
+        g.pendingNormalEnemies.push(enemy);
       });
       this.addNative(
         "damagePC",
@@ -1497,11 +1503,19 @@
         }
       );
       this.addNative("startArenaFight", [], "bool", () => {
-        const count = g.pendingEnemies.length;
+        const count = g.pendingArenaEnemies.length;
         if (!count)
           return false;
-        const enemies2 = g.pendingEnemies.splice(0, count);
-        g.combat.begin(enemies2);
+        const enemies2 = g.pendingArenaEnemies.splice(0, count);
+        g.combat.begin(enemies2, "arena");
+        return true;
+      });
+      this.addNative("startNormalFight", [], "bool", () => {
+        const count = g.pendingNormalEnemies.length;
+        if (!count)
+          return false;
+        const enemies2 = g.pendingNormalEnemies.splice(0, count);
+        g.combat.begin(enemies2, "normal");
         return true;
       });
       this.addNative(
@@ -3345,7 +3359,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
   var sneedCrawler_default2 = "./sneedCrawler-5IJWBAV5.json";
 
   // res/map.dscript
-  var map_default = "./map-WPNSCS2W.dscript";
+  var map_default = "./map-JLKFTYVM.dscript";
 
   // res/atlas/test1.png
   var test1_default = "./test1-MYU5F6VR.png";
@@ -3903,19 +3917,32 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
   // res/music/mod-dot-vigor.ogg
   var mod_dot_vigor_default = "./mod-dot-vigor-OULMZ74T.ogg";
 
+  // res/music/ringing-steel.ogg
+  var ringing_steel_default = "./ringing-steel-7SYI4FL5.ogg";
+
   // res/music/selume.ogg
   var selume_default = "./selume-SBU4SIT3.ogg";
 
   // src/Jukebox.ts
   var komfortZone = { name: "komfort zone", url: komfort_zone_default };
-  var modDotVigor = { name: "mod dot vigor", url: mod_dot_vigor_default };
+  var modDotVigor = {
+    name: "mod dot vigor",
+    url: mod_dot_vigor_default,
+    loop: true
+  };
+  var ringingSteel = {
+    name: "ringing steel",
+    url: ringing_steel_default,
+    loop: true
+  };
   var selume = { name: "selume", url: selume_default };
   var playlists = {
     explore: {
       tracks: [komfortZone, selume],
       between: { roll: 20, bonus: 10 }
     },
-    combat: { tracks: [modDotVigor] }
+    combat: { tracks: [modDotVigor] },
+    arena: { tracks: [ringingSteel] }
   };
   var Jukebox = class {
     constructor(g) {
@@ -3945,13 +3972,24 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
         if (this.wantToPlay) {
           const name = this.wantToPlay;
           this.wantToPlay = void 0;
-          void this.play(name);
+          void this.play(name).then((success) => {
+            if (success) {
+              this.g.eventHandlers.onPartyMove.delete(this.tryPlay);
+              this.g.eventHandlers.onPartySwap.delete(this.tryPlay);
+              this.g.eventHandlers.onPartyTurn.delete(this.tryPlay);
+            }
+            return success;
+          });
         }
       };
       this.index = 0;
       g.eventHandlers.onPartyMove.add(this.tryPlay);
       g.eventHandlers.onPartySwap.add(this.tryPlay);
       g.eventHandlers.onPartyTurn.add(this.tryPlay);
+      g.eventHandlers.onCombatBegin.add(
+        ({ type }) => void this.play(type === "normal" ? "combat" : "arena")
+      );
+      g.eventHandlers.onCombatOver.add(() => void this.play("explore"));
     }
     acquire(track) {
       return __async(this, null, function* () {
@@ -3959,6 +3997,8 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
           const audio = yield this.g.res.loadAudio(track.url);
           audio.addEventListener("ended", this.trackEnded);
           track.audio = audio;
+          if (track.loop)
+            audio.loop = true;
         }
         return track;
       });
@@ -3985,13 +4025,13 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
         const playlist = playlists[p];
         this.playlist = playlist;
         this.index = random(playlist.tracks.length);
-        yield this.start();
+        return this.start();
       });
     }
     start() {
       return __async(this, null, function* () {
         if (!this.playlist)
-          return;
+          return false;
         this.cancelDelay();
         const track = this.playlist.tracks[this.index];
         this.playing = yield this.acquire(track);
@@ -3999,9 +4039,11 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
           yield this.playing.audio.play();
           this.playing = track;
           this.wantToPlay = void 0;
+          return true;
         } catch (e) {
           console.warn(e);
           this.playing = void 0;
+          return false;
         }
       });
     }
@@ -4078,7 +4120,8 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       this.worldVisited = /* @__PURE__ */ new Set();
       this.worldWalls = /* @__PURE__ */ new Map();
       this.inventory = [];
-      this.pendingEnemies = [];
+      this.pendingArenaEnemies = [];
+      this.pendingNormalEnemies = [];
       this.spotElements = [];
       this.party = [
         new Player(this, "Martialist"),

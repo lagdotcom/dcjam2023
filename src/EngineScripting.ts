@@ -55,9 +55,14 @@ export default class EngineScripting extends DScriptHost {
       return name;
     };
 
-    this.addNative("addEnemy", ["string"], undefined, (name: string) => {
+    this.addNative("addArenaEnemy", ["string"], undefined, (name: string) => {
       const enemy = getEnemy(name);
-      g.pendingEnemies.push(enemy);
+      g.pendingArenaEnemies.push(enemy);
+    });
+
+    this.addNative("addNormalEnemy", ["string"], undefined, (name: string) => {
+      const enemy = getEnemy(name);
+      g.pendingNormalEnemies.push(enemy);
     });
 
     this.addNative(
@@ -133,11 +138,20 @@ export default class EngineScripting extends DScriptHost {
     );
 
     this.addNative("startArenaFight", [], "bool", () => {
-      const count = g.pendingEnemies.length;
+      const count = g.pendingArenaEnemies.length;
       if (!count) return false;
 
-      const enemies = g.pendingEnemies.splice(0, count);
-      g.combat.begin(enemies);
+      const enemies = g.pendingArenaEnemies.splice(0, count);
+      g.combat.begin(enemies, "arena");
+      return true;
+    });
+
+    this.addNative("startNormalFight", [], "bool", () => {
+      const count = g.pendingNormalEnemies.length;
+      if (!count) return false;
+
+      const enemies = g.pendingNormalEnemies.splice(0, count);
+      g.combat.begin(enemies, "normal");
       return true;
     });
 

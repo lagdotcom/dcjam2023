@@ -59,8 +59,7 @@ export default class CombatManager {
     ];
   }
 
-  begin(enemies: EnemyName[]) {
-    // TODO more permanent things... penance?
+  begin(enemies: EnemyName[], type: "normal" | "arena") {
     for (const e of this.effects.slice())
       if (!e.permanent) this.g.removeEffect(e);
 
@@ -79,6 +78,7 @@ export default class CombatManager {
 
     this.inCombat = true;
     this.side = "player";
+    this.g.fire("onCombatBegin", { type });
     this.g.draw();
 
     this.enemyAnimationInterval = setInterval(
