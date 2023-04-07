@@ -4035,7 +4035,10 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
         this.cancelDelay();
         const track = this.playlist.tracks[this.index];
         this.playing = yield this.acquire(track);
+        if (!this.playing.audio)
+          throw Error(`Acquire ${track.name} failed`);
         try {
+          this.playing.audio.currentTime = 0;
           yield this.playing.audio.play();
           this.playing = track;
           this.wantToPlay = void 0;

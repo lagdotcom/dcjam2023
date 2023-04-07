@@ -106,9 +106,11 @@ export default class Jukebox {
     this.cancelDelay();
     const track = this.playlist.tracks[this.index];
     this.playing = await this.acquire(track);
+    if (!this.playing.audio) throw Error(`Acquire ${track.name} failed`);
+
     try {
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      await this.playing.audio!.play();
+      this.playing.audio.currentTime = 0;
+      await this.playing.audio.play();
       this.playing = track;
       this.wantToPlay = undefined;
       return true;
