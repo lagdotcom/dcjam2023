@@ -1103,6 +1103,51 @@
     }
   };
 
+  // node_modules/nanoclone/src/index.js
+  function clone(src, seen = /* @__PURE__ */ new Map()) {
+    if (!src || typeof src !== "object")
+      return src;
+    if (seen.has(src))
+      return seen.get(src);
+    let copy;
+    if (src.nodeType && "cloneNode" in src) {
+      copy = src.cloneNode(true);
+      seen.set(src, copy);
+    } else if (src instanceof Date) {
+      copy = new Date(src.getTime());
+      seen.set(src, copy);
+    } else if (src instanceof RegExp) {
+      copy = new RegExp(src);
+      seen.set(src, copy);
+    } else if (Array.isArray(src)) {
+      copy = new Array(src.length);
+      seen.set(src, copy);
+      for (let i = 0; i < src.length; i++)
+        copy[i] = clone(src[i], seen);
+    } else if (src instanceof Map) {
+      copy = /* @__PURE__ */ new Map();
+      seen.set(src, copy);
+      for (const [k, v] of src.entries())
+        copy.set(k, clone(v, seen));
+    } else if (src instanceof Set) {
+      copy = /* @__PURE__ */ new Set();
+      seen.set(src, copy);
+      for (const v of src)
+        copy.add(clone(v, seen));
+    } else if (src instanceof Object) {
+      copy = {};
+      seen.set(src, copy);
+      for (const [k, v] of Object.entries(src))
+        copy[k] = clone(v, seen);
+    } else {
+      throw Error(`Unable to clone ${src}`);
+    }
+    return copy;
+  }
+  function src_default(src) {
+    return clone(src, /* @__PURE__ */ new Map());
+  }
+
   // src/DScript/logic.ts
   function bool(value, readOnly = false) {
     return { _: "bool", value, readOnly };
@@ -1347,7 +1392,7 @@
     const left = lookup(scope, stmt.name.value, true);
     if (!left) {
       if (stmt.op === "=") {
-        scope.env.set(stmt.name.value, right);
+        scope.env.set(stmt.name.value, src_default(right));
         return;
       }
       throw new Error(`Could not resolve: ${stmt.name.value}`);
@@ -1499,6 +1544,12 @@
           throw new Error(`Invalid item: ${name}`);
       });
       this.addNative(
+        "isArenaFightPending",
+        [],
+        "bool",
+        () => g.pendingArenaEnemies.length > 0
+      );
+      this.addNative(
         "isSolid",
         ["number", "number", "number"],
         "bool",
@@ -1614,6 +1665,15 @@
           const side = getSide(x, y, d);
           side.decal = t;
           g.draw();
+        }
+      );
+      this.addNative(
+        "setSolid",
+        ["number", "number", "number", "bool"],
+        void 0,
+        (x, y, d, solid) => {
+          const side = getSide(x, y, d);
+          side.solid = solid;
         }
       );
       this.addNative(
@@ -3335,51 +3395,6 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     }
   };
 
-  // node_modules/nanoclone/src/index.js
-  function clone(src, seen = /* @__PURE__ */ new Map()) {
-    if (!src || typeof src !== "object")
-      return src;
-    if (seen.has(src))
-      return seen.get(src);
-    let copy;
-    if (src.nodeType && "cloneNode" in src) {
-      copy = src.cloneNode(true);
-      seen.set(src, copy);
-    } else if (src instanceof Date) {
-      copy = new Date(src.getTime());
-      seen.set(src, copy);
-    } else if (src instanceof RegExp) {
-      copy = new RegExp(src);
-      seen.set(src, copy);
-    } else if (Array.isArray(src)) {
-      copy = new Array(src.length);
-      seen.set(src, copy);
-      for (let i = 0; i < src.length; i++)
-        copy[i] = clone(src[i], seen);
-    } else if (src instanceof Map) {
-      copy = /* @__PURE__ */ new Map();
-      seen.set(src, copy);
-      for (const [k, v] of src.entries())
-        copy.set(k, clone(v, seen));
-    } else if (src instanceof Set) {
-      copy = /* @__PURE__ */ new Set();
-      seen.set(src, copy);
-      for (const v of src)
-        copy.add(clone(v, seen));
-    } else if (src instanceof Object) {
-      copy = {};
-      seen.set(src, copy);
-      for (const [k, v] of Object.entries(src))
-        copy[k] = clone(v, seen);
-    } else {
-      throw Error(`Unable to clone ${src}`);
-    }
-    return copy;
-  }
-  function src_default(src) {
-    return clone(src, /* @__PURE__ */ new Map());
-  }
-
   // src/Grid.ts
   var Grid = class {
     constructor(defaultValue, toTag = xyToTag) {
@@ -3419,7 +3434,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
   };
 
   // res/map.dscript
-  var map_default = "./map-SMWPRKKQ.dscript";
+  var map_default = "./map-HIKFSW33.dscript";
 
   // res/atlas/flats.png
   var flats_default = "./flats-HZYMJUF6.png";
@@ -3472,6 +3487,15 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     return value;
   }
 
+  // src/tools/sides.ts
+  function openGate(side) {
+    if (side.decalType === "Gate" && typeof side.decal === "number") {
+      side.decalType = "OpenGate";
+      side.decal++;
+      side.solid = false;
+    }
+  }
+
   // src/convertGridCartographerMap.ts
   var wall = { wall: true, solid: true };
   var door = { decal: "Door", wall: true };
@@ -3518,6 +3542,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       }));
       this.scripts = [];
       this.start = xy(0, 0);
+      this.startsOpen = /* @__PURE__ */ new Set();
       this.textures = /* @__PURE__ */ new Map();
       this.definitions.set("NORTH", Dir_default.N);
       this.definitions.set("EAST", Dir_default.E);
@@ -3549,14 +3574,31 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
         const y = r.setup.origin === "tl" ? row.y : f.tiles.bounds.height - (row.y - f.tiles.bounds.y0) - 1;
         for (const tile of row.tdata) {
           const mt = this.tile(x, y);
+          const tag = xyToTag({ x, y });
           if (tile.t)
             mt.floor = this.getTexture(tile.tc);
           if (tile.c)
             mt.ceiling = this.getTexture(0);
           if (tile.b)
-            this.setEdge(tile.b, tile.bc, mt, Dir_default.S, this.tile(x, y + 1), Dir_default.N);
+            this.setEdge(
+              tile.b,
+              tile.bc,
+              mt,
+              Dir_default.S,
+              this.tile(x, y + 1),
+              Dir_default.N,
+              this.startsOpen.has(tag)
+            );
           if (tile.r)
-            this.setEdge(tile.r, tile.rc, mt, Dir_default.E, this.tile(x + 1, y), Dir_default.W);
+            this.setEdge(
+              tile.r,
+              tile.rc,
+              mt,
+              Dir_default.E,
+              this.tile(x + 1, y),
+              Dir_default.W,
+              this.startsOpen.has(tag)
+            );
           x++;
         }
       }
@@ -3634,26 +3676,35 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
           this.tile(x, y).numbers[name] = this.eval(value);
           break;
         }
+        case "#OPEN":
+          this.startsOpen.add(xyToTag({ x, y }));
+          break;
         default:
           throw new Error(`Unknown command: ${cmd} ${arg} at (${x},${y})`);
       }
     }
-    setEdge(edge, index, lt, ld, rt, rd) {
+    setEdge(edge, index, lt, ld, rt, rd, opened) {
       var _a, _b, _c;
       const { main, opposite } = (_a = EdgeDetails[edge]) != null ? _a : defaultEdge;
       const texture = this.getTexture(index);
-      lt.sides[ld] = {
+      const leftSide = {
         wall: main.wall ? texture : void 0,
         decalType: main.decal,
         decal: this.decals.get(`${(_b = main.decal) != null ? _b : ""},${texture}`),
         solid: main.solid
       };
-      rt.sides[rd] = {
+      lt.sides[ld] = leftSide;
+      const rightSide = {
         wall: opposite.wall ? texture : void 0,
         decalType: opposite.decal,
         decal: this.decals.get(`${(_c = opposite.decal) != null ? _c : ""},${texture}`),
         solid: opposite.solid
       };
+      rt.sides[rd] = rightSide;
+      if (opened) {
+        openGate(leftSide);
+        openGate(rightSide);
+      }
     }
   };
   function convertGridCartographerMap(j, region = 0, floor = 0, env = {}) {
@@ -4877,7 +4928,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
   };
 
   // res/map.json
-  var map_default2 = "./map-72XR6WFA.json";
+  var map_default2 = "./map-SBCEGOBP.json";
 
   // src/index.ts
   function loadEngine(parent) {

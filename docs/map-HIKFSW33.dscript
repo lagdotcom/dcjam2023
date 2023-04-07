@@ -58,3 +58,57 @@ function BoulderEnter()
   ; TODO
 end
 onTagEnter('Boulder', BoulderEnter)
+
+ArenaAClosed = false
+function ArenaADoors(solid: bool, decal: number)
+  ArenaAClosed = solid
+
+  selectTileWithTag('ArenaAGateN')
+  setSolid(selectedX, selectedY, NORTH, solid)
+  setDecal(selectedX, selectedY, NORTH, decal)
+  setSolid(selectedX, selectedY-1, SOUTH, solid)
+  setDecal(selectedX, selectedY-1, SOUTH, decal)
+
+  selectTileWithTag('ArenaAGateE')
+  setSolid(selectedX, selectedY, EAST, solid)
+  setDecal(selectedX, selectedY, EAST, decal)
+  setSolid(selectedX+1, selectedY, WEST, solid)
+  setDecal(selectedX+1, selectedY, WEST, decal)
+
+  selectTileWithTag('ArenaAGateS')
+  setSolid(selectedX, selectedY, SOUTH, solid)
+  setDecal(selectedX, selectedY, SOUTH, decal)
+  setSolid(selectedX, selectedY+1, NORTH, solid)
+  setDecal(selectedX, selectedY+1, NORTH, decal)
+
+  selectTileWithTag('ArenaAGateW')
+  setSolid(selectedX, selectedY, WEST, solid)
+  setDecal(selectedX, selectedY, WEST, decal)
+  setSolid(selectedX-1, selectedY, EAST, solid)
+  setDecal(selectedX-1, selectedY, EAST, decal)
+end
+
+function ArenaAEnter()
+  if isArenaFightPending() then
+    if not ArenaAClosed then
+      message('The gate to the arena slams behind you, the gods cheer for blood!')
+      ArenaADoors(true, dGate)
+    end
+  else
+    if ArenaAClosed then
+      message('The gates slide open. The gods are sated.')
+      ArenaADoors(false, dOpenGate)
+    end
+  end
+end
+onTagEnter('ArenaA', ArenaAEnter)
+
+function ArenaAMiddleEnter()
+  if isArenaFightPending() then
+    message('The forces of Mulanginan rally around you!')
+    startArenaFight()
+  else
+    message('This is a safe haven... for now.')
+  end
+end
+onTagEnter('ArenaAMiddle', ArenaAMiddleEnter)

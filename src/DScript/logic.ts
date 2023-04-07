@@ -1,3 +1,4 @@
+import clone from "nanoclone";
 import {
   Assignment,
   BinaryOp,
@@ -353,7 +354,7 @@ function assignment(scope: Scope, stmt: Assignment) {
 
   if (!left) {
     if (stmt.op === "=") {
-      scope.env.set(stmt.name.value, right);
+      scope.env.set(stmt.name.value, clone(right));
       return;
     }
     throw new Error(`Could not resolve: ${stmt.name.value}`);

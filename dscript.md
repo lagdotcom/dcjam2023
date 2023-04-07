@@ -39,6 +39,7 @@ All the boring normal stuff:
 - `getPCName(number): string`
 - `getString(key: string): string` get cell #STRING by key
 - `giveItem(name)`
+- `isArenaFightPending(): bool`
 - `isSolid(x: number, y: number, dir): bool` checks if the wall is solid
 - `makePartyFace(dir: number)`
 - `message(string)` adds in-game message
@@ -52,6 +53,7 @@ All the boring normal stuff:
 - `removeTag(x: number, y: number, tag: string)`
 - `selectTileWithTag(tag: string)` sets `selectedX/Y`
 - `setDecal(x: number, y: number, dir, decal)`
+- `setSolid(x: number, y: number, dir, solid: bool)`
 - `skillCheck(stat, difficulty): bool` makes the active PC roll a d10 skill check
 - `startArenaFight(): bool` returns false if there's no enemies waiting
 - `startNormalFight(): bool` returns false if there's no enemies waiting

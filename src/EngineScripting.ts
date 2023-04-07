@@ -126,6 +126,13 @@ export default class EngineScripting extends DScriptHost {
     });
 
     this.addNative(
+      "isArenaFightPending",
+      [],
+      "bool",
+      () => g.pendingArenaEnemies.length > 0
+    );
+
+    this.addNative(
       "isSolid",
       ["number", "number", "number"],
       "bool",
@@ -251,6 +258,16 @@ export default class EngineScripting extends DScriptHost {
         const side = getSide(x, y, d);
         side.decal = t;
         g.draw();
+      }
+    );
+
+    this.addNative(
+      "setSolid",
+      ["number", "number", "number", "bool"],
+      undefined,
+      (x: number, y: number, d: number, solid: boolean) => {
+        const side = getSide(x, y, d);
+        side.solid = solid;
       }
     );
 

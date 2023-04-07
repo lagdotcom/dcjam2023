@@ -1,4 +1,9 @@
-import { AtlasReference, WallDecalType, WorldCell } from "./types/World";
+import {
+  AtlasReference,
+  WallDecalType,
+  WorldCell,
+  WorldSide,
+} from "./types/World";
 import { Edge, GCMap, Note } from "./types/GCMap";
 import { dirFromInitial, xy } from "./tools/geometry";
 
@@ -6,6 +11,8 @@ import Dir from "./types/Dir";
 import Grid from "./Grid";
 import XY from "./types/XY";
 import { getResourceURL } from "./resources";
+import { XYTag, xyToTag } from "./tools/xyTags";
+import { openGate } from "./tools/sides";
 
 interface EdgeSide {
   decal?: WallDecalType;
@@ -58,6 +65,7 @@ class GCMapConverter {
   grid: Grid<WorldCell>;
   scripts: string[];
   start: XY;
+  startsOpen: Set<XYTag>;
   textures: Map<number, number>;
 
   constructor(env: Record<string, number> = {}) {
@@ -73,6 +81,7 @@ class GCMapConverter {
     }));
     this.scripts = [];
     this.start = xy(0, 0);
+    this.startsOpen = new Set();
     this.textures = new Map();
 
     this.definitions.set("NORTH", Dir.N);
@@ -112,16 +121,33 @@ class GCMapConverter {
 
       for (const tile of row.tdata) {
         const mt = this.tile(x, y);
+        const tag = xyToTag({ x, y });
         if (tile.t) mt.floor = this.getTexture(tile.tc);
 
         // TODO different ceiling textures?
         if (tile.c) mt.ceiling = this.getTexture(0);
 
         if (tile.b)
-          this.setEdge(tile.b, tile.bc, mt, Dir.S, this.tile(x, y + 1), Dir.N);
+          this.setEdge(
+            tile.b,
+            tile.bc,
+            mt,
+            Dir.S,
+            this.tile(x, y + 1),
+            Dir.N,
+            this.startsOpen.has(tag)
+          );
 
         if (tile.r)
-          this.setEdge(tile.r, tile.rc, mt, Dir.E, this.tile(x + 1, y), Dir.W);
+          this.setEdge(
+            tile.r,
+            tile.rc,
+            mt,
+            Dir.E,
+            this.tile(x + 1, y),
+            Dir.W,
+            this.startsOpen.has(tag)
+          );
 
         x++;
       }
@@ -213,6 +239,10 @@ class GCMapConverter {
         break;
       }
 
+      case "#OPEN":
+        this.startsOpen.add(xyToTag({ x, y }));
+        break;
+
       default:
         throw new Error(`Unknown command: ${cmd} ${arg} at (${x},${y})`);
     }
@@ -224,23 +254,32 @@ class GCMapConverter {
     lt: WorldCell,
     ld: Dir,
     rt: WorldCell,
-    rd: Dir
+    rd: Dir,
+    opened: boolean
   ) {
     const { main, opposite } = EdgeDetails[edge] ?? defaultEdge;
     const texture = this.getTexture(index);
 
-    lt.sides[ld] = {
+    const leftSide: WorldSide = {
       wall: main.wall ? texture : undefined,
       decalType: main.decal,
       decal: this.decals.get(`${main.decal ?? ""},${texture}`),
       solid: main.solid,
     };
-    rt.sides[rd] = {
+    lt.sides[ld] = leftSide;
+
+    const rightSide: WorldSide = {
       wall: opposite.wall ? texture : undefined,
       decalType: opposite.decal,
       decal: this.decals.get(`${opposite.decal ?? ""},${texture}`),
       solid: opposite.solid,
     };
+    rt.sides[rd] = rightSide;
+
+    if (opened) {
+      openGate(leftSide);
+      openGate(rightSide);
+    }
   }
 }
 

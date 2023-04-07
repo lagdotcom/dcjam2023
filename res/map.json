@@ -2,7 +2,7 @@
 	"export": {
 		"from": "2022.5.1",
 		"date": "2023-04-07",
-		"time": "15:08:00"
+		"time": "15:57:12"
 	},
 	"regions": [
 		{
@@ -21905,7 +21905,7 @@
 							"x": 16,
 							"y": 32,
 							"monospaced": false,
-							"__data": "Arena\/Save\n- If entering for first time: \"The forces of Mullanginan rally around you!\"\n- If entering after winning: \"This is a safe haven... for now.\"\n- If returning after 10 minutes have elapsed: \"This battleground has been reclaimed in the name of Mullanginan!\""
+							"__data": "#TAG ArenaAMiddle\nArena\/Save\n- If entering for first time: \"The forces of Mullanginan rally around you!\"\n- If entering after winning: \"This is a safe haven... for now.\"\n- If returning after 10 minutes have elapsed: \"This battleground has been reclaimed in the name of Mullanginan!\""
 						},
 						{
 							"x": 51,
@@ -22007,25 +22007,25 @@
 							"x": 14,
 							"y": 32,
 							"monospaced": false,
-							"__data": "Locking gate, closes behind player, opens after combat, remains open after combat for 10 minutes\n\"The gate to the arena slams shut behind you, the gods cheer for blood!\""
+							"__data": "#TAG ArenaAGateE\n#OPEN E\nLocking gate, closes behind player, opens after combat, remains open after combat for 10 minutes\n\"The gate to the arena slams shut behind you, the gods cheer for blood!\""
 						},
 						{
 							"x": 18,
 							"y": 32,
 							"monospaced": false,
-							"__data": "Locking gate, closes behind player, opens after combat, remains open after combat for 10 minutes\n\"The gate to the arena slams shut behind you, the gods cheer for blood!\""
+							"__data": "#TAG ArenaAGateW\n#OPEN W\nLocking gate, closes behind player, opens after combat, remains open after combat for 10 minutes\n\"The gate to the arena slams shut behind you, the gods cheer for blood!\""
 						},
 						{
 							"x": 16,
 							"y": 29,
 							"monospaced": false,
-							"__data": "Locking gate, closes behind player, opens after combat, remains open after combat for 10 minutes\n\"The gate to the arena slams shut behind you, the gods cheer for blood!\""
+							"__data": "#TAG ArenaAGateS\n#OPEN S\nLocking gate, closes behind player, opens after combat, remains open after combat for 10 minutes\n\"The gate to the arena slams shut behind you, the gods cheer for blood!\""
 						},
 						{
 							"x": 16,
 							"y": 35,
 							"monospaced": false,
-							"__data": "Locking gate, closes behind player, opens after combat, remains open after combat for 10 minutes\n\"The gate to the arena slams shut behind you, the gods cheer for blood!\""
+							"__data": "#TAG ArenaAGateN\n#OPEN N\nLocking gate, closes behind player, opens after combat, remains open after combat for 10 minutes\n\"The gate to the arena slams shut behind you, the gods cheer for blood!\""
 						},
 						{
 							"x": 35,
@@ -22037,7 +22037,7 @@
 							"x": 23,
 							"y": 35,
 							"monospaced": false,
-							"__data": "Anyone can read: \"Fools need not look left, nor right. Fools should simply charge ahead should they wish to live.\""
+							"__data": "#TAG Sign\n#NUMBER messageDir,EAST\n#STRING message,\"Fools need not look left, nor right. Fools should simply charge ahead should they wish to live.\""
 						},
 						{
 							"x": 24,
@@ -22085,7 +22085,7 @@
 							"x": 27,
 							"y": 35,
 							"monospaced": false,
-							"__data": "\"A guide to fools:\n- If you are reading this, you have strayed, fool!\n- If you are not reading this, congratulations, o enlightened one.\""
+							"__data": "#TAG Sign\n#NUMBER messageDir,NORTH\n#STRING message,\"A guide to fools:\\n- If you are reading this, you have strayed, fool!\\n- If you are not reading this, congratulations, o enlightened one.\""
 						},
 						{
 							"x": 3,
@@ -22181,7 +22181,7 @@
 							"x": 35,
 							"y": 35,
 							"monospaced": false,
-							"__data": "Empty: \"The sight of the empty chest causes (party leader) to lose heart.\"\n(Subtract 1 camaraderie from party lead til next rest)"
+							"__data": "#TAG EmptyChest\n#OBJECT oChest\nEmpty: \"The sight of the empty chest causes (party leader) to lose heart.\"\n(Subtract 1 camaraderie from party lead til next rest)"
 						},
 						{
 							"x": 32,
@@ -22308,6 +22308,66 @@
 							"y": 27,
 							"monospaced": false,
 							"__data": "#TAG MixedEncounter2"
+						},
+						{
+							"x": 15,
+							"y": 31,
+							"monospaced": false,
+							"__data": "#TAG ArenaA"
+						},
+						{
+							"x": 16,
+							"y": 31,
+							"monospaced": false,
+							"__data": "#TAG ArenaA"
+						},
+						{
+							"x": 17,
+							"y": 31,
+							"monospaced": false,
+							"__data": "#TAG ArenaA"
+						},
+						{
+							"x": 17,
+							"y": 32,
+							"monospaced": false,
+							"__data": "#TAG ArenaA"
+						},
+						{
+							"x": 17,
+							"y": 33,
+							"monospaced": false,
+							"__data": "#TAG ArenaA"
+						},
+						{
+							"x": 16,
+							"y": 33,
+							"monospaced": false,
+							"__data": "#TAG ArenaA"
+						},
+						{
+							"x": 15,
+							"y": 33,
+							"monospaced": false,
+							"__data": "#TAG ArenaA"
+						},
+						{
+							"x": 15,
+							"y": 32,
+							"monospaced": false,
+							"__data": "#TAG ArenaA"
+						},
+						{
+							"x": 16,
+							"y": 30,
+							"monospaced": false,
+							"__data": "#TAG ArenaA"
+						},
+						{
+							"x": 16,
+							"y": 34,
+							"monospaced": false,
+							"__data": "#TAG ArenaA"
 						}
 					]
 				},
