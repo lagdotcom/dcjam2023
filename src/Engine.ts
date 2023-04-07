@@ -84,6 +84,7 @@ export default class Engine implements Game {
   inventory: Item[];
   jukebox: Jukebox;
   log: string[];
+  obstacle?: Dir;
   party: Player[];
   pendingArenaEnemies: EnemyName[];
   pendingNormalEnemies: EnemyName[];
@@ -344,6 +345,7 @@ export default class Engine implements Game {
 
   move(dir: Dir) {
     if (this.combat.inCombat) return false;
+    if (this.obstacle && dir !== this.obstacle) return false;
 
     if (this.canMove(dir)) {
       const old = this.position;
@@ -352,6 +354,7 @@ export default class Engine implements Game {
       this.markNavigable(old, dir);
       this.draw();
 
+      this.setObstacle(false);
       this.fire("onPartyMove", { from: old, to: this.position });
       this.scripting.onEnter(this.position, old);
       return true;
@@ -872,5 +875,9 @@ export default class Engine implements Game {
 
   partyIsDead(lastToDie: number) {
     this.screen = new DeathScreen(this, this.party[lastToDie]);
+  }
+
+  setObstacle(obstacle: boolean) {
+    this.obstacle = obstacle ? rotate(this.facing, 2) : undefined;
   }
 }

@@ -2092,6 +2092,8 @@
             opposite.solid = false;
         }
       );
+      this.addNative("obstacle", [], void 0, () => g.setObstacle(true));
+      this.addNative("clearObstacle", [], void 0, () => g.setObstacle(false));
     }
     run(program) {
       return run(this, program);
@@ -4150,7 +4152,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
   };
 
   // res/map.dscript
-  var map_default2 = "./map-HIKFSW33.dscript";
+  var map_default2 = "./map-4HTETXNQ.dscript";
 
   // res/atlas/flats.png
   var flats_default = "./flats-HZYMJUF6.png";
@@ -4756,12 +4758,15 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     move(dir) {
       if (this.combat.inCombat)
         return false;
+      if (this.obstacle && dir !== this.obstacle)
+        return false;
       if (this.canMove(dir)) {
         const old = this.position;
         this.position = move(this.position, dir);
         this.markVisited();
         this.markNavigable(old, dir);
         this.draw();
+        this.setObstacle(false);
         this.fire("onPartyMove", { from: old, to: this.position });
         this.scripting.onEnter(this.position, old);
         return true;
@@ -5188,6 +5193,9 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     }
     partyIsDead(lastToDie) {
       this.screen = new DeathScreen(this, this.party[lastToDie]);
+    }
+    setObstacle(obstacle) {
+      this.obstacle = obstacle ? rotate(this.facing, 2) : void 0;
     }
   };
 

@@ -291,6 +291,9 @@ export default class EngineScripting extends DScriptHost {
         if (opposite) opposite.solid = false;
       }
     );
+
+    this.addNative("obstacle", [], undefined, () => g.setObstacle(true));
+    this.addNative("clearObstacle", [], undefined, () => g.setObstacle(false));
   }
 
   run(program: Program) {

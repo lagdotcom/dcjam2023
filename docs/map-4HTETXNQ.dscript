@@ -33,6 +33,82 @@ function UnlockGateA()
 end
 onTagInteract('UnlockGateA', UnlockGateA)
 
+function WebEnter()
+  message('A huge web blocks your path.')
+  obstacle()
+end
+onTagEnter('Web', WebEnter)
+
+function ClearObstacleHere(tag: string)
+  removeObject(partyX, partyY)
+  removeTag(partyX, partyY, tag)
+  clearObstacle()
+end
+
+function WebInteract(skill: string)
+  if skill == 'Cut' then
+    if skillCheck('determination', 4) then
+      message(getPCName(pcIndex) + ' cuts the webs away.')
+      ClearObstacleHere('Web')
+      return
+    end
+  else
+    if skill == 'Smash' then
+      if skillCheck('determination', 6) then
+        message(getPCName(pcIndex) + ' smashes into the webs.')
+        ClearObstacleHere('Web')
+        return
+      end
+    else
+      if skill == 'Shift' then
+        if skillCheck('determination', 4) then
+          message(getPCName(pcIndex) + ' shifts through the webs.')
+          ClearObstacleHere('Web')
+          return
+        end
+      else
+        message(getPCName(pcIndex) + ' does not understand how to deal with this.')
+        return
+      end
+    end
+  end
+
+  message(getPCName(pcIndex) + ' strains themselves trying to deal with the web.')
+  damagePC(pcIndex, 'spirit', 1)
+end
+onTagInteract('Web', WebInteract)
+
+function BoulderEnter()
+  message('A large boulder blocks your path.')
+  obstacle()
+end
+onTagEnter('Boulder', BoulderEnter)
+
+function BoulderInteract(skill: string)
+  if skill == 'Smash' then
+    if skillCheck('determination', 6) then
+      message(getPCName(pcIndex) + ' smashes the boulder to bits.')
+      ClearObstacleHere('Boulder')
+      return
+    end
+  else
+    if skill == 'Shift' then
+      if skillCheck('determination', 6) then
+        message(getPCName(pcIndex) + ' shifts the boulder away.')
+        ClearObstacleHere('Boulder')
+        return
+      end
+    else
+      message(getPCName(pcIndex) + ' does not understand how to deal with this.')
+      return
+    end
+  end
+
+  message(getPCName(pcIndex) + ' strains themselves trying to deal with the boulder.')
+  damagePC(pcIndex, 'spirit', 1)
+end
+onTagInteract('Boulder', BoulderInteract)
+
 function ScoutEncounter1()
   removeTag(partyX, partyY, 'ScoutEncounter1')
   message('The Eve Scout sizes you up and looks to dart into the shadows.')
@@ -53,11 +129,6 @@ function MixedEncounter2()
   addArenaEnemy('Nettle Sage')
 end
 onTagEnter('MixedEncounter2', MixedEncounter2)
-
-function BoulderEnter()
-  ; TODO
-end
-onTagEnter('Boulder', BoulderEnter)
 
 ArenaAClosed = false
 function ArenaADoors(solid: bool, decal: number)
@@ -112,3 +183,17 @@ function ArenaAMiddleEnter()
   end
 end
 onTagEnter('ArenaAMiddle', ArenaAMiddleEnter)
+
+
+function UnlockGateC()
+  if partyDir == SOUTH then
+    removeTag(partyX, partyY, 'UnlockGateC')
+    setDecal(partyX, partyY, EAST, dPulledLever)
+    selectTileWithTag('GateC')
+    unlock(selectedX, selectedY, NORTH)
+    setDecal(selectedX, selectedY, NORTH, dOpenGate)
+    setDecal(selectedX, selectedY-1, SOUTH, dOpenGate)
+    message(getString('message'))
+  end
+end
+onTagInteract('UnlockGateC', UnlockGateC)
