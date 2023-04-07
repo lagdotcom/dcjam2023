@@ -1,12 +1,13 @@
+import Engine from "./Engine";
+import Player from "./Player";
 import { Enemy, EnemyName, spawn } from "./enemies";
-
+import isDefined from "./tools/isDefined";
+import { wrap } from "./tools/numbers";
+import { oneOf, pickN } from "./tools/rng";
+import shuffle from "./tools/shuffle";
 import Combatant from "./types/Combatant";
 import Dir from "./types/Dir";
-import Engine from "./Engine";
 import { GameEffect } from "./types/Game";
-import { oneOf, pickN, random } from "./tools/rng";
-import Player from "./Player";
-import isDefined from "./tools/isDefined";
 
 export default class CombatManager {
   effects: GameEffect[];
@@ -63,12 +64,14 @@ export default class CombatManager {
     for (const e of this.effects.slice())
       if (!e.permanent) this.g.removeEffect(e);
 
-    // TODO arrange them more sensibly
     this.resetEnemies();
+    const dirs = shuffle([Dir.N, Dir.E, Dir.S, Dir.W]);
+    let i = 0;
+
     for (const name of enemies) {
       const enemy = spawn(this.g, name);
-      const dir = random(4) as Dir;
-      this.enemies[dir].push(enemy);
+      this.enemies[dirs[i]].push(enemy);
+      i = wrap(i + 1, dirs.length);
     }
 
     for (const c of this.aliveCombatants) {

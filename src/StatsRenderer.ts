@@ -12,10 +12,10 @@ type SwapData = { from: Dir; to: Dir }[];
 
 const barWidth = 38;
 const coordinates: XY[] = [
-  xy(200, 124),
-  xy(260, 166),
-  xy(200, 210),
-  xy(140, 166),
+  xy(214, 138),
+  xy(274, 180),
+  xy(214, 224),
+  xy(154, 180),
 ];
 
 class MarbleAnimator {
@@ -68,9 +68,9 @@ export default class StatsRenderer implements HasHotspots {
 
   constructor(
     public g: Engine,
-    public text = xy(21, 36),
-    public hp = xy(22, 43),
-    public sp = xy(22, 49)
+    public text = xy(25, 21),
+    public hp = xy(7, 29),
+    public sp = xy(7, 35)
   ) {
     this.animator = new MarbleAnimator(this);
     this.spots = [];

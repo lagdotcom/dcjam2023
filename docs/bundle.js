@@ -531,6 +531,25 @@
     return new Enemy(g, enemies[name]);
   }
 
+  // src/tools/shuffle.ts
+  function shuffle(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+  }
+
+  // src/types/Dir.ts
+  var Dir = /* @__PURE__ */ ((Dir2) => {
+    Dir2[Dir2["N"] = 0] = "N";
+    Dir2[Dir2["E"] = 1] = "E";
+    Dir2[Dir2["S"] = 2] = "S";
+    Dir2[Dir2["W"] = 3] = "W";
+    return Dir2;
+  })(Dir || {});
+  var Dir_default = Dir;
+
   // src/CombatManager.ts
   var CombatManager = class {
     constructor(g, enemyInitialDelay = 3e3, enemyTurnDelay = 1e3, enemyFrameTime = 100) {
@@ -628,10 +647,12 @@
         if (!e.permanent)
           this.g.removeEffect(e);
       this.resetEnemies();
+      const dirs = shuffle([Dir_default.N, Dir_default.E, Dir_default.S, Dir_default.W]);
+      let i = 0;
       for (const name of enemies2) {
         const enemy = spawn(this.g, name);
-        const dir = random(4);
-        this.enemies[dir].push(enemy);
+        this.enemies[dirs[i]].push(enemy);
+        i = wrap(i + 1, dirs.length);
       }
       for (const c of this.aliveCombatants) {
         c.usedThisTurn.clear();
@@ -713,16 +734,6 @@
     otherClass: "rgb(96,96,96)"
   };
   var Colours_default = Colours;
-
-  // src/types/Dir.ts
-  var Dir = /* @__PURE__ */ ((Dir2) => {
-    Dir2[Dir2["N"] = 0] = "N";
-    Dir2[Dir2["E"] = 1] = "E";
-    Dir2[Dir2["S"] = 2] = "S";
-    Dir2[Dir2["W"] = 3] = "W";
-    return Dir2;
-  })(Dir || {});
-  var Dir_default = Dir;
 
   // src/tools/geometry.ts
   var xy = (x, y) => ({ x, y });
@@ -2135,7 +2146,7 @@
   var map_border_default = "./map-border-OU5SS5IH.png";
 
   // res/hud/marble.png
-  var marble_default = "./marble-ZLZROWLU.png";
+  var marble_default = "./marble-W57UJINA.png";
 
   // res/hud/ring.png
   var ring_default = "./ring-H2TENGRF.png";
@@ -2143,10 +2154,10 @@
   // src/StatsRenderer.ts
   var barWidth = 38;
   var coordinates = [
-    xy(200, 124),
-    xy(260, 166),
-    xy(200, 210),
-    xy(140, 166)
+    xy(214, 138),
+    xy(274, 180),
+    xy(214, 224),
+    xy(154, 180)
   ];
   var MarbleAnimator = class {
     constructor(parent, interval = 50, progressTick = 0.2) {
@@ -2181,7 +2192,7 @@
     }
   };
   var StatsRenderer = class {
-    constructor(g, text = xy(21, 36), hp = xy(22, 43), sp = xy(22, 49)) {
+    constructor(g, text = xy(25, 21), hp = xy(7, 29), sp = xy(7, 35)) {
       this.g = g;
       this.text = text;
       this.hp = hp;
