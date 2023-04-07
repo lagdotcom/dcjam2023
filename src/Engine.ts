@@ -49,6 +49,7 @@ import {
   GameEvents,
 } from "./types/events";
 import { Predicate, matchAll } from "./types/logic";
+import DeathScreen from "./DeathScreen";
 
 interface WallType {
   canSeeDoor: boolean;
@@ -316,8 +317,10 @@ export default class Engine implements Game {
     const { ctx, screen } = this;
     const { width, height } = this.canvas;
 
-    ctx.fillStyle = "black";
-    ctx.fillRect(0, 0, width, height);
+    if (!screen.doNotClear) {
+      ctx.fillStyle = "black";
+      ctx.fillRect(0, 0, width, height);
+    }
 
     screen.render();
   };
@@ -865,5 +868,9 @@ export default class Engine implements Game {
       return true;
     }
     return false;
+  }
+
+  partyIsDead(lastToDie: number) {
+    this.screen = new DeathScreen(this, this.party[lastToDie]);
   }
 }

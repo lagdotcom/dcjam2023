@@ -171,6 +171,13 @@ export default class CombatManager {
 
   onKilled = (c: Combatant) => {
     if (!c.isPC) this.pendingRemoval.push(c as Enemy);
+    else {
+      const alive = this.g.party.find((p) => p.alive);
+      if (alive) return;
+
+      const index = this.g.party.indexOf(c as Player);
+      this.g.partyIsDead(index);
+    }
   };
 
   onAfterAction = () => {

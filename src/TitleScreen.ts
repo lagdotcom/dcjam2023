@@ -45,6 +45,8 @@ export default class TitleScreen implements GameScreen {
 
       case "Space":
         if (this.selected.size === 4) {
+          // TODO there must be more state to reset...
+          this.g.inventory = [];
           this.g.party = [];
           for (const cn of this.selected)
             this.g.party.push(new Player(this.g, cn));

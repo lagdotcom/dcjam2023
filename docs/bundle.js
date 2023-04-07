@@ -574,6 +574,13 @@
       this.onKilled = (c) => {
         if (!c.isPC)
           this.pendingRemoval.push(c);
+        else {
+          const alive = this.g.party.find((p) => p.alive);
+          if (alive)
+            return;
+          const index = this.g.party.indexOf(c);
+          this.g.partyIsDead(index);
+        }
       };
       this.onAfterAction = () => {
         for (const e of this.pendingRemoval)
@@ -3998,6 +4005,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
         }
         case "Space":
           if (this.selected.size === 4) {
+            this.g.inventory = [];
             this.g.party = [];
             for (const cn of this.selected)
               this.g.party.push(new Player(this.g, cn));
@@ -4453,6 +4461,61 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     return true;
   };
 
+  // src/DeathScreen.ts
+  var DeathScreen = class {
+    constructor(g, lastToDie) {
+      this.g = g;
+      this.lastToDie = lastToDie;
+      this.render = () => {
+        const { width, height } = this.g.canvas;
+        const { ctx } = this.g;
+        if (this.alpha < 1) {
+          this.oldScreen.render();
+          ctx.globalAlpha = this.alpha;
+          ctx.fillStyle = "black";
+          ctx.fillRect(0, 0, width, height);
+          this.alpha += 0.1;
+          if (this.alpha >= 1) {
+            clearInterval(this.interval);
+            this.doNotClear = false;
+          }
+        }
+        const { draw, lineHeight, measure } = withTextStyle(ctx, {
+          textAlign: "center",
+          textBaseline: "middle",
+          fillStyle: "white"
+        });
+        const { lines, measurement } = textWrap(
+          classes_default[this.lastToDie.className].deathQuote,
+          width - 200,
+          measure
+        );
+        const textHeight = lines.length * lineHeight;
+        console.log(measurement);
+        let y = height / 2 - textHeight / 2;
+        for (const line of lines) {
+          draw(line, width / 2, y);
+          y += lineHeight;
+        }
+        ctx.globalAlpha = 1;
+      };
+      g.draw();
+      g.jukebox.stop();
+      g.spotElements = [];
+      this.alpha = 0.1;
+      this.doNotClear = true;
+      this.interval = setInterval(this.render, 400);
+      this.oldScreen = g.screen;
+    }
+    onKey(e) {
+      if (e.code === "Escape") {
+        this.g.screen = new TitleScreen(this.g);
+        if (this.interval)
+          clearInterval(this.interval);
+      }
+    }
+  };
+
   // src/Engine.ts
   var calculateEventName = {
     dr: "onCalculateDR",
@@ -4469,8 +4532,10 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       this.render = () => {
         const { ctx, screen } = this;
         const { width, height } = this.canvas;
-        ctx.fillStyle = "black";
-        ctx.fillRect(0, 0, width, height);
+        if (!screen.doNotClear) {
+          ctx.fillStyle = "black";
+          ctx.fillRect(0, 0, width, height);
+        }
         screen.render();
       };
       this.ctx = getCanvasContext(canvas, "2d");
@@ -5103,6 +5168,9 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
         return true;
       }
       return false;
+    }
+    partyIsDead(lastToDie) {
+      this.screen = new DeathScreen(this, this.party[lastToDie]);
     }
   };
 
