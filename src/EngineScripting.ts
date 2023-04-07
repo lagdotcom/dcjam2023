@@ -55,6 +55,22 @@ export default class EngineScripting extends DScriptHost {
       return name;
     };
     const getThisCell = () => getCell(g.position.x, g.position.y);
+    const getPositionByTag = (tag: string) => {
+      const position = g.findCellWithTag(tag);
+      if (!position) throw new Error(`Cannot find tag: ${tag}`);
+      return position;
+    };
+    const getSide = (x: number, y: number, d: Dir) => {
+      const dir = getDir(d);
+      const cell = getCell(x, y);
+      const side = cell.sides[dir];
+      if (!side)
+        throw new Error(
+          `script tried to unlock ${x},${y},${d} -- side does not exist`
+        );
+
+      return side;
+    };
 
     this.addNative("addArenaEnemy", ["string"], undefined, (name: string) => {
       const enemy = getEnemy(name);
@@ -132,12 +148,10 @@ export default class EngineScripting extends DScriptHost {
     );
 
     this.addNative("movePartyToTag", ["string"], undefined, (tag: string) => {
-      const position = g.findCellWithTag(tag);
-      if (position) {
-        g.position = position;
-        g.markVisited();
-        g.draw();
-      }
+      const position = getPositionByTag(tag);
+      g.position = position;
+      g.markVisited();
+      g.draw();
     });
 
     this.addNative(
@@ -219,6 +233,28 @@ export default class EngineScripting extends DScriptHost {
     );
 
     this.addNative(
+      "selectTileWithTag",
+      ["string"],
+      undefined,
+      (tag: string) => {
+        const position = getPositionByTag(tag);
+        this.env.set("selectedX", num(position.x, true));
+        this.env.set("selectedY", num(position.y, true));
+      }
+    );
+
+    this.addNative(
+      "setDecal",
+      ["number", "number", "number", "number"],
+      undefined,
+      (x: number, y: number, d: number, t: number) => {
+        const side = getSide(x, y, d);
+        side.decal = t;
+        g.draw();
+      }
+    );
+
+    this.addNative(
       "tileHasTag",
       ["number", "number", "string"],
       "bool",
@@ -230,21 +266,12 @@ export default class EngineScripting extends DScriptHost {
       ["number", "number", "number"],
       undefined,
       (x: number, y: number, d: number) => {
-        const dir = getDir(d);
-        const cell = getCell(x, y);
-        const side = cell.sides[dir];
+        const side = getSide(x, y, d);
+        side.solid = false;
 
-        if (side) {
-          side.solid = false;
-          const otherSide = move({ x, y }, dir);
-          const other = getCell(otherSide.x, otherSide.y);
-          const opposite = other.sides[rotate(dir, 2)];
-
-          if (opposite) opposite.solid = false;
-        } else
-          console.warn(
-            `script tried to unlock ${x},${y},${d} -- side does not exist`
-          );
+        const otherSide = move({ x, y }, d);
+        const opposite = getSide(otherSide.x, otherSide.y, rotate(d, 2));
+        if (opposite) opposite.solid = false;
       }
     );
   }

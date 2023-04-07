@@ -24,6 +24,7 @@ const invisible: EdgeSide = { solid: true };
 const fake: EdgeSide = { wall: true };
 const sign: EdgeSide = { decal: "Sign", wall: true, solid: true };
 const gate: EdgeSide = { decal: "Gate", wall: false, solid: true };
+const lever: EdgeSide = { decal: "Lever", wall: true, solid: true };
 
 const defaultEdge: EdgeEntry = { main: wall, opposite: wall };
 
@@ -38,6 +39,9 @@ const EdgeDetails: Partial<Record<Edge, EdgeEntry>> = {
   [Edge.Wall_OneWayLU]: { main: wall, opposite: fake },
   [Edge.Message]: { main: sign, opposite: sign },
   [Edge.Gate]: { main: gate, opposite: gate },
+  // this isn't a mistake...
+  [Edge.LeverLU]: { main: lever, opposite: wall },
+  [Edge.LeverRD]: { main: wall, opposite: lever },
 };
 
 function compareNotes(a: Note, b: Note) {
@@ -123,10 +127,10 @@ class GCMapConverter {
       }
     }
 
-    const { atlases, scripts, start, facing } = this;
+    const { atlases, definitions, scripts, start, facing } = this;
     const name = `${r.name}:${f.index}`;
     const cells = this.grid.asArray();
-    return { name, atlases, cells, scripts, start, facing };
+    return { name, atlases, cells, definitions, scripts, start, facing };
   }
 
   getTexture(index = 0) {

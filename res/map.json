@@ -2,7 +2,7 @@
 	"export": {
 		"from": "2022.5.1",
 		"date": "2023-04-07",
-		"time": "11:39:50"
+		"time": "13:03:38"
 	},
 	"regions": [
 		{
@@ -21899,7 +21899,7 @@
 							"x": 9,
 							"y": 23,
 							"monospaced": false,
-							"__data": "Locked Gate A"
+							"__data": "#TAG GateA\nLocked Gate A"
 						},
 						{
 							"x": 16,
@@ -21977,7 +21977,7 @@
 							"x": 14,
 							"y": 13,
 							"monospaced": false,
-							"__data": "Switch: Unlocks Gate A\n\"The sound of clanking metal is heard in the distance.\""
+							"__data": "#TAG UnlockGateA\n#STRING message,The sound of clanking metal is heard in the distance."
 						},
 						{
 							"x": 13,
@@ -22301,7 +22301,7 @@
 							"x": 0,
 							"y": 12,
 							"monospaced": false,
-							"__data": "#ATLAS flats\n#ATLAS eveScout,martialist,nettleSage,sneedCrawler\n#DEFINE tWall,1\n#DEFINE dSign,2\n#DEFINE dDoor,3\n#DEFINE dGate,4\n#DEFINE dOpenGate,5\n#DEFINE oChest,20\n#STYLE 0,tWall\n#STYLE 1,tWall\n#DECAL Sign,tWall,dSign\n#DECAL Door,tWall,dDoor\n#DECAL Gate,tWall,dGate\n#SCRIPT map.dscript"
+							"__data": "#ATLAS flats\n#ATLAS eveScout,martialist,nettleSage,sneedCrawler\n#DEFINE tWall,1\n#DEFINE dSign,2\n#DEFINE dDoor,3\n#DEFINE dGate,4\n#DEFINE dOpenGate,5\n#DEFINE dLever,6\n#DEFINE dPulledLever,7\n#DEFINE oChest,20\n#STYLE 0,tWall\n#STYLE 1,tWall\n#DECAL Sign,tWall,dSign\n#DECAL Door,tWall,dDoor\n#DECAL Gate,tWall,dGate\n#DECAL Lever,tWall,dLever\n#SCRIPT map.dscript"
 						}
 					]
 				},

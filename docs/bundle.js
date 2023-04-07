@@ -1432,6 +1432,22 @@
         return name;
       };
       const getThisCell = () => getCell(g.position.x, g.position.y);
+      const getPositionByTag = (tag) => {
+        const position = g.findCellWithTag(tag);
+        if (!position)
+          throw new Error(`Cannot find tag: ${tag}`);
+        return position;
+      };
+      const getSide = (x, y, d) => {
+        const dir = getDir(d);
+        const cell = getCell(x, y);
+        const side = cell.sides[dir];
+        if (!side)
+          throw new Error(
+            `script tried to unlock ${x},${y},${d} -- side does not exist`
+          );
+        return side;
+      };
       this.addNative("addArenaEnemy", ["string"], void 0, (name) => {
         const enemy = getEnemy(name);
         g.pendingArenaEnemies.push(enemy);
@@ -1505,12 +1521,10 @@
         (msg) => g.addToLog(msg)
       );
       this.addNative("movePartyToTag", ["string"], void 0, (tag) => {
-        const position = g.findCellWithTag(tag);
-        if (position) {
-          g.position = position;
-          g.markVisited();
-          g.draw();
-        }
+        const position = getPositionByTag(tag);
+        g.position = position;
+        g.markVisited();
+        g.draw();
       });
       this.addNative(
         "skillCheck",
@@ -1583,6 +1597,26 @@
         }
       );
       this.addNative(
+        "selectTileWithTag",
+        ["string"],
+        void 0,
+        (tag) => {
+          const position = getPositionByTag(tag);
+          this.env.set("selectedX", num(position.x, true));
+          this.env.set("selectedY", num(position.y, true));
+        }
+      );
+      this.addNative(
+        "setDecal",
+        ["number", "number", "number", "number"],
+        void 0,
+        (x, y, d, t) => {
+          const side = getSide(x, y, d);
+          side.decal = t;
+          g.draw();
+        }
+      );
+      this.addNative(
         "tileHasTag",
         ["number", "number", "string"],
         "bool",
@@ -1593,20 +1627,12 @@
         ["number", "number", "number"],
         void 0,
         (x, y, d) => {
-          const dir = getDir(d);
-          const cell = getCell(x, y);
-          const side = cell.sides[dir];
-          if (side) {
-            side.solid = false;
-            const otherSide = move({ x, y }, dir);
-            const other = getCell(otherSide.x, otherSide.y);
-            const opposite = other.sides[rotate(dir, 2)];
-            if (opposite)
-              opposite.solid = false;
-          } else
-            console.warn(
-              `script tried to unlock ${x},${y},${d} -- side does not exist`
-            );
+          const side = getSide(x, y, d);
+          side.solid = false;
+          const otherSide = move({ x, y }, d);
+          const opposite = getSide(otherSide.x, otherSide.y, rotate(d, 2));
+          if (opposite)
+            opposite.solid = false;
         }
       );
     }
@@ -3391,13 +3417,13 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
   };
 
   // res/map.dscript
-  var map_default = "./map-FRYIGI3J.dscript";
+  var map_default = "./map-F5WG5MLL.dscript";
 
   // res/atlas/flats.png
-  var flats_default = "./flats-PEHJXQ3Z.png";
+  var flats_default = "./flats-25PTRK3Z.png";
 
   // res/atlas/flats.json
-  var flats_default2 = "./flats-2HLDS6GB.json";
+  var flats_default2 = "./flats-UBBZHLYT.json";
 
   // res/atlas/eveScout.png
   var eveScout_default = "./eveScout-GB6RQXWR.png";
@@ -3452,6 +3478,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
   var fake = { wall: true };
   var sign = { decal: "Sign", wall: true, solid: true };
   var gate = { decal: "Gate", wall: false, solid: true };
+  var lever = { decal: "Lever", wall: true, solid: true };
   var defaultEdge = { main: wall, opposite: wall };
   var EdgeDetails = {
     [2 /* Door */]: { main: door, opposite: door },
@@ -3463,7 +3490,10 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     [10 /* Wall_OneWayRD */]: { main: fake, opposite: wall },
     [7 /* Wall_OneWayLU */]: { main: wall, opposite: fake },
     [28 /* Message */]: { main: sign, opposite: sign },
-    [27 /* Gate */]: { main: gate, opposite: gate }
+    [27 /* Gate */]: { main: gate, opposite: gate },
+    // this isn't a mistake...
+    [23 /* LeverLU */]: { main: lever, opposite: wall },
+    [24 /* LeverRD */]: { main: wall, opposite: lever }
   };
   function compareNotes(a, b) {
     if (a.x !== b.x)
@@ -3528,10 +3558,10 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
           x++;
         }
       }
-      const { atlases, scripts, start, facing } = this;
+      const { atlases, definitions, scripts, start, facing } = this;
       const name = `${r.name}:${f.index}`;
       const cells = this.grid.asArray();
-      return { name, atlases, cells, scripts, start, facing };
+      return { name, atlases, cells, definitions, scripts, start, facing };
     }
     getTexture(index = 0) {
       const texture = this.textures.get(index);
@@ -4342,9 +4372,12 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       return __async(this, null, function* () {
         this.renderSetup = void 0;
         const map = yield this.res.loadGCMap(jsonUrl);
-        const { atlases, cells, scripts, start, facing, name } = convertGridCartographerMap(map, region, floor, EnemyObjects);
+        const { atlases, cells, definitions, scripts, start, facing, name } = convertGridCartographerMap(map, region, floor, EnemyObjects);
         if (!atlases.length)
           throw new Error(`${jsonUrl} did not contain #ATLAS`);
+        for (const [key, value] of definitions.entries()) {
+          this.scripting.env.set(key, num(value, true));
+        }
         const codeFiles = yield Promise.all(
           scripts.map((url) => this.res.loadScript(url))
         );
@@ -4376,6 +4409,9 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
         }
       }
       return cell;
+    }
+    get currentCell() {
+      return this.getCell(this.position.x, this.position.y);
     }
     findCellWithTag(tag) {
       if (!this.world)
@@ -4839,7 +4875,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
   };
 
   // res/map.json
-  var map_default2 = "./map-66DVFW57.json";
+  var map_default2 = "./map-XSISRDFQ.json";
 
   // src/index.ts
   function loadEngine(parent) {

@@ -47,6 +47,7 @@ import HasHotspots from "./types/HasHotspots";
 import Jukebox from "./Jukebox";
 import { getItem } from "./items";
 import { endTurnAction } from "./actions";
+import { num } from "./DScript/logic";
 
 interface WallType {
   canSeeDoor: boolean;
@@ -268,9 +269,13 @@ export default class Engine implements Game {
     this.renderSetup = undefined;
 
     const map = await this.res.loadGCMap(jsonUrl);
-    const { atlases, cells, scripts, start, facing, name } =
+    const { atlases, cells, definitions, scripts, start, facing, name } =
       convertGridCartographerMap(map, region, floor, EnemyObjects);
     if (!atlases.length) throw new Error(`${jsonUrl} did not contain #ATLAS`);
+
+    for (const [key, value] of definitions.entries()) {
+      this.scripting.env.set(key, num(value, true));
+    }
 
     // TODO how about clearing old script stuff...?
     const codeFiles = await Promise.all(
@@ -309,6 +314,10 @@ export default class Engine implements Game {
     }
 
     return cell;
+  }
+
+  get currentCell() {
+    return this.getCell(this.position.x, this.position.y);
   }
 
   findCellWithTag(tag: string) {

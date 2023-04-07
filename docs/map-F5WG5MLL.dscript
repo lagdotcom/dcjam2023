@@ -5,7 +5,7 @@ onTagInteract('ShowMessageOnInteract', ShowMessageOnInteract)
 
 function SignInteract()
   if partyDir == getNumber('messageDir') then
-    message("")
+    message('')
     message(getString('message'))
   end
 end
@@ -14,8 +14,20 @@ onTagInteract('Sign', SignInteract)
 function TreasureInteract()
   item = getString('item')
   giveItem(item)
-  message("The box contains a " + item + ".")
+  message('The box contains a ' + item + '.')
   removeTag(partyX, partyY, 'Treasure')
   removeObject(partyX, partyY)
 end
 onTagInteract('Treasure', TreasureInteract)
+
+function UnlockGateA()
+  if partyDir == EAST then
+    removeTag(partyX, partyY, 'UnlockGateA')
+    setDecal(partyX, partyY, EAST, dPulledLever)
+    selectTileWithTag('GateA')
+    unlock(selectedX, selectedY, SOUTH)
+    setDecal(selectedX, selectedY, SOUTH, dOpenGate)
+    message(getString('message'))
+  end
+end
+onTagInteract('UnlockGateA', UnlockGateA)

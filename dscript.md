@@ -29,6 +29,7 @@ All the boring normal stuff:
 
 - `NORTH`/`EAST`/`SOUTH`/`WEST` symbolic constants for directions
 - `partyX`/`partyY`/`partyDir` constants for party position/facing
+- `selectedX`/`selectedY` set after `selectTileWithTag`
 - `pcIndex` the interacting PC (facing / skill use)
 - `addArenaEnemy(name)` now follows party
 - `addNormalEnemy(name)` preparation for calling `startNormalFight`
@@ -49,6 +50,8 @@ All the boring normal stuff:
 - `random(max: number): number` generates a random integer below `max`
 - `removeObject(x: number, y: number)`
 - `removeTag(x: number, y: number, tag: string)`
+- `selectTileWithTag(tag: string)` sets `selectedX/Y`
+- `setDecal(x: number, y: number, dir, decal)`
 - `skillCheck(stat, difficulty): bool` makes the active PC roll a d10 skill check
 - `startArenaFight(): bool` returns false if there's no enemies waiting
 - `startNormalFight(): bool` returns false if there's no enemies waiting
