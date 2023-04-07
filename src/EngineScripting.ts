@@ -54,6 +54,7 @@ export default class EngineScripting extends DScriptHost {
       if (!isEnemyName(name)) throw new Error(`Invalid enemy: ${name}`);
       return name;
     };
+    const getThisCell = () => getCell(g.position.x, g.position.y);
 
     this.addNative("addArenaEnemy", ["string"], undefined, (name: string) => {
       const enemy = getEnemy(name);
@@ -87,9 +88,25 @@ export default class EngineScripting extends DScriptHost {
       (index: number) => getPC(index).name
     );
 
+    this.addNative("getNumber", ["string"], "number", (key: string) => {
+      const cell = getThisCell();
+      if (!(key in cell.numbers))
+        throw new Error(
+          `Tried to get non-existant #NUMBER ${key} at ${g.position.x},${g.position.y}`
+        );
+      return cell.numbers[key];
+    });
+    this.addNative("getString", ["string"], "string", (key: string) => {
+      const cell = getThisCell();
+      if (!(key in cell.strings))
+        throw new Error(
+          `Tried to get non-existant #STRING ${key} at ${g.position.x},${g.position.y}`
+        );
+      return cell.strings[key];
+    });
+
     this.addNative("giveItem", ["string"], undefined, (name: string) => {
-      if (!this.g.addToInventory(name))
-        throw new Error(`Invalid item: ${name}`);
+      if (!g.addToInventory(name)) throw new Error(`Invalid item: ${name}`);
     });
 
     this.addNative(

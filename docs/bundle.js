@@ -1426,6 +1426,7 @@
           throw new Error(`Invalid enemy: ${name}`);
         return name;
       };
+      const getThisCell = () => getCell(g.position.x, g.position.y);
       this.addNative("addArenaEnemy", ["string"], void 0, (name) => {
         const enemy = getEnemy(name);
         g.pendingArenaEnemies.push(enemy);
@@ -1456,8 +1457,24 @@
         "string",
         (index) => getPC(index).name
       );
+      this.addNative("getNumber", ["string"], "number", (key) => {
+        const cell = getThisCell();
+        if (!(key in cell.numbers))
+          throw new Error(
+            `Tried to get non-existant #NUMBER ${key} at ${g.position.x},${g.position.y}`
+          );
+        return cell.numbers[key];
+      });
+      this.addNative("getString", ["string"], "string", (key) => {
+        const cell = getThisCell();
+        if (!(key in cell.strings))
+          throw new Error(
+            `Tried to get non-existant #STRING ${key} at ${g.position.x},${g.position.y}`
+          );
+        return cell.strings[key];
+      });
       this.addNative("giveItem", ["string"], void 0, (name) => {
-        if (!this.g.addToInventory(name))
+        if (!g.addToInventory(name))
           throw new Error(`Invalid item: ${name}`);
       });
       this.addNative(
@@ -1818,6 +1835,8 @@
       this.spots = [];
     }
     render() {
+      if (this.g.combat.inCombat)
+        return;
       const { buttonSize, offset, position, rowHeight } = this;
       const { draw } = withTextStyle(this.g.ctx, {
         textAlign: "left",
@@ -1958,14 +1977,36 @@
   };
 
   // src/tools/textWrap.ts
+  function splitWords(s) {
+    const words = [];
+    let current = "";
+    for (const c of s) {
+      if (c === " " || c === "\n") {
+        words.push(current);
+        if (c === "\n")
+          words.push("\n");
+        current = "";
+        continue;
+      }
+      current += c;
+    }
+    if (current)
+      words.push(current);
+    return words;
+  }
   function textWrap(source, width, measure) {
     const measurement = measure(source);
     if (measurement.width < width)
-      return { lines: [source], measurement };
-    const words = source.split(" ");
+      return { lines: source.split("\n"), measurement };
+    const words = splitWords(source);
     const lines = [];
     let constructed = "";
     for (const w of words) {
+      if (w === "\n") {
+        lines.push(constructed);
+        constructed = "";
+        continue;
+      }
       if (!constructed) {
         constructed += w;
         continue;
@@ -1985,7 +2026,7 @@
 
   // src/LogRenderer.ts
   var LogRenderer = class {
-    constructor(g, position = xy(276, 0), size = xy(144, 160), padding = xy(2, 2)) {
+    constructor(g, position = xy(276, 0), size = xy(204, 270), padding = xy(2, 2)) {
       this.g = g;
       this.position = position;
       this.size = size;
@@ -3334,6 +3375,15 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     }
   };
 
+  // res/map.dscript
+  var map_default = "./map-2LUOABUJ.dscript";
+
+  // res/atlas/flats.png
+  var flats_default = "./flats-2M2255OW.png";
+
+  // res/atlas/flats.json
+  var flats_default2 = "./flats-S4OCCEE4.json";
+
   // res/atlas/eveScout.png
   var eveScout_default = "./eveScout-GB6RQXWR.png";
 
@@ -3358,20 +3408,11 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
   // res/atlas/sneedCrawler.json
   var sneedCrawler_default2 = "./sneedCrawler-5IJWBAV5.json";
 
-  // res/map.dscript
-  var map_default = "./map-JLKFTYVM.dscript";
-
-  // res/atlas/test1.png
-  var test1_default = "./test1-MYU5F6VR.png";
-
-  // res/atlas/test1.json
-  var test1_default2 = "./test1-DCKQ56SO.json";
-
   // src/resources.ts
   var Resources = {
-    "test1.png": test1_default,
-    "test1.json": test1_default2,
     "map.dscript": map_default,
+    "flats.png": flats_default,
+    "flats.json": flats_default2,
     "eveScout.png": eveScout_default,
     "eveScout.json": eveScout_default2,
     "martialist.png": martialist_default,
@@ -3394,6 +3435,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
   var locked = { decal: "Door", wall: true, solid: true };
   var invisible = { solid: true };
   var fake = { wall: true };
+  var sign = { decal: "Sign", wall: true, solid: true };
   var defaultEdge = { main: wall, opposite: wall };
   var EdgeDetails = {
     [2 /* Door */]: { main: door, opposite: door },
@@ -3403,7 +3445,8 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     [5 /* Door_OneWayLU */]: { main: wall, opposite: door },
     [13 /* Wall_Secret */]: { main: invisible, opposite: invisible },
     [10 /* Wall_OneWayRD */]: { main: fake, opposite: wall },
-    [7 /* Wall_OneWayLU */]: { main: wall, opposite: fake }
+    [7 /* Wall_OneWayLU */]: { main: wall, opposite: fake },
+    [28 /* Message */]: { main: sign, opposite: sign }
   };
   var GCMapConverter = class {
     constructor(env = {}) {
@@ -3411,10 +3454,19 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       this.decals = /* @__PURE__ */ new Map();
       this.definitions = new Map(Object.entries(env));
       this.facing = Dir_default.N;
-      this.grid = new Grid(() => ({ sides: {}, tags: [] }));
+      this.grid = new Grid(() => ({
+        sides: {},
+        tags: [],
+        strings: {},
+        numbers: {}
+      }));
       this.scripts = [];
       this.start = xy(0, 0);
       this.textures = /* @__PURE__ */ new Map();
+      this.definitions.set("NORTH", Dir_default.N);
+      this.definitions.set("EAST", Dir_default.E);
+      this.definitions.set("SOUTH", Dir_default.S);
+      this.definitions.set("WEST", Dir_default.W);
     }
     tile(x, y) {
       return this.grid.getOrDefault({ x, y });
@@ -3432,8 +3484,8 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
         for (const line of (_a = __data == null ? void 0 : __data.split("\n")) != null ? _a : []) {
           if (!line.startsWith("#"))
             continue;
-          const [cmd, arg] = line.split(" ");
-          this.applyCommand(cmd, arg, x, y);
+          const [cmd, ...args] = line.split(" ");
+          this.applyCommand(cmd, args.join(" "), x, y);
         }
       }
       for (const row of (_b = f.tiles.rows) != null ? _b : []) {
@@ -3475,10 +3527,12 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     applyCommand(cmd, arg, x, y) {
       switch (cmd) {
         case "#ATLAS":
-          this.atlases.push({
-            image: getResourceURL(arg + ".png"),
-            json: getResourceURL(arg + ".json")
-          });
+          this.atlases.push(
+            ...arg.split(",").map((name) => ({
+              image: getResourceURL(name + ".png"),
+              json: getResourceURL(name + ".json")
+            }))
+          );
           return;
         case "#DEFINE": {
           const [key, value] = arg.split(",");
@@ -3514,6 +3568,16 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
         case "#OBJECT":
           this.tile(x, y).object = this.eval(arg);
           break;
+        case "#STRING": {
+          const [name, ...args] = arg.split(",");
+          this.tile(x, y).strings[name] = args.join(",").replace(/\\n/g, "\n");
+          break;
+        }
+        case "#NUMBER": {
+          const [name, value] = arg.split(",");
+          this.tile(x, y).numbers[name] = this.eval(value);
+          break;
+        }
         default:
           throw new Error(`Unknown command: ${cmd} ${arg} at (${x},${y})`);
       }
@@ -4747,7 +4811,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
   };
 
   // res/map.json
-  var map_default2 = "./map-I7UKMEE2.json";
+  var map_default2 = "./map-N5PAY7F7.json";
 
   // src/index.ts
   function loadEngine(parent) {
@@ -4776,7 +4840,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     };
     window.addEventListener("resize", onResize);
     onResize();
-    void g.loadGCMap(map_default2, 0, 1);
+    void g.loadGCMap(map_default2, 0, -1);
     void g.jukebox.play("explore");
   }
   window.addEventListener("load", () => loadEngine(document.body));

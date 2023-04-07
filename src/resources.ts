@@ -1,3 +1,8 @@
+import mapDScript from "../res/map.dscript";
+
+import flatsImage from "../res/atlas/flats.png";
+import flatsJson from "../res/atlas/flats.json";
+
 import eveScoutImage from "../res/atlas/eveScout.png";
 import eveScoutJson from "../res/atlas/eveScout.json";
 import martialistImage from "../res/atlas/martialist.png";
@@ -7,14 +12,11 @@ import nettleSageJson from "../res/atlas/nettleSage.json";
 import sneedCrawlerImage from "../res/atlas/sneedCrawler.png";
 import sneedCrawlerJson from "../res/atlas/sneedCrawler.json";
 
-import mapDScript from "../res/map.dscript";
-import test1Image from "../res/atlas/test1.png";
-import test1Json from "../res/atlas/test1.json";
-
 const Resources: Record<string, string> = {
-  "test1.png": test1Image,
-  "test1.json": test1Json,
   "map.dscript": mapDScript,
+
+  "flats.png": flatsImage,
+  "flats.json": flatsJson,
 
   "eveScout.png": eveScoutImage,
   "eveScout.json": eveScoutJson,

@@ -34,7 +34,9 @@ All the boring normal stuff:
 - `addNormalEnemy(name)` preparation for calling `startNormalFight`
 - `damagePC(number, stat, amount)`
 - `debug(any)` prints to console
+- `getNumber(key: string): number` get cell #NUMBER by key
 - `getPCName(number): string`
+- `getString(key: string): string` get cell #STRING by key
 - `giveItem(name)`
 - `isSolid(x: number, y: number, dir): bool` checks if the wall is solid
 - `makePartyFace(dir: number)`

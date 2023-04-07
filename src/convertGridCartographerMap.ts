@@ -22,6 +22,7 @@ const door: EdgeSide = { decal: "Door", wall: true };
 const locked: EdgeSide = { decal: "Door", wall: true, solid: true };
 const invisible: EdgeSide = { solid: true };
 const fake: EdgeSide = { wall: true };
+const sign: EdgeSide = { decal: "Sign", wall: true, solid: true };
 
 const defaultEdge: EdgeEntry = { main: wall, opposite: wall };
 
@@ -34,6 +35,7 @@ const EdgeDetails: Partial<Record<Edge, EdgeEntry>> = {
   [Edge.Wall_Secret]: { main: invisible, opposite: invisible },
   [Edge.Wall_OneWayRD]: { main: fake, opposite: wall },
   [Edge.Wall_OneWayLU]: { main: wall, opposite: fake },
+  [Edge.Message]: { main: sign, opposite: sign },
 };
 
 class GCMapConverter {
@@ -51,10 +53,20 @@ class GCMapConverter {
     this.decals = new Map();
     this.definitions = new Map(Object.entries(env));
     this.facing = Dir.N;
-    this.grid = new Grid<WorldCell>(() => ({ sides: {}, tags: [] }));
+    this.grid = new Grid<WorldCell>(() => ({
+      sides: {},
+      tags: [],
+      strings: {},
+      numbers: {},
+    }));
     this.scripts = [];
     this.start = xy(0, 0);
     this.textures = new Map();
+
+    this.definitions.set("NORTH", Dir.N);
+    this.definitions.set("EAST", Dir.E);
+    this.definitions.set("SOUTH", Dir.S);
+    this.definitions.set("WEST", Dir.W);
   }
 
   tile(x: number, y: number) {
@@ -74,8 +86,8 @@ class GCMapConverter {
       for (const line of __data?.split("\n") ?? []) {
         if (!line.startsWith("#")) continue;
 
-        const [cmd, arg] = line.split(" ");
-        this.applyCommand(cmd, arg, x, y);
+        const [cmd, ...args] = line.split(" ");
+        this.applyCommand(cmd, args.join(" "), x, y);
       }
     }
 
@@ -130,10 +142,12 @@ class GCMapConverter {
   applyCommand(cmd: string, arg: string, x: number, y: number) {
     switch (cmd) {
       case "#ATLAS":
-        this.atlases.push({
-          image: getResourceURL(arg + ".png"),
-          json: getResourceURL(arg + ".json"),
-        });
+        this.atlases.push(
+          ...arg.split(",").map((name) => ({
+            image: getResourceURL(name + ".png"),
+            json: getResourceURL(name + ".json"),
+          }))
+        );
         return;
 
       case "#DEFINE": {
@@ -174,6 +188,18 @@ class GCMapConverter {
       case "#OBJECT":
         this.tile(x, y).object = this.eval(arg);
         break;
+
+      case "#STRING": {
+        const [name, ...args] = arg.split(",");
+        this.tile(x, y).strings[name] = args.join(",").replace(/\\n/g, "\n");
+        break;
+      }
+
+      case "#NUMBER": {
+        const [name, value] = arg.split(",");
+        this.tile(x, y).numbers[name] = this.eval(value);
+        break;
+      }
 
       default:
         throw new Error(`Unknown command: ${cmd} ${arg} at (${x},${y})`);

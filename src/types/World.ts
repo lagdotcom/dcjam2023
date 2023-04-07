@@ -1,7 +1,7 @@
 import Dir from "./Dir";
 import XY from "./XY";
 
-export type WallDecalType = "Door";
+export type WallDecalType = "Door" | "Sign";
 
 export interface WorldSide {
   solid?: boolean;
@@ -16,6 +16,8 @@ export interface WorldCell {
   floor?: number;
   sides: Partial<Record<Dir, WorldSide>>;
   tags: string[];
+  strings: Record<string, string>;
+  numbers: Record<string, number>;
 }
 
 export interface AtlasReference {

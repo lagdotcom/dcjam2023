@@ -8,7 +8,7 @@ export default class LogRenderer {
   constructor(
     public g: Engine,
     public position = xy(276, 0),
-    public size = xy(144, 160),
+    public size = xy(204, 270),
     public padding = xy(2, 2)
   ) {}
 

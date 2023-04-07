@@ -18,6 +18,8 @@ export default class SkillRenderer implements HasHotspots {
   }
 
   render() {
+    if (this.g.combat.inCombat) return;
+
     const { buttonSize, offset, position, rowHeight } = this;
     const { draw } = withTextStyle(this.g.ctx, {
       textAlign: "left",
