@@ -54,13 +54,12 @@ export default class DeathScreen implements GameScreen {
       fillStyle: "white",
     });
 
-    const { lines, measurement } = textWrap(
+    const { lines } = textWrap(
       classes[this.lastToDie.className].deathQuote,
       width - 200,
       measure
     );
     const textHeight = lines.length * lineHeight;
-    console.log(measurement);
 
     let y = height / 2 - textHeight / 2;
     for (const line of lines) {
