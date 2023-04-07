@@ -146,6 +146,14 @@ export default class DungeonRenderer {
     for (const pos of tiles) {
       const cell = this.g.getCell(pos.x, pos.y);
       if (!cell) continue;
+
+      if (cell.ceiling) this.drawImage(cell.ceiling, "ceiling", pos.dx, pos.dz);
+      if (cell.floor) this.drawImage(cell.floor, "floor", pos.dx, pos.dz);
+    }
+
+    for (const pos of tiles) {
+      const cell = this.g.getCell(pos.x, pos.y);
+      if (!cell) continue;
       // console.log(pos, cell);
 
       if (pos.leftVisible) {
@@ -165,14 +173,6 @@ export default class DungeonRenderer {
         this.drawFrontImage(front.wall, "front", pos.dx, pos.dz - 1);
       if (front?.decal)
         this.drawFrontImage(front.decal, "front", pos.dx, pos.dz - 1);
-
-      if (cell.ceiling) this.drawImage(cell.ceiling, "ceiling", pos.dx, pos.dz);
-      if (cell.floor) this.drawImage(cell.floor, "floor", pos.dx, pos.dz);
-    }
-
-    for (const pos of tiles) {
-      const cell = this.g.getCell(pos.x, pos.y);
-      if (!cell) continue;
 
       if (cell.object)
         this.drawFrontImage(cell.object, "object", pos.dx, pos.dz);

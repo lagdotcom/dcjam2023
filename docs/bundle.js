@@ -1069,6 +1069,15 @@
         const cell = this.g.getCell(pos.x, pos.y);
         if (!cell)
           continue;
+        if (cell.ceiling)
+          this.drawImage(cell.ceiling, "ceiling", pos.dx, pos.dz);
+        if (cell.floor)
+          this.drawImage(cell.floor, "floor", pos.dx, pos.dz);
+      }
+      for (const pos of tiles) {
+        const cell = this.g.getCell(pos.x, pos.y);
+        if (!cell)
+          continue;
         if (pos.leftVisible) {
           const left = cell.sides[leftSide];
           if (left == null ? void 0 : left.wall)
@@ -1088,15 +1097,6 @@
           this.drawFrontImage(front.wall, "front", pos.dx, pos.dz - 1);
         if (front == null ? void 0 : front.decal)
           this.drawFrontImage(front.decal, "front", pos.dx, pos.dz - 1);
-        if (cell.ceiling)
-          this.drawImage(cell.ceiling, "ceiling", pos.dx, pos.dz);
-        if (cell.floor)
-          this.drawImage(cell.floor, "floor", pos.dx, pos.dz);
-      }
-      for (const pos of tiles) {
-        const cell = this.g.getCell(pos.x, pos.y);
-        if (!cell)
-          continue;
         if (cell.object)
           this.drawFrontImage(cell.object, "object", pos.dx, pos.dz);
       }
@@ -3419,13 +3419,13 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
   };
 
   // res/map.dscript
-  var map_default = "./map-C27VFWFB.dscript";
+  var map_default = "./map-SMWPRKKQ.dscript";
 
   // res/atlas/flats.png
-  var flats_default = "./flats-25PTRK3Z.png";
+  var flats_default = "./flats-HZYMJUF6.png";
 
   // res/atlas/flats.json
-  var flats_default2 = "./flats-UBBZHLYT.json";
+  var flats_default2 = "./flats-V3RS32W5.json";
 
   // res/atlas/eveScout.png
   var eveScout_default = "./eveScout-GB6RQXWR.png";
@@ -4877,7 +4877,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
   };
 
   // res/map.json
-  var map_default2 = "./map-W5O63Z2H.json";
+  var map_default2 = "./map-72XR6WFA.json";
 
   // src/index.ts
   function loadEngine(parent) {

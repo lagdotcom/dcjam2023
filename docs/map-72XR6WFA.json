@@ -2,7 +2,7 @@
 	"export": {
 		"from": "2022.5.1",
 		"date": "2023-04-07",
-		"time": "13:19:54"
+		"time": "15:08:00"
 	},
 	"regions": [
 		{
@@ -21983,19 +21983,19 @@
 							"x": 13,
 							"y": 13,
 							"monospaced": false,
-							"__data": "Boulders can be:\n- shifted (higher than a 6)\n- smashed (higher than a 6), \n\nCannot be:\ncut, prayed to, etc.\n\nSuccess: \"(Party member) (actioned) the boulder,\"\nFailure: \"(Party member) strained themselves trying to (action) the boulder.\"\nNo Spirit remaining: \"Nobody has the energy to deal with this.\"\nNo party member capable: \"Nobody understands how to deal with this.\"\n(subtract 1 SPT til next rest if failed)"
+							"__data": "#TAG Boulder\n#OBJECT oBoulder\nBoulders can be:\n- shifted (higher than a 6)\n- smashed (higher than a 6), \n\nCannot be:\ncut, prayed to, etc.\n\nSuccess: \"(Party member) (actioned) the boulder,\"\nFailure: \"(Party member) strained themselves trying to (action) the boulder.\"\nNo Spirit remaining: \"Nobody has the energy to deal with this.\"\nNo party member capable: \"Nobody understands how to deal with this.\"\n(subtract 1 SPT til next rest if failed)"
 						},
 						{
 							"x": 13,
 							"y": 14,
 							"monospaced": false,
-							"__data": "Boulders can be:\n- shifted (higher than a 6)\n- smashed (higher than a 6), \n\nCannot be:\ncut, prayed to, etc.\n\nSuccess: \"(Party member) (actioned) the boulder,\"\nFailure: \"(Party member) strained themselves trying to (action) the boulder.\"\nNo Spirit remaining: \"Nobody has the energy to deal with this.\"\nNo party member capable: \"Nobody understands how to deal with this.\"\n(subtract 1 SPT til next rest if failed)"
+							"__data": "#TAG Boulder\n#OBJECT oBoulder\nBoulders can be:\n- shifted (higher than a 6)\n- smashed (higher than a 6), \n\nCannot be:\ncut, prayed to, etc.\n\nSuccess: \"(Party member) (actioned) the boulder,\"\nFailure: \"(Party member) strained themselves trying to (action) the boulder.\"\nNo Spirit remaining: \"Nobody has the energy to deal with this.\"\nNo party member capable: \"Nobody understands how to deal with this.\"\n(subtract 1 SPT til next rest if failed)"
 						},
 						{
 							"x": 7,
 							"y": 17,
 							"monospaced": false,
-							"__data": "Web, can be:\n- Cut (roll higher than 4)\n- Smashed (roll higher than 6)\n- Shifted (roll higher than 4)\n\nCannot be:\n- Prayed to\n- Read well (lol)\n- Flagsinger'd\n\nSuccess: \"(Party member) (actioned) the web.\"\nFailure: \"(Party member) strained themselves trying to (action) the web.\"\nNo Spirit remaining: \"Nobody has the energy to deal with this.\"\nNo party member capable: \"Nobody understands how to deal with this.\"\n(subtract 1 SPT til next rest if failed)"
+							"__data": "#TAG Web\n#OBJECT oWeb\nWeb, can be:\n- Cut (roll higher than 4)\n- Smashed (roll higher than 6)\n- Shifted (roll higher than 4)\n\nCannot be:\n- Prayed to\n- Read well (lol)\n- Flagsinger'd\n\nSuccess: \"(Party member) (actioned) the web.\"\nFailure: \"(Party member) strained themselves trying to (action) the web.\"\nNo Spirit remaining: \"Nobody has the energy to deal with this.\"\nNo party member capable: \"Nobody understands how to deal with this.\"\n(subtract 1 SPT til next rest if failed)"
 						},
 						{
 							"x": 9,
@@ -22091,13 +22091,13 @@
 							"x": 3,
 							"y": 40,
 							"monospaced": false,
-							"__data": "LifeDew"
+							"__data": "#OBJECT oChest\n#TAG Treasure\n#STRING item,Life Dew"
 						},
 						{
 							"x": 2,
 							"y": 39,
 							"monospaced": false,
-							"__data": "HolyDew"
+							"__data": "#OBJECT oChest\n#TAG Treasure\n#STRING item,Holy Dew"
 						},
 						{
 							"x": 1,
@@ -22127,7 +22127,7 @@
 							"x": 26,
 							"y": 44,
 							"monospaced": false,
-							"__data": "Gambesar"
+							"__data": "#OBJECT oChest\n#TAG Treasure\n#STRING item,Gambesar"
 						},
 						{
 							"x": 46,
@@ -22211,7 +22211,7 @@
 							"x": 37,
 							"y": 43,
 							"monospaced": false,
-							"__data": "Rockring Sleeve"
+							"__data": "#OBJECT oChest\n#TAG Treasure\n#STRING item,Rockring Sleeve"
 						},
 						{
 							"x": 17,
@@ -22301,7 +22301,13 @@
 							"x": 0,
 							"y": 12,
 							"monospaced": false,
-							"__data": "#ATLAS flats\n#ATLAS eveScout,martialist,nettleSage,sneedCrawler\n#DEFINE tWall,1\n#DEFINE dSign,2\n#DEFINE dDoor,3\n#DEFINE dGate,4\n#DEFINE dOpenGate,5\n#DEFINE dLever,6\n#DEFINE dPulledLever,7\n#DEFINE oChest,20\n#STYLE 0,tWall\n#STYLE 1,tWall\n#DECAL Sign,tWall,dSign\n#DECAL Door,tWall,dDoor\n#DECAL Gate,tWall,dGate\n#DECAL Lever,tWall,dLever\n#SCRIPT map.dscript"
+							"__data": "#ATLAS flats\n#ATLAS eveScout,martialist,nettleSage,sneedCrawler\n#DEFINE tWall,1\n#DEFINE dSign,2\n#DEFINE dDoor,3\n#DEFINE dGate,4\n#DEFINE dOpenGate,5\n#DEFINE dLever,6\n#DEFINE dPulledLever,7\n#DEFINE dLockedDoor,8\n#DEFINE oChest,20\n#DEFINE oWeb,21\n#DEFINE oBoulder,22 \n#STYLE 0,tWall\n#STYLE 1,tWall\n#DECAL Sign,tWall,dSign\n#DECAL Door,tWall,dDoor\n#DECAL Gate,tWall,dGate\n#DECAL Lever,tWall,dLever\n#SCRIPT map.dscript"
+						},
+						{
+							"x": 9,
+							"y": 27,
+							"monospaced": false,
+							"__data": "#TAG MixedEncounter2"
 						}
 					]
 				},
