@@ -47,7 +47,8 @@ All the boring normal stuff:
 - `onTagInteract(tag: string, function)` sets up an interact callback
   - the callback should be like `function callback(skill: string)`
 - `random(max: number): number` generates a random integer below `max`
-- `removeTag(x: number, y:number, tag: string)`
+- `removeObject(x: number, y: number)`
+- `removeTag(x: number, y: number, tag: string)`
 - `skillCheck(stat, difficulty): bool` makes the active PC roll a d10 skill check
 - `startArenaFight(): bool` returns false if there's no enemies waiting
 - `startNormalFight(): bool` returns false if there's no enemies waiting

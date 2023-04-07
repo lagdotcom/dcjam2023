@@ -2,7 +2,7 @@
 	"export": {
 		"from": "2022.5.1",
 		"date": "2023-04-07",
-		"time": "11:07:51"
+		"time": "11:39:50"
 	},
 	"regions": [
 		{
@@ -22061,7 +22061,7 @@
 							"x": 15,
 							"y": 21,
 							"monospaced": false,
-							"__data": "Contains: Hair Shirt"
+							"__data": "#OBJECT oChest\n#TAG Treasure\n#STRING item,Hair Shirt\nContains: Hair Shirt"
 						},
 						{
 							"x": 29,
@@ -22301,7 +22301,7 @@
 							"x": 0,
 							"y": 12,
 							"monospaced": false,
-							"__data": "#ATLAS flats\n#ATLAS eveScout,martialist,nettleSage,sneedCrawler\n#DEFINE tWall,1\n#DEFINE dSign,2\n#DEFINE dDoor,3\n#STYLE 0,tWall\n#STYLE 1,tWall\n#DECAL Sign,tWall,dSign\n#DECAL Door,tWall,dDoor\n#SCRIPT map.dscript"
+							"__data": "#ATLAS flats\n#ATLAS eveScout,martialist,nettleSage,sneedCrawler\n#DEFINE tWall,1\n#DEFINE dSign,2\n#DEFINE dDoor,3\n#DEFINE dGate,4\n#DEFINE dOpenGate,5\n#DEFINE oChest,20\n#STYLE 0,tWall\n#STYLE 1,tWall\n#DECAL Sign,tWall,dSign\n#DECAL Door,tWall,dDoor\n#DECAL Gate,tWall,dGate\n#SCRIPT map.dscript"
 						}
 					]
 				},

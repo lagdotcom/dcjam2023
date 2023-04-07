@@ -148,13 +148,17 @@ export default class DungeonRenderer {
       if (!cell) continue;
       // console.log(pos, cell);
 
-      const left = cell.sides[leftSide];
-      if (left?.wall) this.drawImage(left.wall, "side", pos.dx - 1, pos.dz);
-      if (left?.decal) this.drawImage(left.decal, "side", pos.dx - 1, pos.dz);
-
-      const right = cell.sides[rightSide];
-      if (right?.wall) this.drawImage(right.wall, "side", pos.dx + 1, pos.dz);
-      if (right?.decal) this.drawImage(right.decal, "side", pos.dx + 1, pos.dz);
+      if (pos.leftVisible) {
+        const left = cell.sides[leftSide];
+        if (left?.wall) this.drawImage(left.wall, "side", pos.dx - 1, pos.dz);
+        if (left?.decal) this.drawImage(left.decal, "side", pos.dx - 1, pos.dz);
+      }
+      if (pos.rightVisible) {
+        const right = cell.sides[rightSide];
+        if (right?.wall) this.drawImage(right.wall, "side", pos.dx + 1, pos.dz);
+        if (right?.decal)
+          this.drawImage(right.decal, "side", pos.dx + 1, pos.dz);
+      }
 
       const front = cell.sides[this.g.facing];
       if (front?.wall)

@@ -1,7 +1,7 @@
 import Dir from "./Dir";
 import XY from "./XY";
 
-export type WallDecalType = "Door" | "Sign";
+export type WallDecalType = "Door" | "Gate" | "Sign";
 
 export interface WorldSide {
   solid?: boolean;

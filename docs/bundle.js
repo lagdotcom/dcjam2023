@@ -4,22 +4,8 @@
   var __defProp = Object.defineProperty;
   var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
   var __getOwnPropNames = Object.getOwnPropertyNames;
-  var __getOwnPropSymbols = Object.getOwnPropertySymbols;
   var __getProtoOf = Object.getPrototypeOf;
   var __hasOwnProp = Object.prototype.hasOwnProperty;
-  var __propIsEnum = Object.prototype.propertyIsEnumerable;
-  var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
-  var __spreadValues = (a, b) => {
-    for (var prop in b ||= {})
-      if (__hasOwnProp.call(b, prop))
-        __defNormalProp(a, prop, b[prop]);
-    if (__getOwnPropSymbols)
-      for (var prop of __getOwnPropSymbols(b)) {
-        if (__propIsEnum.call(b, prop))
-          __defNormalProp(a, prop, b[prop]);
-      }
-    return a;
-  };
   var __commonJS = (cb, mod) => function __require() {
     return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
   };
@@ -932,15 +918,30 @@
       if (!cell)
         return;
       const [dx, dz] = this.displacement(position);
-      this.entries.set(tag, { x, y, dx, dz, width, depth });
-      const leftDir = rotate(facing, 3);
-      const leftWall = cell.sides[leftDir];
-      if (!(leftWall == null ? void 0 : leftWall.wall))
-        this.propagate(move(position, leftDir), width - 1, depth);
-      const rightDir = rotate(facing, 1);
-      const rightWall = cell.sides[rightDir];
-      if (!(rightWall == null ? void 0 : rightWall.wall))
-        this.propagate(move(position, rightDir), width - 1, depth);
+      const leftVisible = dx <= 0;
+      const rightVisible = dx >= 0;
+      this.entries.set(tag, {
+        x,
+        y,
+        dx,
+        dz,
+        width,
+        depth,
+        leftVisible,
+        rightVisible
+      });
+      if (leftVisible) {
+        const leftDir = rotate(facing, 3);
+        const leftWall = cell.sides[leftDir];
+        if (!(leftWall == null ? void 0 : leftWall.wall))
+          this.propagate(move(position, leftDir), width - 1, depth);
+      }
+      if (rightVisible) {
+        const rightDir = rotate(facing, 1);
+        const rightWall = cell.sides[rightDir];
+        if (!(rightWall == null ? void 0 : rightWall.wall))
+          this.propagate(move(position, rightDir), width - 1, depth);
+      }
       const forwardWall = cell.sides[facing];
       if (!(forwardWall == null ? void 0 : forwardWall.wall))
         this.propagate(move(position, facing), width, depth - 1);
@@ -1068,16 +1069,20 @@
         const cell = this.g.getCell(pos.x, pos.y);
         if (!cell)
           continue;
-        const left = cell.sides[leftSide];
-        if (left == null ? void 0 : left.wall)
-          this.drawImage(left.wall, "side", pos.dx - 1, pos.dz);
-        if (left == null ? void 0 : left.decal)
-          this.drawImage(left.decal, "side", pos.dx - 1, pos.dz);
-        const right = cell.sides[rightSide];
-        if (right == null ? void 0 : right.wall)
-          this.drawImage(right.wall, "side", pos.dx + 1, pos.dz);
-        if (right == null ? void 0 : right.decal)
-          this.drawImage(right.decal, "side", pos.dx + 1, pos.dz);
+        if (pos.leftVisible) {
+          const left = cell.sides[leftSide];
+          if (left == null ? void 0 : left.wall)
+            this.drawImage(left.wall, "side", pos.dx - 1, pos.dz);
+          if (left == null ? void 0 : left.decal)
+            this.drawImage(left.decal, "side", pos.dx - 1, pos.dz);
+        }
+        if (pos.rightVisible) {
+          const right = cell.sides[rightSide];
+          if (right == null ? void 0 : right.wall)
+            this.drawImage(right.wall, "side", pos.dx + 1, pos.dz);
+          if (right == null ? void 0 : right.decal)
+            this.drawImage(right.decal, "side", pos.dx + 1, pos.dz);
+        }
         const front = cell.sides[this.g.facing];
         if (front == null ? void 0 : front.wall)
           this.drawFrontImage(front.wall, "front", pos.dx, pos.dz - 1);
@@ -1552,6 +1557,16 @@
         }
       );
       this.addNative("random", ["number"], "number", random);
+      this.addNative(
+        "removeObject",
+        ["number", "number"],
+        void 0,
+        (x, y) => {
+          const cell = getCell(x, y);
+          cell.object = void 0;
+          g.draw();
+        }
+      );
       this.addNative(
         "removeTag",
         ["number", "number", "string"],
@@ -3376,13 +3391,13 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
   };
 
   // res/map.dscript
-  var map_default = "./map-2LUOABUJ.dscript";
+  var map_default = "./map-FRYIGI3J.dscript";
 
   // res/atlas/flats.png
-  var flats_default = "./flats-2M2255OW.png";
+  var flats_default = "./flats-PEHJXQ3Z.png";
 
   // res/atlas/flats.json
-  var flats_default2 = "./flats-S4OCCEE4.json";
+  var flats_default2 = "./flats-2HLDS6GB.json";
 
   // res/atlas/eveScout.png
   var eveScout_default = "./eveScout-GB6RQXWR.png";
@@ -3436,6 +3451,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
   var invisible = { solid: true };
   var fake = { wall: true };
   var sign = { decal: "Sign", wall: true, solid: true };
+  var gate = { decal: "Gate", wall: false, solid: true };
   var defaultEdge = { main: wall, opposite: wall };
   var EdgeDetails = {
     [2 /* Door */]: { main: door, opposite: door },
@@ -3446,8 +3462,16 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     [13 /* Wall_Secret */]: { main: invisible, opposite: invisible },
     [10 /* Wall_OneWayRD */]: { main: fake, opposite: wall },
     [7 /* Wall_OneWayLU */]: { main: wall, opposite: fake },
-    [28 /* Message */]: { main: sign, opposite: sign }
+    [28 /* Message */]: { main: sign, opposite: sign },
+    [27 /* Gate */]: { main: gate, opposite: gate }
   };
+  function compareNotes(a, b) {
+    if (a.x !== b.x)
+      return a.x - b.x;
+    if (a.y !== b.y)
+      return a.y - b.y;
+    return 0;
+  }
   var GCMapConverter = class {
     constructor(env = {}) {
       this.atlases = [];
@@ -3479,7 +3503,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       const f = r.floors.find((f2) => f2.index === floor);
       if (!f)
         throw new Error(`No such floor: ${floor}`);
-      for (const note of f.notes) {
+      for (const note of f.notes.sort(compareNotes)) {
         const { __data, x, y } = note;
         for (const line of (_a = __data == null ? void 0 : __data.split("\n")) != null ? _a : []) {
           if (!line.startsWith("#"))
@@ -4123,7 +4147,11 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
   };
 
   // src/items/index.ts
-  var allItems = __spreadValues(__spreadValues(__spreadValues(__spreadValues(__spreadValues(__spreadValues({}, cleavesman_exports), farScout_exports), flagSinger_exports), loamSeer_exports), martialist_exports), warCaller_exports);
+  var allItems = Object.fromEntries(
+    [cleavesman_exports, farScout_exports, flagSinger_exports, loamSeer_exports, martialist_exports, warCaller_exports].flatMap(
+      (repository) => Object.values(repository).map((item) => [item.name, item])
+    )
+  );
   function getItem(s) {
     return allItems[s];
   }
@@ -4811,7 +4839,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
   };
 
   // res/map.json
-  var map_default2 = "./map-N5PAY7F7.json";
+  var map_default2 = "./map-66DVFW57.json";
 
   // src/index.ts
   function loadEngine(parent) {

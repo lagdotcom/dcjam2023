@@ -1,5 +1,5 @@
 import { AtlasReference, WallDecalType, WorldCell } from "./types/World";
-import { Edge, GCMap } from "./types/GCMap";
+import { Edge, GCMap, Note } from "./types/GCMap";
 import { dirFromInitial, xy } from "./tools/geometry";
 
 import Dir from "./types/Dir";
@@ -23,6 +23,7 @@ const locked: EdgeSide = { decal: "Door", wall: true, solid: true };
 const invisible: EdgeSide = { solid: true };
 const fake: EdgeSide = { wall: true };
 const sign: EdgeSide = { decal: "Sign", wall: true, solid: true };
+const gate: EdgeSide = { decal: "Gate", wall: false, solid: true };
 
 const defaultEdge: EdgeEntry = { main: wall, opposite: wall };
 
@@ -36,7 +37,14 @@ const EdgeDetails: Partial<Record<Edge, EdgeEntry>> = {
   [Edge.Wall_OneWayRD]: { main: fake, opposite: wall },
   [Edge.Wall_OneWayLU]: { main: wall, opposite: fake },
   [Edge.Message]: { main: sign, opposite: sign },
+  [Edge.Gate]: { main: gate, opposite: gate },
 };
+
+function compareNotes(a: Note, b: Note) {
+  if (a.x !== b.x) return a.x - b.x;
+  if (a.y !== b.y) return a.y - b.y;
+  return 0;
+}
 
 class GCMapConverter {
   atlases: AtlasReference[];
@@ -80,7 +88,7 @@ class GCMapConverter {
     const f = r.floors.find((f) => f.index === floor);
     if (!f) throw new Error(`No such floor: ${floor}`);
 
-    for (const note of f.notes) {
+    for (const note of f.notes.sort(compareNotes)) {
       const { __data, x, y } = note;
 
       for (const line of __data?.split("\n") ?? []) {

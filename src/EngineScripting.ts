@@ -193,6 +193,17 @@ export default class EngineScripting extends DScriptHost {
     this.addNative("random", ["number"], "number", random);
 
     this.addNative(
+      "removeObject",
+      ["number", "number"],
+      undefined,
+      (x: number, y: number) => {
+        const cell = getCell(x, y);
+        cell.object = undefined;
+        g.draw();
+      }
+    );
+
+    this.addNative(
       "removeTag",
       ["number", "number", "string"],
       undefined,

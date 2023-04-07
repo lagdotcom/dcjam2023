@@ -6,17 +6,12 @@ import * as loamSeer from "./loamSeer";
 import * as martialist from "./martialist";
 import * as warCaller from "./warCaller";
 
-const allItems = {
-  ...cleavesman,
-  ...farScout,
-  ...flagSinger,
-  ...loamSeer,
-  ...martialist,
-  ...warCaller,
-};
-
-export type ItemName = keyof typeof allItems;
+const allItems = Object.fromEntries(
+  [cleavesman, farScout, flagSinger, loamSeer, martialist, warCaller].flatMap(
+    (repository) => Object.values(repository).map((item) => [item.name, item])
+  )
+);
 
 export function getItem(s: string): Item | undefined {
-  return allItems[s as ItemName];
+  return allItems[s];
 }

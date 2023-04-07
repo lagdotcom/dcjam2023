@@ -10,3 +10,12 @@ function SignInteract()
   end
 end
 onTagInteract('Sign', SignInteract)
+
+function TreasureInteract()
+  item = getString('item')
+  giveItem(item)
+  message("The box contains a " + item + ".")
+  removeTag(partyX, partyY, 'Treasure')
+  removeObject(partyX, partyY)
+end
+onTagInteract('Treasure', TreasureInteract)

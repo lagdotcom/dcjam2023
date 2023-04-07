@@ -12,6 +12,8 @@ interface FovEntry {
   dz: number;
   width: number;
   depth: number;
+  leftVisible: boolean;
+  rightVisible: boolean;
 }
 
 const facingDisplacements: Record<Dir, [number, number, number, number]> = {
@@ -73,17 +75,31 @@ class FovCalculator {
     if (!cell) return;
 
     const [dx, dz] = this.displacement(position);
-    this.entries.set(tag, { x, y, dx, dz, width, depth });
+    const leftVisible = dx <= 0;
+    const rightVisible = dx >= 0;
+    this.entries.set(tag, {
+      x,
+      y,
+      dx,
+      dz,
+      width,
+      depth,
+      leftVisible,
+      rightVisible,
+    });
 
-    const leftDir = rotate(facing, 3);
-    const leftWall = cell.sides[leftDir];
-    if (!leftWall?.wall)
-      this.propagate(move(position, leftDir), width - 1, depth);
-
-    const rightDir = rotate(facing, 1);
-    const rightWall = cell.sides[rightDir];
-    if (!rightWall?.wall)
-      this.propagate(move(position, rightDir), width - 1, depth);
+    if (leftVisible) {
+      const leftDir = rotate(facing, 3);
+      const leftWall = cell.sides[leftDir];
+      if (!leftWall?.wall)
+        this.propagate(move(position, leftDir), width - 1, depth);
+    }
+    if (rightVisible) {
+      const rightDir = rotate(facing, 1);
+      const rightWall = cell.sides[rightDir];
+      if (!rightWall?.wall)
+        this.propagate(move(position, rightDir), width - 1, depth);
+    }
 
     const forwardWall = cell.sides[facing];
     if (!forwardWall?.wall)
