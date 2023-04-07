@@ -24,7 +24,7 @@ export default class DeathScreen implements GameScreen {
   }
 
   onKey(e: KeyboardEvent) {
-    if (e.code === "Escape") {
+    if (e.code === "Escape" || this.alpha >= 1) {
       this.g.screen = new TitleScreen(this.g);
       if (this.interval) clearInterval(this.interval);
     }

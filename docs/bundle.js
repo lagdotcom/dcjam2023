@@ -3979,6 +3979,13 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       this.g = g;
       g.draw();
       void g.jukebox.play("title");
+      g.log = [];
+      g.pendingArenaEnemies = [];
+      g.pendingNormalEnemies = [];
+      g.scripting = new EngineScripting(g);
+      g.showLog = false;
+      g.visited.clear();
+      g.walls.clear();
       this.index = 0;
       this.selected = /* @__PURE__ */ new Set();
     }
@@ -4485,13 +4492,12 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
           textBaseline: "middle",
           fillStyle: "white"
         });
-        const { lines, measurement } = textWrap(
+        const { lines } = textWrap(
           classes_default[this.lastToDie.className].deathQuote,
           width - 200,
           measure
         );
         const textHeight = lines.length * lineHeight;
-        console.log(measurement);
         let y = height / 2 - textHeight / 2;
         for (const line of lines) {
           draw(line, width / 2, y);
@@ -4508,7 +4514,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       this.oldScreen = g.screen;
     }
     onKey(e) {
-      if (e.code === "Escape") {
+      if (e.code === "Escape" || this.alpha >= 1) {
         this.g.screen = new TitleScreen(this.g);
         if (this.interval)
           clearInterval(this.interval);

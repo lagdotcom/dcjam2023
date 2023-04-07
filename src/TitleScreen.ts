@@ -1,6 +1,7 @@
 import mapJson from "../res/map.json";
 import Colours from "./Colours";
 import Engine from "./Engine";
+import EngineScripting from "./EngineScripting";
 import Player from "./Player";
 import classes from "./classes";
 import { wrap } from "./tools/numbers";
@@ -16,6 +17,13 @@ export default class TitleScreen implements GameScreen {
   constructor(public g: Engine) {
     g.draw();
     void g.jukebox.play("title");
+    g.log = [];
+    g.pendingArenaEnemies = [];
+    g.pendingNormalEnemies = [];
+    g.scripting = new EngineScripting(g);
+    g.showLog = false;
+    g.visited.clear();
+    g.walls.clear();
 
     this.index = 0;
     this.selected = new Set();
