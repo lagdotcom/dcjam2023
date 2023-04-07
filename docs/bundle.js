@@ -1643,6 +1643,8 @@
       this.env.set("partyX", num(this.g.position.x, true));
       this.env.set("partyY", num(this.g.position.y, true));
       this.env.set("partyDir", num(this.g.facing, true));
+      this.env.delete("selectedX");
+      this.env.delete("selectedY");
       if (fn._ === "function")
         return callFunction(this, fn, args.slice(0, fn.args.length));
       else
@@ -3417,7 +3419,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
   };
 
   // res/map.dscript
-  var map_default = "./map-F5WG5MLL.dscript";
+  var map_default = "./map-C27VFWFB.dscript";
 
   // res/atlas/flats.png
   var flats_default = "./flats-25PTRK3Z.png";
@@ -4875,7 +4877,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
   };
 
   // res/map.json
-  var map_default2 = "./map-XSISRDFQ.json";
+  var map_default2 = "./map-W5O63Z2H.json";
 
   // src/index.ts
   function loadEngine(parent) {

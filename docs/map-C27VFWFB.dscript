@@ -31,3 +31,15 @@ function UnlockGateA()
   end
 end
 onTagInteract('UnlockGateA', UnlockGateA)
+
+function ScoutEncounter1()
+  removeTag(partyX, partyY, 'ScoutEncounter1')
+  message('The Eve Scout sizes you up and looks to dart into the shadows.')
+  if skillCheck('determination', 3) then
+    message('Before the Eve Scout can move a muscle, she is struck down by ' + getPCName(partyDir) + '.')
+  else
+    message('You were unable to react in time; the Eve Scout slips into the darkness.')
+    addArenaNormal('Eve Scout')
+  end
+end
+onTagEnter('ScoutEncounter1', ScoutEncounter1)

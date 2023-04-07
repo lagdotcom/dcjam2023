@@ -2,7 +2,7 @@
 	"export": {
 		"from": "2022.5.1",
 		"date": "2023-04-07",
-		"time": "13:03:38"
+		"time": "13:19:54"
 	},
 	"regions": [
 		{
@@ -21971,7 +21971,7 @@
 							"x": 12,
 							"y": 15,
 							"monospaced": false,
-							"__data": "An Eve Scout stands here: \"The Eve Scout sizes you up and looks to dart into the shadows, catch her quickly!\"\n- A dice roll occurs, it being the first one you only need to roll higher than a 3\nSuccess: \"Before the Eve Scout can move a muscle, she is struck down by (current party lead).\"\nFailure: \"You were unable to react in time, the Eve Scout slips into the darkness.\" (add 1 Eve Scout to next encounter)"
+							"__data": "#TAG ScoutEncounter1\nAn Eve Scout stands here: \"The Eve Scout sizes you up and looks to dart into the shadows, catch her quickly!\"\n- A dice roll occurs, it being the first one you only need to roll higher than a 3\nSuccess: \"Before the Eve Scout can move a muscle, she is struck down by (current party lead).\"\nFailure: \"You were unable to react in time, the Eve Scout slips into the darkness.\" (add 1 Eve Scout to next encounter)"
 						},
 						{
 							"x": 14,
@@ -22061,7 +22061,7 @@
 							"x": 15,
 							"y": 21,
 							"monospaced": false,
-							"__data": "#OBJECT oChest\n#TAG Treasure\n#STRING item,Hair Shirt\nContains: Hair Shirt"
+							"__data": "#OBJECT oChest\n#TAG Treasure\n#STRING item,Hair Shirt"
 						},
 						{
 							"x": 29,
