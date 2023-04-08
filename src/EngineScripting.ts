@@ -17,6 +17,7 @@ import XY from "./types/XY";
 import isStat from "./tools/combatants";
 import { random } from "./tools/rng";
 import { EnemyName, isEnemyName } from "./enemies";
+import { isSoundName } from "./Sounds";
 
 export default class EngineScripting extends DScriptHost {
   onTagEnter: Map<string, RuntimeFunction>;
@@ -70,6 +71,10 @@ export default class EngineScripting extends DScriptHost {
         );
 
       return side;
+    };
+    const getSound = (name: string) => {
+      if (!isSoundName(name)) throw new Error(`invalid sound name: ${name}`);
+      return name;
     };
 
     this.addNative("addArenaEnemy", ["string"], undefined, (name: string) => {
@@ -304,6 +309,11 @@ export default class EngineScripting extends DScriptHost {
 
     this.addNative("obstacle", [], undefined, () => g.setObstacle(true));
     this.addNative("clearObstacle", [], undefined, () => g.setObstacle(false));
+
+    this.addNative("playSound", ["string"], undefined, (name: string) => {
+      const sound = getSound(name);
+      void g.sfx.play(sound);
+    });
   }
 
   run(program: Program) {

@@ -17,6 +17,7 @@ import {
 } from "./actions";
 import Engine from "./Engine";
 import { wrap } from "./tools/numbers";
+import { niceList, pluralS } from "./tools/lists";
 
 export interface EnemyAnimation {
   delay: number;
@@ -35,6 +36,11 @@ const Lash: CombatAction = {
   targets: oneOpponent,
   act({ g, me, targets }) {
     if (g.applyDamage(me, targets, 3, "hp", "normal") > 0) {
+      g.addToLog(
+        `${niceList(targets.map((x) => x.name))} feel${pluralS(
+          targets
+        )} temporarily demoralized.`
+      );
       g.addEffect(() => ({
         name: "Lash",
         duration: 2,

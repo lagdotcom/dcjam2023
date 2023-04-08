@@ -52,6 +52,7 @@ export const Liquor: Item = {
     targets: ally(1),
     act({ g, targets }) {
       for (const target of targets) {
+        // TODO this will crash the game
         target.camaraderie++;
         g.addToLog(`${target.name} feels a little more convivial.`);
       }
@@ -70,6 +71,7 @@ export const Ration: Item = {
     targets: ally(1),
     act({ g, targets }) {
       for (const target of targets) {
+        // TODO this will crash the game
         target.determination++;
         g.addToLog(`${target.name} feels a little more determined.`);
       }
@@ -88,6 +90,7 @@ export const HolyDew: Item = {
     targets: ally(1),
     act({ g, targets }) {
       for (const target of targets) {
+        // TODO this will crash the game
         target.spirit++;
         g.addToLog(`${target.name} feels their hopes lift.`);
       }

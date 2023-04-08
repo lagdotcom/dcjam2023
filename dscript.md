@@ -51,6 +51,7 @@ All the boring normal stuff:
   - the callback should be like `function callback(x: number, y: number)`
 - `onTagInteract(tag: string, function)` sets up an interact callback
   - the callback should be like `function callback(skill: string)`
+- `playSound(name)`
 - `random(max: number): number` generates a random integer below `max`
 - `removeObject(x: number, y: number)`
 - `removeTag(x: number, y: number, tag: string)`

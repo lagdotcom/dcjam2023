@@ -22,6 +22,7 @@ onTagInteract('Treasure', TreasureInteract)
 
 function UnlockGateA()
   if partyDir == EAST then
+    playSound('clank')
     removeTag(partyX, partyY, 'UnlockGateA')
     setDecal(partyX, partyY, EAST, dPulledLever)
     selectTileWithTag('GateA')
@@ -35,6 +36,7 @@ onTagInteract('UnlockGateA', UnlockGateA)
 
 function UnlockGateB()
   if partyDir == NORTH then
+    playSound('clank')
     removeTag(partyX, partyY, 'UnlockGateB')
     setDecal(partyX, partyY, NORTH, dPulledLever)
     selectTileWithTag('GateB')
@@ -48,6 +50,7 @@ onTagInteract('UnlockGateB', UnlockGateB)
 
 function UnlockGateC()
   if partyDir == SOUTH then
+    playSound('clank')
     removeTag(partyX, partyY, 'UnlockGateC')
     setDecal(partyX, partyY, SOUTH, dPulledLever)
     selectTileWithTag('GateC')
@@ -61,6 +64,7 @@ onTagInteract('UnlockGateC', UnlockGateC)
 
 function UnlockGateD()
   if partyDir == NORTH then
+    playSound('clank')
     removeTag(partyX, partyY, 'UnlockGateD')
     setDecal(partyX, partyY, NORTH, dPulledLever)
     selectTileWithTag('GateD')
@@ -74,6 +78,7 @@ onTagInteract('UnlockGateD', UnlockGateD)
 
 function UnlockGateE()
   if partyDir == NORTH then
+    playSound('clank')
     removeTag(partyX, partyY, 'UnlockGateE')
     setDecal(partyX, partyY, NORTH, dPulledLever)
     selectTileWithTag('GateE')
@@ -100,6 +105,7 @@ end
 function WebInteract(skill: string)
   if skill == 'Cut' then
     if skillCheck('determination', 4) then
+      playSound('woosh')
       message(getPCName(pcIndex) + ' cuts the webs away.')
       ClearObstacleHere('Web')
       return
@@ -107,6 +113,7 @@ function WebInteract(skill: string)
   else
     if skill == 'Smash' then
       if skillCheck('determination', 6) then
+        playSound('woosh')
         message(getPCName(pcIndex) + ' smashes into the webs.')
         ClearObstacleHere('Web')
         return
@@ -114,6 +121,7 @@ function WebInteract(skill: string)
     else
       if skill == 'Shift' then
         if skillCheck('determination', 4) then
+          playSound('woosh')
           message(getPCName(pcIndex) + ' shifts through the webs.')
           ClearObstacleHere('Web')
           return
@@ -139,6 +147,7 @@ onTagEnter('Boulder', BoulderEnter)
 function BoulderInteract(skill: string)
   if skill == 'Smash' then
     if skillCheck('determination', 6) then
+      playSound('woosh')
       message(getPCName(pcIndex) + ' smashes the boulder to bits.')
       ClearObstacleHere('Boulder')
       return
@@ -146,6 +155,7 @@ function BoulderInteract(skill: string)
   else
     if skill == 'Shift' then
       if skillCheck('determination', 6) then
+        playSound('woosh')
         message(getPCName(pcIndex) + ' shifts the boulder away.')
         ClearObstacleHere('Boulder')
         return
@@ -268,6 +278,7 @@ end
 function ArenaAEnter()
   if isArenaFightPending() then
     if not ArenaAClosed then
+      playSound('clank')
       message('The gate to the arena slams behind you, the gods cheer for blood!')
       ArenaADoors(true, dGate)
     end
@@ -310,6 +321,7 @@ end
 function ArenaBEnter()
   if isArenaFightPending() then
     if not ArenaBClosed then
+      playSound('clank')
       message('The gate to the arena slams behind you, the gods cheer for blood!')
       ArenaBDoors(true, dGate)
     end

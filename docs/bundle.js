@@ -391,6 +391,23 @@
     return m < 0 ? m + max : m;
   }
 
+  // src/tools/lists.ts
+  function niceList(items) {
+    var _a;
+    if (items.length === 0)
+      return "nobody";
+    if (items.length === 1)
+      return items[0];
+    const firstBunch = items.slice(0, -1);
+    const last = (_a = items.at(-1)) != null ? _a : "nobody";
+    return `${firstBunch.join(", ")} and ${last}`;
+  }
+  function pluralS(items) {
+    if (items.length === 1)
+      return "s";
+    return "";
+  }
+
   // src/enemies.ts
   var Lash = {
     name: "Lash",
@@ -399,6 +416,11 @@
     targets: oneOpponent,
     act({ g, me, targets }) {
       if (g.applyDamage(me, targets, 3, "hp", "normal") > 0) {
+        g.addToLog(
+          `${niceList(targets.map((x) => x.name))} feel${pluralS(
+            targets
+          )} temporarily demoralized.`
+        );
         g.addEffect(() => ({
           name: "Lash",
           duration: 2,
@@ -1845,6 +1867,50 @@
     return AttackableStats.includes(s);
   }
 
+  // res/sfx/buff1.ogg
+  var buff1_default = "./buff1-X33WXBHF.ogg";
+
+  // res/sfx/clank.ogg
+  var clank_default = "./clank-SVQ65PBR.ogg";
+
+  // res/sfx/cry1.ogg
+  var cry1_default = "./cry1-J2YW3NUB.ogg";
+
+  // res/sfx/death1.ogg
+  var death1_default = "./death1-LNMY6PR7.ogg";
+
+  // res/sfx/woosh.ogg
+  var woosh_default = "./woosh-7BFHNSSE.ogg";
+
+  // src/Sounds.ts
+  var allSounds = {
+    buff1: buff1_default,
+    clank: clank_default,
+    cry1: cry1_default,
+    death1: death1_default,
+    woosh: woosh_default
+  };
+  function isSoundName(name) {
+    return typeof allSounds[name] === "string";
+  }
+  var Sounds = class {
+    constructor(g) {
+      this.g = g;
+      for (const url of Object.values(allSounds))
+        void g.res.loadAudio(url);
+      g.eventHandlers.onKilled.add(
+        ({ who }) => void this.play(who.isPC ? "cry1" : "death1")
+      );
+    }
+    play(name) {
+      return __async(this, null, function* () {
+        const audio = yield this.g.res.loadAudio(allSounds[name]);
+        audio.currentTime = 0;
+        yield audio.play();
+      });
+    }
+  };
+
   // src/EngineScripting.ts
   var EngineScripting = class extends DScriptHost {
     constructor(g) {
@@ -1898,6 +1964,11 @@
             `script tried to unlock ${x},${y},${d} -- side does not exist`
           );
         return side;
+      };
+      const getSound = (name) => {
+        if (!isSoundName(name))
+          throw new Error(`invalid sound name: ${name}`);
+        return name;
       };
       this.addNative("addArenaEnemy", ["string"], void 0, (name) => {
         const enemy = getEnemy(name);
@@ -2112,6 +2183,10 @@
       );
       this.addNative("obstacle", [], void 0, () => g.setObstacle(true));
       this.addNative("clearObstacle", [], void 0, () => g.setObstacle(false));
+      this.addNative("playSound", ["string"], void 0, (name) => {
+        const sound = getSound(name);
+        void g.sfx.play(sound);
+      });
     }
     run(program) {
       return run(this, program);
@@ -4188,7 +4263,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
   };
 
   // res/map.dscript
-  var map_default2 = "./map-DFHFNJNH.dscript";
+  var map_default2 = "./map-ZR4AD5RX.dscript";
 
   // res/atlas/flats.png
   var flats_default = "./flats-YFBZMEC6.png";
@@ -4674,43 +4749,6 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
         if (this.interval)
           clearInterval(this.interval);
       }
-    }
-  };
-
-  // res/sfx/buff1.ogg
-  var buff1_default = "./buff1-X33WXBHF.ogg";
-
-  // res/sfx/cry1.ogg
-  var cry1_default = "./cry1-J2YW3NUB.ogg";
-
-  // res/sfx/death1.ogg
-  var death1_default = "./death1-LNMY6PR7.ogg";
-
-  // res/sfx/woosh.ogg
-  var woosh_default = "./woosh-7BFHNSSE.ogg";
-
-  // src/Sounds.ts
-  var allSounds = {
-    buff1: buff1_default,
-    cry1: cry1_default,
-    death1: death1_default,
-    woosh: woosh_default
-  };
-  var Sounds = class {
-    constructor(g) {
-      this.g = g;
-      for (const url of Object.values(allSounds))
-        void g.res.loadAudio(url);
-      g.eventHandlers.onKilled.add(
-        ({ who }) => void this.play(who.isPC ? "cry1" : "death1")
-      );
-    }
-    play(name) {
-      return __async(this, null, function* () {
-        const audio = yield this.g.res.loadAudio(allSounds[name]);
-        audio.currentTime = 0;
-        yield audio.play();
-      });
     }
   };
 
