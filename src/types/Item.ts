@@ -9,7 +9,7 @@ export default interface Item {
   name: string;
   restrict?: ClassName[];
   slot?: ItemSlot;
-  type?: "Weapon" | "Armour" | "Shield" | "Catalyst" | "Flag";
+  type?: "Weapon" | "Armour" | "Shield" | "Catalyst" | "Flag" | "Consumable";
   action: CombatAction;
   bonus: Partial<Record<BoostableStat, number>>;
   lore?: string;

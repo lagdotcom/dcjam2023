@@ -2849,7 +2849,7 @@
   var sad_folks_default = "./sad-folks-WT2RUZAU.png";
 
   // res/map.json
-  var map_default = "./map-O7O3ZS2I.json";
+  var map_default = "./map-F62K2GKU.json";
 
   // src/items/cleavesman.ts
   var cleavesman_exports = {};
@@ -4052,8 +4052,11 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
           fontSize: 20
         });
         draw("Poisoned Daggers", canvas.width / 2, 20);
-        if (selected.size === 4)
-          draw("Press Space to begin", canvas.width / 2, canvas.height - 20);
+        draw(
+          selected.size === 4 ? "Press Space to begin" : "Pick 4 with Enter",
+          canvas.width / 2,
+          canvas.height - 20
+        );
       }
       {
         const { draw, lineHeight, measure } = withTextStyle(ctx, {
@@ -4438,9 +4441,115 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     return converter.convert(j, region, floor);
   }
 
+  // src/items/consumable.ts
+  var consumable_exports = {};
+  __export(consumable_exports, {
+    HolyDew: () => HolyDew,
+    LifeDew: () => LifeDew,
+    Liquor: () => Liquor,
+    ManaDew: () => ManaDew,
+    Ration: () => Ration
+  });
+  var LifeDew = {
+    name: "Life Dew",
+    type: "Consumable",
+    bonus: {},
+    action: {
+      name: "Scatter",
+      tags: ["heal"],
+      sp: 1,
+      targets: ally(1),
+      targetFilter: (c) => c.hp < c.maxHP,
+      act({ g, me, targets }) {
+        g.heal(me, targets, 3);
+      }
+    }
+  };
+  var ManaDew = {
+    name: "Mana Dew",
+    type: "Consumable",
+    bonus: {},
+    action: {
+      name: "Scatter",
+      tags: ["heal"],
+      sp: 1,
+      targets: ally(1),
+      targetFilter: (c) => c.sp < c.maxSP,
+      act({ g, targets }) {
+        for (const target of targets) {
+          const newSP = Math.min(target.maxSP, target.sp + 3);
+          const gain = newSP - target.maxSP;
+          if (gain) {
+            target.sp += gain;
+            g.addToLog(`${target.name} feels recharged.`);
+          }
+        }
+      }
+    }
+  };
+  var Liquor = {
+    name: "Liquor",
+    type: "Consumable",
+    bonus: {},
+    action: {
+      name: "Drink",
+      tags: ["heal"],
+      sp: 1,
+      targets: ally(1),
+      act({ g, targets }) {
+        for (const target of targets) {
+          target.camaraderie++;
+          g.addToLog(`${target.name} feels a little more convivial.`);
+        }
+      }
+    }
+  };
+  var Ration = {
+    name: "Ration",
+    type: "Consumable",
+    bonus: {},
+    action: {
+      name: "Eat",
+      tags: ["heal"],
+      sp: 1,
+      targets: ally(1),
+      act({ g, targets }) {
+        for (const target of targets) {
+          target.determination++;
+          g.addToLog(`${target.name} feels a little more determined.`);
+        }
+      }
+    }
+  };
+  var HolyDew = {
+    name: "Holy Dew",
+    type: "Consumable",
+    bonus: {},
+    action: {
+      name: "Scatter",
+      tags: ["heal"],
+      sp: 1,
+      targets: ally(1),
+      act({ g, targets }) {
+        for (const target of targets) {
+          target.spirit++;
+          g.addToLog(`${target.name} feels their hopes lift.`);
+        }
+      }
+    }
+  };
+
   // src/items/index.ts
   var allItems = Object.fromEntries(
-    [cleavesman_exports, farScout_exports, flagSinger_exports, loamSeer_exports, martialist_exports, warCaller_exports].flatMap(
+    [
+      cleavesman_exports,
+      farScout_exports,
+      flagSinger_exports,
+      loamSeer_exports,
+      martialist_exports,
+      warCaller_exports,
+      consumable_exports
+    ].flatMap(
       (repository) => Object.values(repository).map((item) => [item.name, item])
     )
   );

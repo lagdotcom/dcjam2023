@@ -2,7 +2,7 @@
 	"export": {
 		"from": "2022.5.1",
 		"date": "2023-04-08",
-		"time": "06:46:56"
+		"time": "07:20:19"
 	},
 	"regions": [
 		{
@@ -21959,7 +21959,7 @@
 							"x": 42,
 							"y": 18,
 							"monospaced": false,
-							"__data": "Contains: Storyscroll"
+							"__data": "#OBJECT oChest\n#TAG Treasure\n#STRING item,Storyscroll"
 						},
 						{
 							"x": 51,
@@ -21983,7 +21983,7 @@
 							"x": 46,
 							"y": 36,
 							"monospaced": false,
-							"__data": "Loromay's Hand"
+							"__data": "#OBJECT oChest\n#TAG Treasure\n#STRING item,Loromay's Hand"
 						},
 						{
 							"x": 10,
@@ -22019,7 +22019,7 @@
 							"x": 46,
 							"y": 35,
 							"monospaced": false,
-							"__data": "Liquor"
+							"__data": "#OBJECT oChest\n#TAG Treasure\n#STRING item,Liquor"
 						},
 						{
 							"x": 37,

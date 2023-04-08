@@ -5,10 +5,19 @@ import * as flagSinger from "./flagSinger";
 import * as loamSeer from "./loamSeer";
 import * as martialist from "./martialist";
 import * as warCaller from "./warCaller";
+import * as consumable from "./consumable";
 
 const allItems = Object.fromEntries(
-  [cleavesman, farScout, flagSinger, loamSeer, martialist, warCaller].flatMap(
-    (repository) => Object.values(repository).map((item) => [item.name, item])
+  [
+    cleavesman,
+    farScout,
+    flagSinger,
+    loamSeer,
+    martialist,
+    warCaller,
+    consumable,
+  ].flatMap((repository) =>
+    Object.values(repository).map((item) => [item.name, item])
   )
 );
 

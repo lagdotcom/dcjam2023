@@ -78,8 +78,11 @@ export default class TitleScreen implements GameScreen {
       });
       draw("Poisoned Daggers", canvas.width / 2, 20);
 
-      if (selected.size === 4)
-        draw("Press Space to begin", canvas.width / 2, canvas.height - 20);
+      draw(
+        selected.size === 4 ? "Press Space to begin" : "Pick 4 with Enter",
+        canvas.width / 2,
+        canvas.height - 20
+      );
     }
 
     {

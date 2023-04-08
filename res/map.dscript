@@ -53,7 +53,7 @@ function UnlockGateC()
     selectTileWithTag('GateC')
     unlock(selectedX, selectedY, SOUTH)
     setDecal(selectedX, selectedY, SOUTH, dOpenGate)
-    setDecal(selectedX, selectedY-1, SOUTH, dOpenGate)
+    setDecal(selectedX, selectedY+1, NORTH, dOpenGate)
     message(getString('message'))
   end
 end
