@@ -27,7 +27,8 @@ export default class SplashScreen {
     });
   }
 
-  onKey() {
+  onKey(e: KeyboardEvent) {
+    e.preventDefault();
     this.next();
   }
 

@@ -34,16 +34,19 @@ export default class TitleScreen implements GameScreen {
 
     switch (e.code) {
       case "ArrowUp":
+        e.preventDefault();
         this.g.draw();
         this.index = wrap(this.index - 1, ClassNames.length);
         break;
       case "ArrowDown":
+        e.preventDefault();
         this.g.draw();
         this.index = wrap(this.index + 1, ClassNames.length);
         break;
 
       case "Enter":
       case "Return": {
+        e.preventDefault();
         this.g.draw();
         const cn = ClassNames[this.index];
         if (this.selected.has(cn)) this.selected.delete(cn);
@@ -52,6 +55,7 @@ export default class TitleScreen implements GameScreen {
       }
 
       case "Space":
+        e.preventDefault();
         if (this.selected.size === 4) {
           // TODO there must be more state to reset...
           this.g.inventory = [];

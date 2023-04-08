@@ -4024,15 +4024,18 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       this.g.jukebox.tryPlay();
       switch (e.code) {
         case "ArrowUp":
+          e.preventDefault();
           this.g.draw();
           this.index = wrap(this.index - 1, ClassNames.length);
           break;
         case "ArrowDown":
+          e.preventDefault();
           this.g.draw();
           this.index = wrap(this.index + 1, ClassNames.length);
           break;
         case "Enter":
         case "Return": {
+          e.preventDefault();
           this.g.draw();
           const cn = ClassNames[this.index];
           if (this.selected.has(cn))
@@ -4042,6 +4045,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
           break;
         }
         case "Space":
+          e.preventDefault();
           if (this.selected.size === 4) {
             this.g.inventory = [];
             this.g.party = [];
@@ -4116,7 +4120,8 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
         return img;
       });
     }
-    onKey() {
+    onKey(e) {
+      e.preventDefault();
       this.next();
     }
     render() {
@@ -4656,6 +4661,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     }
     onKey(e) {
       if (e.code === "Escape" || this.alpha >= 1) {
+        e.preventDefault();
         this.g.screen = new TitleScreen(this.g);
         if (this.interval)
           clearInterval(this.interval);
