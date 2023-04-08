@@ -52,6 +52,10 @@ export const EnemyObjects = {
   eEveScout: 110,
   eSneedCrawler: 120,
   eMullanginanMartialist: 130,
+  oNettleSage: 100,
+  oEveScout: 110,
+  oSneedCrawler: 120,
+  oMullanginanMartialist: 130,
 } as const;
 
 const enemies = {

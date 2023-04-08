@@ -1,8 +1,8 @@
 {
 	"export": {
 		"from": "2022.5.1",
-		"date": "2023-04-07",
-		"time": "21:20:32"
+		"date": "2023-04-08",
+		"time": "06:46:56"
 	},
 	"regions": [
 		{
@@ -21833,7 +21833,7 @@
 							"x": 12,
 							"y": 15,
 							"monospaced": false,
-							"__data": "#TAG ScoutEncounter1\nAn Eve Scout stands here: \"The Eve Scout sizes you up and looks to dart into the shadows, catch her quickly!\"\n- A dice roll occurs, it being the first one you only need to roll higher than a 3\nSuccess: \"Before the Eve Scout can move a muscle, she is struck down by (current party lead).\"\nFailure: \"You were unable to react in time, the Eve Scout slips into the darkness.\" (add 1 Eve Scout to next encounter)"
+							"__data": "#OBJECT oEveScout\n#TAG ScoutEncounter1\nAn Eve Scout stands here: \"The Eve Scout sizes you up and looks to dart into the shadows, catch her quickly!\"\n- A dice roll occurs, it being the first one you only need to roll higher than a 3\nSuccess: \"Before the Eve Scout can move a muscle, she is struck down by (current party lead).\"\nFailure: \"You were unable to react in time, the Eve Scout slips into the darkness.\" (add 1 Eve Scout to next encounter)"
 						},
 						{
 							"x": 14,
@@ -21893,7 +21893,7 @@
 							"x": 35,
 							"y": 41,
 							"monospaced": false,
-							"__data": "#TAG SneedEncounter5\nSneed Crawler: \"The busy machine takes notice of you, bleeping loudly before burrowing away.\"\n(add 1 Sneed Crawler to next encounter)"
+							"__data": "#OBJECT oSneedCrawler\n#TAG SneedEncounter5\nSneed Crawler: \"The busy machine takes notice of you, bleeping loudly before burrowing away.\"\n(add 1 Sneed Crawler to next encounter)"
 						},
 						{
 							"x": 23,
@@ -21917,7 +21917,7 @@
 							"x": 12,
 							"y": 36,
 							"monospaced": false,
-							"__data": "#TAG MartialistEncounter4\nMartialist: \"A martialist is propped against the wall, he seems to not care about your intrusion.\"\n- Just a strange interaction, maybe this guy shows up later in the final game"
+							"__data": "#OBJECT oMullanginanMartialist\n#TAG MartialistEncounter4\nMartialist: \"A martialist is propped against the wall, he seems to not care about your intrusion.\"\n- Just a strange interaction, maybe this guy shows up later in the final game"
 						},
 						{
 							"x": 15,
@@ -21929,7 +21929,7 @@
 							"x": 29,
 							"y": 34,
 							"monospaced": false,
-							"__data": "#TAG SneedEncounter5\nSneed Crawler: \"The busy machine takes notice of you, bleeping loudly before burrowing away.\"\n(add 1 Sneed Crawler to next encounter)"
+							"__data": "#OBJECT oSneedCrawler\n#TAG SneedEncounter5\nSneed Crawler: \"The busy machine takes notice of you, bleeping loudly before burrowing away.\"\n(add 1 Sneed Crawler to next encounter)"
 						},
 						{
 							"x": 42,
@@ -22001,7 +22001,7 @@
 							"x": 29,
 							"y": 29,
 							"monospaced": false,
-							"__data": "#TAG SageEncounter3\nNettle Sage: \"A nettle sage flits off down the hall as you approach.\"\n(add 1 Nettle Sage to next encounter)"
+							"__data": "#OBJECT oNettleSage\n#TAG SageEncounter3\nNettle Sage: \"A nettle sage flits off down the hall as you approach.\"\n(add 1 Nettle Sage to next encounter)"
 						},
 						{
 							"x": 61,
@@ -22013,7 +22013,7 @@
 							"x": 49,
 							"y": 36,
 							"monospaced": false,
-							"__data": "#TAG ScoutEncounter1\nAn Eve Scout stands here: \"The Eve Scout sizes you up and looks to dart into the shadows, catch her quickly!\"\n- A dice roll occurs, it being the first one you only need to roll higher than a 3\nSuccess: \"Before the Eve Scout can move a muscle, she is struck down by (current party lead).\"\nFailure: \"You were unable to react in time, the Eve Scout slips into the darkness.\" (add 1 Eve Scout to next encounter)"
+							"__data": "#OBJECT oEveScout\n#TAG ScoutEncounter1\nAn Eve Scout stands here: \"The Eve Scout sizes you up and looks to dart into the shadows, catch her quickly!\"\n- A dice roll occurs, it being the first one you only need to roll higher than a 3\nSuccess: \"Before the Eve Scout can move a muscle, she is struck down by (current party lead).\"\nFailure: \"You were unable to react in time, the Eve Scout slips into the darkness.\" (add 1 Eve Scout to next encounter)"
 						},
 						{
 							"x": 46,
@@ -22061,7 +22061,7 @@
 							"x": 26,
 							"y": 31,
 							"monospaced": false,
-							"__data": "Trap lever: \"As you pull this lever, a blaring sound occurs as two Sneed Crawlers whiz by.\"\n(add 2 sneed crawlers to next encounter)"
+							"__data": "Trap lever: \"As you pull this lever, a blaring sound occurs as two Sneed Crawlers whiz by.\"\n(add 2 sneed crawlers to next encounter)\ndon't worry about getting this working before the jam ends, honestly it kind of plays off like a fake switch if you read the hint in the room across from here"
 						},
 						{
 							"x": 22,
@@ -22079,19 +22079,19 @@
 							"x": 33,
 							"y": 12,
 							"monospaced": false,
-							"__data": "#TAG MixedEncounter8\nEve Scout: \"A set of eyes pass through the shadows, followed by the sound of rustling leaves.\"\n(add 1 eve scout and 1 nettle sage to next encounter)"
+							"__data": "#OBJECT oEveScout\n#TAG MixedEncounter8\nEve Scout: \"A set of eyes pass through the shadows, followed by the sound of rustling leaves.\"\n(add 1 eve scout and 1 nettle sage to next encounter)"
 						},
 						{
 							"x": 29,
 							"y": 12,
 							"monospaced": false,
-							"__data": "#TAG ScoutEncounter1\nAn Eve Scout stands here: \"The Eve Scout sizes you up and looks to dart into the shadows, catch her quickly!\"\n- A dice roll occurs, it being the first one you only need to roll higher than a 3\nSuccess: \"Before the Eve Scout can move a muscle, she is struck down by (current party lead).\"\nFailure: \"You were unable to react in time, the Eve Scout slips into the darkness.\" (add 1 Eve Scout to next encounter)"
+							"__data": "#OBJECT oEveScout\n#TAG ScoutEncounter1\nAn Eve Scout stands here: \"The Eve Scout sizes you up and looks to dart into the shadows, catch her quickly!\"\n- A dice roll occurs, it being the first one you only need to roll higher than a 3\nSuccess: \"Before the Eve Scout can move a muscle, she is struck down by (current party lead).\"\nFailure: \"You were unable to react in time, the Eve Scout slips into the darkness.\" (add 1 Eve Scout to next encounter)"
 						},
 						{
 							"x": 31,
 							"y": 10,
 							"monospaced": false,
-							"__data": "#TAG SneedEncounter5\nSneed Crawler: \"The busy machine takes notice of you, bleeping loudly before burrowing away.\"\n(add 1 Sneed Crawler to next encounter)"
+							"__data": "#OBJECT oSneedCrawler\n#TAG SneedEncounter5\nSneed Crawler: \"The busy machine takes notice of you, bleeping loudly before burrowing away.\"\n(add 1 Sneed Crawler to next encounter)"
 						},
 						{
 							"x": 33,
@@ -22103,13 +22103,13 @@
 							"x": 38,
 							"y": 17,
 							"monospaced": false,
-							"__data": "#TAG MartialistEncounter6\n\"Martialists overseeing tunnel construction meet your eye, then slip into shadow.\"\n(add 2 martialists to next encounter)"
+							"__data": "#OBJECT oMullanginanMartialist\n#TAG MartialistEncounter6\n\"Martialists overseeing tunnel construction meet your eye, then slip into shadow.\"\n(add 2 martialists to next encounter)"
 						},
 						{
 							"x": 40,
 							"y": 19,
 							"monospaced": false,
-							"__data": "#TAG SageEncounter3\nNettle Sage: \"A nettle sage flits off down the hall as you approach.\"\n(add 1 Nettle Sage to next encounter)"
+							"__data": "#OBJECT oNettleSage\n#TAG SageEncounter3\nNettle Sage: \"A nettle sage flits off down the hall as you approach.\"\n(add 1 Nettle Sage to next encounter)"
 						},
 						{
 							"x": 27,
@@ -22199,13 +22199,13 @@
 							"x": 31,
 							"y": 32,
 							"monospaced": false,
-							"__data": "#TAG MartialistEncounter6\n\"Martialists overseeing tunnel construction meet your eye, then slip into shadow.\"\n(add 2 martialists to next encounter)"
+							"__data": "#OBJECT oMullanginanMartialist\n#TAG MartialistEncounter6\n\"Martialists overseeing tunnel construction meet your eye, then slip into shadow.\"\n(add 2 martialists to next encounter)"
 						},
 						{
 							"x": 28,
 							"y": 36,
 							"monospaced": false,
-							"__data": "#TAG SneedEncounter7\n\"A duo of sneed crawlers are merrily digging through the tunnels, screeching past with reckless abandon.\"\n(add 2 sneed crawlers to next encounter)"
+							"__data": "#OBJECT oSneedCrawler\n#TAG SneedEncounter7\n\"A duo of sneed crawlers are merrily digging through the tunnels, screeching past with reckless abandon.\"\n(add 2 sneed crawlers to next encounter)"
 						},
 						{
 							"x": 42,
@@ -22235,25 +22235,25 @@
 							"x": 9,
 							"y": 39,
 							"monospaced": false,
-							"__data": "#TAG ScoutEncounter1\nAn Eve Scout stands here: \"The Eve Scout sizes you up and looks to dart into the shadows, catch her quickly!\"\n- A dice roll occurs, it being the first one you only need to roll higher than a 3\nSuccess: \"Before the Eve Scout can move a muscle, she is struck down by (current party lead).\"\nFailure: \"You were unable to react in time, the Eve Scout slips into the darkness.\" (add 1 Eve Scout to next encounter)"
+							"__data": "#OBJECT oEveScout\n#TAG ScoutEncounter1\nAn Eve Scout stands here: \"The Eve Scout sizes you up and looks to dart into the shadows, catch her quickly!\"\n- A dice roll occurs, it being the first one you only need to roll higher than a 3\nSuccess: \"Before the Eve Scout can move a muscle, she is struck down by (current party lead).\"\nFailure: \"You were unable to react in time, the Eve Scout slips into the darkness.\" (add 1 Eve Scout to next encounter)"
 						},
 						{
 							"x": 2,
 							"y": 37,
 							"monospaced": false,
-							"__data": "#TAG MartialistEncounter6\n\"Martialists overseeing tunnel construction meet your eye, then slip into shadow.\"\n(add 2 martialists to next encounter)"
+							"__data": "#OBJECT oMullanginanMartialist\n#TAG MartialistEncounter6\n\"Martialists overseeing tunnel construction meet your eye, then slip into shadow.\"\n(add 2 martialists to next encounter)"
 						},
 						{
 							"x": 4,
 							"y": 32,
 							"monospaced": false,
-							"__data": "#TAG SneedEncounter7\n\"A duo of sneed crawlers are merrily digging through the tunnels, screeching past with reckless abandon.\"\n(add 2 sneed crawlers to next encounter)"
+							"__data": "#OBJECT oSneedCrawler\n#TAG SneedEncounter7\n\"A duo of sneed crawlers are merrily digging through the tunnels, screeching past with reckless abandon.\"\n(add 2 sneed crawlers to next encounter)"
 						},
 						{
 							"x": 4,
 							"y": 29,
 							"monospaced": false,
-							"__data": "\"In the hall of a dozen prongs, a wisened soul seeks the southern oddity and sees through it's facade.\""
+							"__data": "#TAG Sign\n#NUMBER messageDir,NORTH\n#STRING message,\"In the hall of a dozen prongs, a wisened soul seeks the southern oddity and sees through its facade.\""
 						},
 						{
 							"x": 31,
@@ -22295,7 +22295,7 @@
 							"x": 23,
 							"y": 39,
 							"monospaced": false,
-							"__data": "#TAG MixedEncounter8\nEve Scout: \"A set of eyes pass through the shadows, followed by the sound of rustling leaves.\"\n(add 1 eve scout and 1 nettle sage to next encounter)"
+							"__data": "#OBJECT oEveScout\n#TAG MixedEncounter8\nEve Scout: \"A set of eyes pass through the shadows, followed by the sound of rustling leaves.\"\n(add 1 eve scout and 1 nettle sage to next encounter)"
 						},
 						{
 							"x": 27,
@@ -22307,31 +22307,31 @@
 							"x": 58,
 							"y": 36,
 							"monospaced": false,
-							"__data": "#TAG ScoutEncounter1\nAn Eve Scout stands here: \"The Eve Scout sizes you up and looks to dart into the shadows, catch her quickly!\"\n- A dice roll occurs, it being the first one you only need to roll higher than a 3\nSuccess: \"Before the Eve Scout can move a muscle, she is struck down by (current party lead).\"\nFailure: \"You were unable to react in time, the Eve Scout slips into the darkness.\" (add 1 Eve Scout to next encounter)"
+							"__data": "#OBJECT oEveScout\n#TAG ScoutEncounter1\nAn Eve Scout stands here: \"The Eve Scout sizes you up and looks to dart into the shadows, catch her quickly!\"\n- A dice roll occurs, it being the first one you only need to roll higher than a 3\nSuccess: \"Before the Eve Scout can move a muscle, she is struck down by (current party lead).\"\nFailure: \"You were unable to react in time, the Eve Scout slips into the darkness.\" (add 1 Eve Scout to next encounter)"
 						},
 						{
 							"x": 52,
 							"y": 33,
 							"monospaced": false,
-							"__data": "#TAG MixedEncounter8\nEve Scout: \"A set of eyes pass through the shadows, followed by the sound of rustling leaves.\"\n(add 1 eve scout and 1 nettle sage to next encounter)"
+							"__data": "#OBJECT oEveScout\n#TAG MixedEncounter8\nEve Scout: \"A set of eyes pass through the shadows, followed by the sound of rustling leaves.\"\n(add 1 eve scout and 1 nettle sage to next encounter)"
 						},
 						{
 							"x": 57,
 							"y": 27,
 							"monospaced": false,
-							"__data": "#TAG SageEncounter3\nNettle Sage: \"A nettle sage flits off down the hall as you approach.\"\n(add 1 Nettle Sage to next encounter)"
+							"__data": "#OBJECT oNettleSage\n#TAG SageEncounter3\nNettle Sage: \"A nettle sage flits off down the hall as you approach.\"\n(add 1 Nettle Sage to next encounter)"
 						},
 						{
 							"x": 40,
 							"y": 29,
 							"monospaced": false,
-							"__data": "#TAG ScoutEncounter1\nAn Eve Scout stands here: \"The Eve Scout sizes you up and looks to dart into the shadows, catch her quickly!\"\n- A dice roll occurs, it being the first one you only need to roll higher than a 3\nSuccess: \"Before the Eve Scout can move a muscle, she is struck down by (current party lead).\"\nFailure: \"You were unable to react in time, the Eve Scout slips into the darkness.\" (add 1 Eve Scout to next encounter)"
+							"__data": "#OBJECT oEveScout\n#TAG ScoutEncounter1\nAn Eve Scout stands here: \"The Eve Scout sizes you up and looks to dart into the shadows, catch her quickly!\"\n- A dice roll occurs, it being the first one you only need to roll higher than a 3\nSuccess: \"Before the Eve Scout can move a muscle, she is struck down by (current party lead).\"\nFailure: \"You were unable to react in time, the Eve Scout slips into the darkness.\" (add 1 Eve Scout to next encounter)"
 						},
 						{
 							"x": 61,
 							"y": 31,
 							"monospaced": false,
-							"__data": "#TAG SneedEncounter7\n\"A duo of sneed crawlers are merrily digging through the tunnels, screeching past with reckless abandon.\"\n(add 2 sneed crawlers to next encounter)"
+							"__data": "#OBJECT oSneedCrawler\n#TAG SneedEncounter7\n\"A duo of sneed crawlers are merrily digging through the tunnels, screeching past with reckless abandon.\"\n(add 2 sneed crawlers to next encounter)"
 						},
 						{
 							"x": 40,
@@ -22367,7 +22367,7 @@
 							"x": 23,
 							"y": 27,
 							"monospaced": false,
-							"__data": "#TAG ScoutEncounter1\nAn Eve Scout stands here: \"The Eve Scout sizes you up and looks to dart into the shadows, catch her quickly!\"\n- A dice roll occurs, it being the first one you only need to roll higher than a 3\nSuccess: \"Before the Eve Scout can move a muscle, she is struck down by (current party lead).\"\nFailure: \"You were unable to react in time, the Eve Scout slips into the darkness.\" (add 1 Eve Scout to next encounter)"
+							"__data": "#OBJECT oEveScout\n#TAG ScoutEncounter1\nAn Eve Scout stands here: \"The Eve Scout sizes you up and looks to dart into the shadows, catch her quickly!\"\n- A dice roll occurs, it being the first one you only need to roll higher than a 3\nSuccess: \"Before the Eve Scout can move a muscle, she is struck down by (current party lead).\"\nFailure: \"You were unable to react in time, the Eve Scout slips into the darkness.\" (add 1 Eve Scout to next encounter)"
 						},
 						{
 							"x": 4,
@@ -22385,13 +22385,13 @@
 							"x": 25,
 							"y": 42,
 							"monospaced": false,
-							"__data": "#TAG SneedEncounter7\n\"A duo of sneed crawlers are merrily digging through the tunnels, screeching past with reckless abandon.\"\n(add 2 sneed crawlers to next encounter)"
+							"__data": "#OBJECT oSneedCrawler\n#TAG SneedEncounter7\n\"A duo of sneed crawlers are merrily digging through the tunnels, screeching past with reckless abandon.\"\n(add 2 sneed crawlers to next encounter)"
 						},
 						{
 							"x": 18,
 							"y": 42,
 							"monospaced": false,
-							"__data": "#TAG SageEncounter3\nNettle Sage: \"A nettle sage flits off down the hall as you approach.\"\n(add 1 Nettle Sage to next encounter)"
+							"__data": "#OBJECT oNettleSage\n#TAG SageEncounter3\nNettle Sage: \"A nettle sage flits off down the hall as you approach.\"\n(add 1 Nettle Sage to next encounter)"
 						},
 						{
 							"x": 30,

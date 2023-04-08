@@ -415,7 +415,11 @@
     eNettleSage: 100,
     eEveScout: 110,
     eSneedCrawler: 120,
-    eMullanginanMartialist: 130
+    eMullanginanMartialist: 130,
+    oNettleSage: 100,
+    oEveScout: 110,
+    oSneedCrawler: 120,
+    oMullanginanMartialist: 130
   };
   var enemies = {
     "Eve Scout": {
@@ -2845,7 +2849,7 @@
   var sad_folks_default = "./sad-folks-WT2RUZAU.png";
 
   // res/map.json
-  var map_default = "./map-5S5AKS6C.json";
+  var map_default = "./map-O7O3ZS2I.json";
 
   // src/items/cleavesman.ts
   var cleavesman_exports = {};
@@ -4155,7 +4159,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
   };
 
   // res/map.dscript
-  var map_default2 = "./map-DTBMWECD.dscript";
+  var map_default2 = "./map-XJZGFW4B.dscript";
 
   // res/atlas/flats.png
   var flats_default = "./flats-HZYMJUF6.png";

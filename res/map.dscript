@@ -162,6 +162,7 @@ end
 onTagInteract('Boulder', BoulderInteract)
 
 function ScoutEncounter1()
+  removeObject(partyX, partyY)
   removeTag(partyX, partyY, 'ScoutEncounter1')
   message('The eve scout sizes you up and looks to dart into the shadows.')
   if skillCheck('determination', 12) then
@@ -183,6 +184,7 @@ end
 onTagEnter('MixedEncounter2', MixedEncounter2)
 
 function SageEncounter3()
+  removeObject(partyX, partyY)
   removeTag(partyX, partyY, 'SageEncounter3')
   message('A nettle sage flits off down the hall as you approach.')
   addArenaEnemy('Nettle Sage')
@@ -195,6 +197,7 @@ end
 onTagEnter('MartialistEncounter4', MartialistEncounter4)
 
 function SneedEncounter5()
+  removeObject(partyX, partyY)
   removeTag(partyX, partyY, 'SneedEncounter5')
   message('The busy Sneed Crawler takes notice of you, bleeping loudly before burrowing away.')
   addArenaEnemy('Sneed Crawler')
@@ -202,6 +205,7 @@ end
 onTagEnter('SneedEncounter5', SneedEncounter5)
 
 function MartialistEncounter6()
+  removeObject(partyX, partyY)
   removeTag(partyX, partyY, 'MartialistEncounter6')
   message('Martialists overseeing tunnel construction meet your eye, then slip into shadow.')
   addArenaEnemy('Mullanginan Martialist')
@@ -210,6 +214,7 @@ end
 onTagEnter('MartialistEncounter6', MartialistEncounter6)
 
 function SneedEncounter7()
+  removeObject(partyX, partyY)
   removeTag(partyX, partyY, 'SneedEncounter7')
   message('A duo of sneed crawlers are merrily digging through the tunnels, screeching past with reckless abandon.')
   addArenaEnemy('Sneed Crawler')
@@ -218,6 +223,7 @@ end
 onTagEnter('SneedEncounter7', SneedEncounter7)
 
 function MixedEncounter8()
+  removeObject(partyX, partyY)
   removeTag(partyX, partyY, 'MixedEncounter8')
   message('A set of eyes pass through the shadows, followed by the sound of rustling leaves.')
   addArenaEnemy('Eve Scout')
