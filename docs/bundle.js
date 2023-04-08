@@ -4162,10 +4162,10 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
   var map_default2 = "./map-XJZGFW4B.dscript";
 
   // res/atlas/flats.png
-  var flats_default = "./flats-HZYMJUF6.png";
+  var flats_default = "./flats-YFBZMEC6.png";
 
   // res/atlas/flats.json
-  var flats_default2 = "./flats-V3RS32W5.json";
+  var flats_default2 = "./flats-GGEKOGMO.json";
 
   // res/atlas/eveScout.png
   var eveScout_default = "./eveScout-GB6RQXWR.png";
