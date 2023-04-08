@@ -343,16 +343,8 @@
     tags: ["duff"],
     sp: 3,
     targets: oneOpponent,
-    act({ g, targets }) {
-      g.addEffect(() => ({
-        name: "Sand",
-        duration: Infinity,
-        affects: targets,
-        onCalculateDetermination(e) {
-          if (this.affects.includes(e.who))
-            e.value--;
-        }
-      }));
+    act({ g, me, targets }) {
+      g.applyDamage(me, targets, 1, "determination", "normal");
     }
   };
   var Scar = {
@@ -372,16 +364,8 @@
     tags: ["duff"],
     sp: 3,
     targets: oneOpponent,
-    act({ g, targets }) {
-      g.addEffect(() => ({
-        name: "Trick",
-        duration: Infinity,
-        affects: targets,
-        onCalculateCamaraderie(e) {
-          if (this.affects.includes(e.who))
-            e.value--;
-        }
-      }));
+    act({ g, me, targets }) {
+      g.applyDamage(me, targets, 1, "camaraderie", "normal");
     }
   };
 
@@ -465,7 +449,7 @@
       camaraderie: 1,
       determination: 5,
       spirit: 4,
-      dr: 0,
+      dr: 2,
       actions: [generateAttack(0, 1), Scar, Barb]
     },
     "Mullanginan Martialist": {
@@ -477,7 +461,7 @@
       camaraderie: 3,
       determination: 4,
       spirit: 4,
-      dr: 0,
+      dr: 1,
       actions: [generateAttack(0, 1), Parry, Defy, Flight]
     },
     "Nettle Sage": {
@@ -3098,6 +3082,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       sp: 4,
       targets: oneOpponent,
       act({ g, targets }) {
+        g.addToLog(`${niceList(targets.map((x) => x.name))} is bound tightly!`);
         g.addEffect(() => ({
           name: "Bind",
           duration: 2,
@@ -3182,6 +3167,11 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       sp: 2,
       targets: ally(1),
       act({ g, targets }) {
+        g.addToLog(
+          `${niceList(targets.map((x) => x.name))} feel${pluralS(
+            targets
+          )} more protected.`
+        );
         g.addEffect(() => ({
           name: "Cheer",
           duration: 2,
@@ -3381,16 +3371,22 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     type: "Armour",
     bonus: {},
     action: {
-      name: "Search",
+      name: "Observe",
       tags: [],
       sp: 4,
       targets: oneOpponent,
       act({ g, targets }) {
+        g.addToLog(
+          `${niceList(targets.map((x) => x.name))} has nowhere to hide!`
+        );
         g.addEffect(() => ({
-          name: "Search",
-          duration: Infinity,
-          affects: targets
-          // TODO: enemy is more likely to drop items
+          name: "Observe",
+          duration: 2,
+          affects: targets,
+          onCalculateDR(e) {
+            if (this.affects.includes(e.who))
+              e.value--;
+          }
         }));
       }
     }

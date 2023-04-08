@@ -86,7 +86,7 @@ const enemies = {
     camaraderie: 1,
     determination: 5,
     spirit: 4,
-    dr: 0,
+    dr: 2,
     actions: [generateAttack(0, 1), Scar, Barb],
   },
   "Mullanginan Martialist": {
@@ -98,7 +98,7 @@ const enemies = {
     camaraderie: 3,
     determination: 4,
     spirit: 4,
-    dr: 0,
+    dr: 1,
     actions: [generateAttack(0, 1), Parry, Defy, Flight],
   },
   "Nettle Sage": {

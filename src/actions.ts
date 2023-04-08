@@ -234,15 +234,8 @@ export const Sand: CombatAction = {
   tags: ["duff"],
   sp: 3,
   targets: oneOpponent,
-  act({ g, targets }) {
-    g.addEffect(() => ({
-      name: "Sand",
-      duration: Infinity,
-      affects: targets,
-      onCalculateDetermination(e) {
-        if (this.affects.includes(e.who)) e.value--;
-      },
-    }));
+  act({ g, me, targets }) {
+    g.applyDamage(me, targets, 1, "determination", "normal");
   },
 };
 
@@ -264,14 +257,7 @@ export const Trick: CombatAction = {
   tags: ["duff"],
   sp: 3,
   targets: oneOpponent,
-  act({ g, targets }) {
-    g.addEffect(() => ({
-      name: "Trick",
-      duration: Infinity,
-      affects: targets,
-      onCalculateCamaraderie(e) {
-        if (this.affects.includes(e.who)) e.value--;
-      },
-    }));
+  act({ g, me, targets }) {
+    g.applyDamage(me, targets, 1, "camaraderie", "normal");
   },
 };

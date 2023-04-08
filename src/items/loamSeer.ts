@@ -1,5 +1,6 @@
 import { Bless, Bravery, oneOpponent, onlyMe, opponents } from "../actions";
 import isDefined from "../tools/isDefined";
+import { niceList } from "../tools/lists";
 import { oneOf } from "../tools/rng";
 import Item from "../types/Item";
 
@@ -19,16 +20,25 @@ export const JacketAndRucksack: Item = {
   type: "Armour",
   bonus: {},
   action: {
-    name: "Search",
+    name: "Observe",
     tags: [],
     sp: 4,
     targets: oneOpponent,
     act({ g, targets }) {
+      // TODO have/has
+      g.addToLog(
+        `${niceList(targets.map((x) => x.name))} has nowhere to hide!`
+      );
+
+      // TODO: [Search] enemy is more likely to drop items
+
       g.addEffect(() => ({
-        name: "Search",
-        duration: Infinity,
+        name: "Observe",
+        duration: 2,
         affects: targets,
-        // TODO: enemy is more likely to drop items
+        onCalculateDR(e) {
+          if (this.affects.includes(e.who)) e.value--;
+        },
       }));
     },
   },
