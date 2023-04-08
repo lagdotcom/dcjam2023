@@ -1,5 +1,6 @@
 import Engine from "./Engine";
 
+import footprintUrl from "../res/music/footprint-of-the-elephant.ogg";
 import komfortZoneUrl from "../res/music/komfort-zone.ogg";
 import modDotVigorUrl from "../res/music/mod-dot-vigor.ogg";
 import ringingSteelUrl from "../res/music/ringing-steel.ogg";
@@ -19,7 +20,7 @@ interface Playlist {
   between?: { roll: number; bonus: number };
 }
 
-const PlaylistNames = ["title", "explore", "combat", "arena"] as const;
+const PlaylistNames = ["title", "explore", "combat", "arena", "death"] as const;
 type PlaylistName = (typeof PlaylistNames)[number];
 
 const komfortZone: Track = { name: "komfort zone", url: komfortZoneUrl };
@@ -34,12 +35,17 @@ const ringingSteel: Track = {
   loop: true,
 };
 const selume: Track = { name: "selume", url: selumeUrl };
+const footprintOfTheElephant: Track = {
+  name: "footprint of the elephant",
+  url: footprintUrl,
+};
 
 const playlists: Record<PlaylistName, Playlist> = {
   title: { tracks: [selume] },
   explore: { tracks: [komfortZone], between: { roll: 20, bonus: 10 } },
-  combat: { tracks: [modDotVigor] },
-  arena: { tracks: [ringingSteel] },
+  combat: { tracks: [modDotVigor] }, // FIXME later
+  arena: { tracks: [ringingSteel, modDotVigor] },
+  death: { tracks: [footprintOfTheElephant] },
 };
 
 export default class Jukebox {
@@ -59,7 +65,14 @@ export default class Jukebox {
     g.eventHandlers.onCombatBegin.add(
       ({ type }) => void this.play(type === "normal" ? "combat" : "arena")
     );
-    g.eventHandlers.onCombatOver.add(() => void this.play("explore"));
+    g.eventHandlers.onCombatOver.add(
+      ({ winners }) => void this.play(winners === "party" ? "explore" : "death")
+    );
+
+    // start loading music pre-emptively
+    for (const pl of Object.values(playlists)) {
+      for (const tr of pl.tracks) void g.res.loadAudio(tr.url);
+    }
   }
 
   private async acquire(track: Track) {

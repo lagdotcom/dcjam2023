@@ -34,11 +34,13 @@ export default class TitleScreen implements GameScreen {
 
     switch (e.code) {
       case "ArrowUp":
+      case "KeyW":
         e.preventDefault();
         this.g.draw();
         this.index = wrap(this.index - 1, ClassNames.length);
         break;
       case "ArrowDown":
+      case "KeyS":
         e.preventDefault();
         this.g.draw();
         this.index = wrap(this.index + 1, ClassNames.length);

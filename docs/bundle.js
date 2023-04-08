@@ -2496,17 +2496,20 @@
     }
   };
 
+  // res/music/footprint-of-the-elephant.ogg
+  var footprint_of_the_elephant_default = "./footprint-of-the-elephant-5T73CFK4.ogg";
+
   // res/music/komfort-zone.ogg
-  var komfort_zone_default = "./komfort-zone-GXVCNDIF.ogg";
+  var komfort_zone_default = "./komfort-zone-3FATGHSQ.ogg";
 
   // res/music/mod-dot-vigor.ogg
-  var mod_dot_vigor_default = "./mod-dot-vigor-OULMZ74T.ogg";
+  var mod_dot_vigor_default = "./mod-dot-vigor-KOENWLDQ.ogg";
 
   // res/music/ringing-steel.ogg
-  var ringing_steel_default = "./ringing-steel-7SYI4FL5.ogg";
+  var ringing_steel_default = "./ringing-steel-T6LCRT3L.ogg";
 
   // res/music/selume.ogg
-  var selume_default = "./selume-SBU4SIT3.ogg";
+  var selume_default = "./selume-YNM3EUW5.ogg";
 
   // src/Jukebox.ts
   var komfortZone = { name: "komfort zone", url: komfort_zone_default };
@@ -2521,11 +2524,17 @@
     loop: true
   };
   var selume = { name: "selume", url: selume_default };
+  var footprintOfTheElephant = {
+    name: "footprint of the elephant",
+    url: footprint_of_the_elephant_default
+  };
   var playlists = {
     title: { tracks: [selume] },
     explore: { tracks: [komfortZone], between: { roll: 20, bonus: 10 } },
     combat: { tracks: [modDotVigor] },
-    arena: { tracks: [ringingSteel] }
+    // FIXME later
+    arena: { tracks: [ringingSteel, modDotVigor] },
+    death: { tracks: [footprintOfTheElephant] }
   };
   var Jukebox = class {
     constructor(g) {
@@ -2572,7 +2581,13 @@
       g.eventHandlers.onCombatBegin.add(
         ({ type }) => void this.play(type === "normal" ? "combat" : "arena")
       );
-      g.eventHandlers.onCombatOver.add(() => void this.play("explore"));
+      g.eventHandlers.onCombatOver.add(
+        ({ winners }) => void this.play(winners === "party" ? "explore" : "death")
+      );
+      for (const pl of Object.values(playlists)) {
+        for (const tr of pl.tracks)
+          void g.res.loadAudio(tr.url);
+      }
     }
     acquire(track) {
       return __async(this, null, function* () {
@@ -4024,11 +4039,13 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       this.g.jukebox.tryPlay();
       switch (e.code) {
         case "ArrowUp":
+        case "KeyW":
           e.preventDefault();
           this.g.draw();
           this.index = wrap(this.index - 1, ClassNames.length);
           break;
         case "ArrowDown":
+        case "KeyS":
           e.preventDefault();
           this.g.draw();
           this.index = wrap(this.index + 1, ClassNames.length);
@@ -4652,7 +4669,6 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
         ctx.globalAlpha = 1;
       };
       g.draw();
-      g.jukebox.stop();
       g.spotElements = [];
       this.alpha = 0.1;
       this.doNotClear = true;

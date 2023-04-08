@@ -14,7 +14,6 @@ export default class DeathScreen implements GameScreen {
 
   constructor(public g: Engine, public lastToDie: Player) {
     g.draw();
-    g.jukebox.stop();
     g.spotElements = [];
 
     this.alpha = 0.1;
