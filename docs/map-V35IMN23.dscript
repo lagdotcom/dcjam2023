@@ -226,7 +226,7 @@ end
 onTagEnter('MixedEncounter8', MixedEncounter8)
 
 function JamEncounter9()
-  message('A martialist is propped against the wall, he seems to not care about your intrusion.')
+  message('The night of the poisoned daggers will continue... This is the end of our entry, thanks for playing, and let us know what you thought!')
 end
 onTagEnter('JamEncounter9', JamEncounter9)
 

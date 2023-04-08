@@ -4152,7 +4152,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
   };
 
   // res/map.dscript
-  var map_default2 = "./map-EAR2EO5S.dscript";
+  var map_default2 = "./map-V35IMN23.dscript";
 
   // res/atlas/flats.png
   var flats_default = "./flats-HZYMJUF6.png";
