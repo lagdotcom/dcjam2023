@@ -2,7 +2,7 @@
 	"export": {
 		"from": "2022.5.1",
 		"date": "2023-04-07",
-		"time": "21:20:32"
+		"time": "11:58:30"
 	},
 	"regions": [
 		{
@@ -13843,8 +13843,6 @@
 									{
 										"r": 1,
 										"rc": 1,
-										"m": 46,
-										"mc": 1,
 										"t": 31
 									},
 									{
@@ -14072,8 +14070,6 @@
 										"rc": 1
 									},
 									{
-										"m": 46,
-										"mc": 1,
 										"t": 31
 									},
 									{
@@ -14156,7 +14152,7 @@
 										"t": 31
 									},
 									{
-										"b": 25,
+										"b": 13,
 										"bc": 1,
 										"t": 31
 									},
@@ -14177,7 +14173,7 @@
 										"t": 31
 									},
 									{
-										"b": 25,
+										"b": 13,
 										"bc": 1,
 										"t": 31
 									},
@@ -14626,7 +14622,7 @@
 										"bc": 1
 									},
 									{
-										"b": 28,
+										"b": 1,
 										"bc": 1
 									},
 									{
@@ -14874,11 +14870,17 @@
 							},
 							{
 								"y": 16,
-								"start": 5,
+								"start": 4,
 								"tdata": [
 									{
+										"b": 1,
+										"bc": 1
+									},
+									{
 										"r": 1,
-										"rc": 1
+										"rc": 1,
+										"b": 1,
+										"bc": 1
 									},
 									{
 										"r": 1,
@@ -15122,11 +15124,19 @@
 							},
 							{
 								"y": 17,
-								"start": 5,
+								"start": 3,
 								"tdata": [
 									{
 										"r": 1,
 										"rc": 1
+									},
+									{
+										"t": 31
+									},
+									{
+										"b": 1,
+										"bc": 1,
+										"t": 31
 									},
 									{
 										"b": 1,
@@ -15377,8 +15387,19 @@
 							},
 							{
 								"y": 18,
-								"start": 6,
+								"start": 3,
 								"tdata": [
+									{
+										"r": 1,
+										"rc": 1
+									},
+									{
+										"r": 1,
+										"rc": 1,
+										"t": 31
+									},
+									{
+									},
 									{
 										"b": 1,
 										"bc": 1
@@ -15641,8 +15662,21 @@
 							},
 							{
 								"y": 19,
-								"start": 5,
+								"start": 3,
 								"tdata": [
+									{
+										"r": 1,
+										"rc": 1,
+										"b": 1,
+										"bc": 1
+									},
+									{
+										"r": 1,
+										"rc": 1,
+										"b": 2,
+										"bc": 1,
+										"t": 31
+									},
 									{
 										"r": 1,
 										"rc": 1
@@ -15900,8 +15934,20 @@
 							},
 							{
 								"y": 20,
-								"start": 5,
+								"start": 2,
 								"tdata": [
+									{
+										"r": 1,
+										"rc": 1
+									},
+									{
+										"t": 31
+									},
+									{
+										"r": 1,
+										"rc": 1,
+										"t": 31
+									},
 									{
 										"r": 1,
 										"rc": 1
@@ -16122,8 +16168,20 @@
 							},
 							{
 								"y": 21,
-								"start": 5,
+								"start": 2,
 								"tdata": [
+									{
+										"r": 1,
+										"rc": 1
+									},
+									{
+										"t": 31
+									},
+									{
+										"r": 1,
+										"rc": 1,
+										"t": 31
+									},
 									{
 										"r": 1,
 										"rc": 1
@@ -16361,8 +16419,24 @@
 							},
 							{
 								"y": 22,
-								"start": 5,
+								"start": 2,
 								"tdata": [
+									{
+										"r": 1,
+										"rc": 1
+									},
+									{
+										"b": 1,
+										"bc": 1,
+										"t": 31
+									},
+									{
+										"r": 1,
+										"rc": 1,
+										"b": 1,
+										"bc": 1,
+										"t": 31
+									},
 									{
 										"r": 1,
 										"rc": 1
@@ -16701,13 +16775,9 @@
 									{
 										"b": 1,
 										"bc": 1,
-										"m": 20,
-										"mc": 1,
 										"t": 31
 									},
 									{
-										"r": 25,
-										"rc": 1,
 										"b": 1,
 										"bc": 1,
 										"t": 31
@@ -16806,9 +16876,11 @@
 										"bc": 1
 									},
 									{
+										"b": 1,
+										"bc": 1
 									},
 									{
-										"b": 24,
+										"b": 1,
 										"bc": 1
 									},
 									{
@@ -17038,15 +17110,14 @@
 										"t": 31
 									},
 									{
-										"r": 1,
-										"rc": 1,
 										"b": 1,
 										"bc": 1,
 										"t": 31
 									},
 									{
-										"r": 1,
-										"rc": 1
+										"b": 1,
+										"bc": 1,
+										"t": 31
 									},
 									{
 										"r": 1,
@@ -17153,7 +17224,7 @@
 									{
 									},
 									{
-										"b": 28,
+										"b": 1,
 										"bc": 1
 									},
 									{
@@ -17165,7 +17236,7 @@
 									{
 									},
 									{
-										"b": 28,
+										"b": 1,
 										"bc": 1
 									},
 									{
@@ -17228,8 +17299,6 @@
 										"t": 31
 									},
 									{
-										"b": 1,
-										"bc": 1,
 										"t": 31
 									},
 									{
@@ -17255,7 +17324,9 @@
 									},
 									{
 										"r": 1,
-										"rc": 1
+										"rc": 1,
+										"b": 1,
+										"bc": 1
 									},
 									{
 										"r": 1,
@@ -17263,6 +17334,8 @@
 										"t": 31
 									},
 									{
+										"b": 1,
+										"bc": 1
 									},
 									{
 									},
@@ -17340,7 +17413,9 @@
 									},
 									{
 										"r": 1,
-										"rc": 1
+										"rc": 1,
+										"b": 1,
+										"bc": 1
 									},
 									{
 										"r": 1,
@@ -17350,6 +17425,8 @@
 										"t": 31
 									},
 									{
+										"b": 1,
+										"bc": 1
 									},
 									{
 									},
@@ -17428,6 +17505,13 @@
 									{
 									},
 									{
+										"r": 1,
+										"rc": 1
+									},
+									{
+										"r": 1,
+										"rc": 1,
+										"t": 31
 									},
 									{
 									},
@@ -17438,12 +17522,6 @@
 									{
 									},
 									{
-									},
-									{
-									},
-									{
-										"b": 1,
-										"bc": 1
 									},
 									{
 										"b": 1,
@@ -17458,6 +17536,12 @@
 										"rc": 1,
 										"b": 1,
 										"bc": 1
+									},
+									{
+										"t": 31
+									},
+									{
+										"t": 31
 									},
 									{
 										"r": 1,
@@ -17477,8 +17561,8 @@
 										"bc": 1
 									},
 									{
-									},
-									{
+										"b": 1,
+										"bc": 1
 									},
 									{
 										"b": 1,
@@ -17543,8 +17627,6 @@
 									{
 										"r": 1,
 										"rc": 1,
-										"m": 46,
-										"mc": 1,
 										"t": 31
 									},
 									{
@@ -17554,23 +17636,19 @@
 									{
 									},
 									{
+										"r": 1,
+										"rc": 1
 									},
 									{
-										"r": 1,
-										"rc": 1,
-										"b": 1,
-										"bc": 1
-									},
-									{
-										"r": 1,
-										"rc": 1,
-										"m": 14,
-										"mc": 1,
 										"t": 31
 									},
 									{
-										"b": 1,
-										"bc": 1
+										"t": 31
+									},
+									{
+										"r": 1,
+										"rc": 1,
+										"t": 31
 									},
 									{
 										"r": 1,
@@ -17661,12 +17739,15 @@
 										"bc": 1
 									},
 									{
+										"r": 1,
+										"rc": 1,
 										"b": 1,
 										"bc": 1
 									},
 									{
-										"b": 1,
-										"bc": 1
+										"r": 1,
+										"rc": 1,
+										"t": 31
 									},
 									{
 										"b": 1,
@@ -17683,6 +17764,22 @@
 									{
 										"r": 1,
 										"rc": 1
+									},
+									{
+										"t": 31
+									},
+									{
+										"b": 1,
+										"bc": 1,
+										"t": 31
+									},
+									{
+										"b": 1,
+										"bc": 1,
+										"t": 31
+									},
+									{
+										"t": 31
 									},
 									{
 										"m": 14,
@@ -17690,8 +17787,6 @@
 										"t": 31
 									},
 									{
-										"b": 1,
-										"bc": 1,
 										"t": 31
 									},
 									{
@@ -17705,7 +17800,7 @@
 										"t": 31
 									},
 									{
-										"m": 125,
+										"m": 20,
 										"mc": 1,
 										"t": 31
 									},
@@ -17713,24 +17808,6 @@
 										"b": 1,
 										"bc": 1,
 										"t": 31
-									},
-									{
-										"b": 1,
-										"bc": 1,
-										"t": 31
-									},
-									{
-										"r": 1,
-										"rc": 1,
-										"b": 1,
-										"bc": 1,
-										"t": 31
-									},
-									{
-									},
-									{
-										"r": 1,
-										"rc": 1
 									},
 									{
 										"b": 1,
@@ -17770,7 +17847,7 @@
 										"bc": 1
 									},
 									{
-										"b": 28,
+										"b": 1,
 										"bc": 1
 									},
 									{
@@ -17808,8 +17885,6 @@
 										"t": 31
 									},
 									{
-										"m": 46,
-										"mc": 1,
 										"t": 31
 									},
 									{
@@ -17973,6 +18048,25 @@
 										"t": 31
 									},
 									{
+									},
+									{
+										"r": 1,
+										"rc": 1
+									},
+									{
+										"b": 1,
+										"bc": 1,
+										"t": 31
+									},
+									{
+										"t": 31
+									},
+									{
+										"r": 1,
+										"rc": 1,
+										"b": 1,
+										"bc": 1,
+										"t": 31
 									},
 									{
 									},
@@ -18069,7 +18163,7 @@
 										"t": 31
 									},
 									{
-										"r": 28,
+										"r": 1,
 										"rc": 1,
 										"t": 31
 									},
@@ -18153,19 +18247,17 @@
 									{
 										"r": 1,
 										"rc": 1,
-										"b": 1,
-										"bc": 1,
 										"t": 31
 									},
 									{
 										"r": 1,
-										"rc": 1
+										"rc": 1,
+										"b": 1,
+										"bc": 1
 									},
 									{
 										"r": 27,
 										"rc": 1,
-										"b": 1,
-										"bc": 1,
 										"t": 31
 									},
 									{
@@ -18244,12 +18336,15 @@
 									{
 									},
 									{
+										"r": 1,
+										"rc": 1,
 										"b": 1,
 										"bc": 1
 									},
 									{
-										"b": 1,
-										"bc": 1
+										"r": 1,
+										"rc": 1,
+										"t": 31
 									},
 									{
 										"b": 1,
@@ -18269,6 +18364,8 @@
 										"t": 31
 									},
 									{
+										"m": 131,
+										"mc": 1,
 										"t": 31
 									},
 									{
@@ -18327,8 +18424,6 @@
 										"rc": 1
 									},
 									{
-										"b": 1,
-										"bc": 1,
 										"t": 31
 									},
 									{
@@ -18337,8 +18432,6 @@
 									{
 										"r": 1,
 										"rc": 1,
-										"b": 1,
-										"bc": 1,
 										"t": 31
 									},
 									{
@@ -18401,31 +18494,46 @@
 									{
 									},
 									{
+										"r": 1,
+										"rc": 1
+									},
+									{
+										"b": 1,
+										"bc": 1,
+										"t": 31
+									},
+									{
+										"b": 1,
+										"bc": 1,
+										"t": 31
+									},
+									{
+										"r": 1,
+										"rc": 1,
+										"b": 1,
+										"bc": 1,
+										"t": 31
 									},
 									{
 									},
 									{
-										"b": 24,
+										"r": 1,
+										"rc": 1
+									},
+									{
+										"r": 1,
+										"rc": 1,
+										"t": 31
+									},
+									{
+										"b": 1,
 										"bc": 1
 									},
 									{
-									},
-									{
-									},
-									{
-										"r": 1,
-										"rc": 1
-									},
-									{
 										"r": 1,
 										"rc": 1,
-										"t": 31
-									},
-									{
-									},
-									{
-										"r": 1,
-										"rc": 1
+										"b": 1,
+										"bc": 1
 									},
 									{
 										"r": 1,
@@ -18605,19 +18713,25 @@
 										"bc": 1
 									},
 									{
-									},
-									{
 										"r": 1,
 										"rc": 1
 									},
 									{
-										"r": 1,
-										"rc": 1,
+										"b": 1,
+										"bc": 1,
+										"t": 31
+									},
+									{
 										"b": 2,
 										"bc": 1,
 										"t": 31
 									},
 									{
+										"r": 1,
+										"rc": 1,
+										"b": 1,
+										"bc": 1,
+										"t": 31
 									},
 									{
 										"r": 1,
@@ -18685,36 +18799,37 @@
 									{
 									},
 									{
-										"r": 1,
-										"rc": 1
-									},
-									{
-										"r": 1,
-										"rc": 1,
-										"t": 31
-									},
-									{
-									},
-									{
-									},
-									{
-										"r": 1,
-										"rc": 1
-									},
-									{
-										"r": 1,
-										"rc": 1,
-										"t": 31
+										"b": 1,
+										"bc": 1
 									},
 									{
 										"b": 1,
 										"bc": 1
 									},
 									{
-										"r": 1,
-										"rc": 1,
 										"b": 1,
 										"bc": 1
+									},
+									{
+									},
+									{
+										"r": 1,
+										"rc": 1
+									},
+									{
+										"t": 31
+									},
+									{
+										"b": 1,
+										"bc": 1,
+										"m": 20,
+										"mc": 1,
+										"t": 31
+									},
+									{
+										"b": 1,
+										"bc": 1,
+										"t": 31
 									},
 									{
 										"r": 1,
@@ -18778,8 +18893,6 @@
 									{
 										"b": 1,
 										"bc": 1,
-										"m": 14,
-										"mc": 1,
 										"t": 31
 									},
 									{
@@ -18919,8 +19032,6 @@
 									{
 										"r": 1,
 										"rc": 1,
-										"b": 1,
-										"bc": 1,
 										"t": 31
 									},
 									{
@@ -18967,6 +19078,21 @@
 									{
 									},
 									{
+										"r": 1,
+										"rc": 1
+									},
+									{
+										"t": 31
+									},
+									{
+										"t": 31
+									},
+									{
+										"r": 1,
+										"rc": 1,
+										"t": 31
+									},
+									{
 										"b": 1,
 										"bc": 1
 									},
@@ -18982,31 +19108,10 @@
 										"t": 31
 									},
 									{
-										"b": 1,
-										"bc": 1
-									},
-									{
-										"b": 1,
-										"bc": 1
 									},
 									{
 										"r": 1,
-										"rc": 1,
-										"b": 1,
-										"bc": 1
-									},
-									{
-										"t": 31
-									},
-									{
-										"b": 1,
-										"bc": 1,
-										"t": 31
-									},
-									{
-										"b": 1,
-										"bc": 1,
-										"t": 31
+										"rc": 1
 									},
 									{
 										"r": 1,
@@ -19183,10 +19288,17 @@
 									{
 									},
 									{
+										"r": 1,
+										"rc": 1
 									},
 									{
-										"b": 28,
-										"bc": 1
+										"r": 1,
+										"rc": 1,
+										"b": 1,
+										"bc": 1,
+										"m": 46,
+										"mc": 1,
+										"t": 31
 									},
 									{
 									},
@@ -19235,17 +19347,12 @@
 										"t": 31
 									},
 									{
+									},
+									{
 										"r": 1,
 										"rc": 1
 									},
 									{
-										"b": 1,
-										"bc": 1,
-										"t": 31
-									},
-									{
-										"b": 1,
-										"bc": 1,
 										"t": 31
 									},
 									{
@@ -19254,8 +19361,8 @@
 										"t": 31
 									},
 									{
-										"b": 1,
-										"bc": 1,
+										"r": 27,
+										"rc": 1,
 										"t": 31
 									},
 									{
@@ -19297,8 +19404,6 @@
 									{
 										"b": 1,
 										"bc": 1,
-										"m": 14,
-										"mc": 1,
 										"t": 31
 									},
 									{
@@ -19400,13 +19505,10 @@
 										"bc": 1
 									},
 									{
-										"r": 1,
-										"rc": 1
 									},
 									{
-										"r": 1,
-										"rc": 1,
-										"t": 31
+										"b": 28,
+										"bc": 1
 									},
 									{
 										"r": 1,
@@ -19453,19 +19555,25 @@
 									{
 									},
 									{
-									},
-									{
 										"r": 1,
 										"rc": 1
 									},
 									{
-										"r": 1,
-										"rc": 1,
+										"b": 1,
+										"bc": 1,
+										"t": 31
+									},
+									{
 										"b": 27,
 										"bc": 1,
 										"t": 31
 									},
 									{
+										"r": 1,
+										"rc": 1,
+										"b": 1,
+										"bc": 1,
+										"t": 31
 									},
 									{
 									},
@@ -19867,20 +19975,14 @@
 										"t": 31
 									},
 									{
-										"b": 1,
-										"bc": 1,
 										"t": 31
 									},
 									{
-										"b": 1,
-										"bc": 1,
 										"t": 31
 									},
 									{
 										"r": 2,
 										"rc": 1,
-										"b": 1,
-										"bc": 1,
 										"t": 31
 									},
 									{
@@ -19946,6 +20048,8 @@
 									{
 										"b": 1,
 										"bc": 1,
+										"m": 14,
+										"mc": 1,
 										"t": 31
 									},
 									{
@@ -19982,10 +20086,8 @@
 										"rc": 1
 									},
 									{
-										"r": 28,
+										"r": 1,
 										"rc": 1,
-										"b": 27,
-										"bc": 1,
 										"t": 31
 									},
 									{
@@ -20031,7 +20133,7 @@
 										"rc": 1
 									},
 									{
-										"r": 28,
+										"r": 1,
 										"rc": 1,
 										"t": 31
 									},
@@ -20055,8 +20157,6 @@
 									{
 										"b": 1,
 										"bc": 1,
-										"m": 14,
-										"mc": 1,
 										"t": 31
 									},
 									{
@@ -20065,7 +20165,7 @@
 										"t": 31
 									},
 									{
-										"r": 28,
+										"r": 1,
 										"rc": 1,
 										"b": 1,
 										"bc": 1
@@ -20143,12 +20243,25 @@
 										"bc": 1
 									},
 									{
+										"r": 1,
+										"rc": 1
 									},
 									{
+										"b": 1,
+										"bc": 1,
+										"t": 31
 									},
 									{
+										"b": 1,
+										"bc": 1,
+										"t": 31
 									},
 									{
+										"r": 1,
+										"rc": 1,
+										"b": 1,
+										"bc": 1,
+										"t": 31
 									},
 									{
 									},
@@ -20181,9 +20294,55 @@
 									{
 										"r": 1,
 										"rc": 1,
+										"b": 23,
+										"bc": 1,
+										"m": 8,
+										"mc": 1,
+										"t": 31
+									},
+									{
+										"r": 1,
+										"rc": 1
+									},
+									{
+										"r": 1,
+										"rc": 1,
+										"b": 23,
+										"bc": 1,
+										"t": 31
+									},
+									{
+										"r": 1,
+										"rc": 1
+									},
+									{
+										"r": 1,
+										"rc": 1,
 										"b": 1,
 										"bc": 1,
-										"m": 46,
+										"t": 31
+									},
+									{
+										"r": 1,
+										"rc": 1
+									},
+									{
+										"r": 1,
+										"rc": 1,
+										"b": 29,
+										"bc": 1,
+										"t": 31
+									},
+									{
+										"r": 1,
+										"rc": 1
+									},
+									{
+										"r": 1,
+										"rc": 1,
+										"b": 23,
+										"bc": 1,
+										"m": 8,
 										"mc": 1,
 										"t": 31
 									},
@@ -20199,48 +20358,6 @@
 										"t": 31
 									},
 									{
-										"r": 1,
-										"rc": 1
-									},
-									{
-										"r": 1,
-										"rc": 1,
-										"b": 1,
-										"bc": 1,
-										"t": 31
-									},
-									{
-										"r": 1,
-										"rc": 1
-									},
-									{
-										"r": 1,
-										"rc": 1,
-										"t": 31
-									},
-									{
-										"r": 1,
-										"rc": 1
-									},
-									{
-										"r": 1,
-										"rc": 1,
-										"b": 1,
-										"bc": 1,
-										"t": 31
-									},
-									{
-										"r": 1,
-										"rc": 1
-									},
-									{
-										"r": 1,
-										"rc": 1,
-										"b": 1,
-										"bc": 1,
-										"t": 31
-									},
-									{
 									},
 									{
 									},
@@ -20300,8 +20417,6 @@
 										"t": 31
 									},
 									{
-										"b": 1,
-										"bc": 1,
 										"t": 31
 									},
 									{
@@ -20318,8 +20433,6 @@
 									{
 										"r": 1,
 										"rc": 1,
-										"b": 28,
-										"bc": 1,
 										"t": 31
 									},
 									{
@@ -20332,8 +20445,6 @@
 										"t": 31
 									},
 									{
-										"b": 1,
-										"bc": 1,
 										"t": 31
 									},
 									{
@@ -20463,8 +20574,6 @@
 									{
 										"r": 1,
 										"rc": 1,
-										"b": 25,
-										"bc": 1,
 										"t": 31
 									},
 									{
@@ -20541,26 +20650,35 @@
 									{
 									},
 									{
+										"r": 1,
+										"rc": 1
 									},
 									{
-										"b": 1,
-										"bc": 1
-									},
-									{
-									},
-									{
-									},
-									{
-										"b": 1,
-										"bc": 1
+										"r": 1,
+										"rc": 1,
+										"t": 31
 									},
 									{
 									},
 									{
+										"r": 1,
+										"rc": 1
 									},
 									{
-										"b": 1,
-										"bc": 1
+										"r": 1,
+										"rc": 1,
+										"t": 31
+									},
+									{
+									},
+									{
+										"r": 1,
+										"rc": 1
+									},
+									{
+										"r": 1,
+										"rc": 1,
+										"t": 31
 									}
 								]
 							},
@@ -20608,8 +20726,6 @@
 									{
 										"b": 1,
 										"bc": 1,
-										"m": 14,
-										"mc": 1,
 										"t": 31
 									},
 									{
@@ -20662,8 +20778,6 @@
 									{
 										"b": 1,
 										"bc": 1,
-										"m": 14,
-										"mc": 1,
 										"t": 31
 									},
 									{
@@ -21767,7 +21881,19 @@
 							"x": 42,
 							"y": 33,
 							"monospaced": false,
-							"__data": "#TAG ArenaAMiddle\nArena\/Save\n- If entering for first time: \"The forces of Mullanginan rally around you!\"\n- If entering after winning: \"This is a safe haven... for now.\"\n- If returning after 10 minutes have elapsed: \"This battleground has been reclaimed in the name of Mullanginan!\""
+							"__data": "#TAG ArenaBMiddle\nArena\/Save\n- If entering for first time: \"The forces of Mullanginan rally around you!\"\n- If entering after winning: \"This is a safe haven... for now.\"\n- If returning after 10 minutes have elapsed: \"This battleground has been reclaimed in the name of Mullanginan!\""
+						},
+						{
+							"x": 4,
+							"y": 30,
+							"monospaced": false,
+							"__data": "Hint 1: \"In the hall of a dozen prongs, seek the southern oddity.\""
+						},
+						{
+							"x": 31,
+							"y": 37,
+							"monospaced": false,
+							"__data": "Hint 1 hidden door"
 						},
 						{
 							"x": 9,
@@ -21788,6 +21914,12 @@
 							"__data": "Arena\/Save"
 						},
 						{
+							"x": 20,
+							"y": 17,
+							"monospaced": false,
+							"__data": "Demo end zone, final encounter\/dialogue here\n\nA martialist\/possibly unique boss: \"Ridiculous, do you not see our poisoned daggers laid at our feet? \nDo you not see the unusual emptiness around you, hear the sounds of laughter as we struggle?\nAll the same, it is our home you have come to uninvited, it is our kinsmen you cut down.\nYou shall suffer their fate, not in the name of Mullanginan, but in the name of progress and truth.\"\n- final battle begins, either large group of enemies or miniboss type guy flanked by a few dudes\nAfter martialist\/possibly unique boss defeat: \"Folly, til the very end, all of you and I both I suppose.\nDo what you must, I no longer bear meaning to Telnoth, and neither shall you so long as the two\nhalves of the whole pull wool over our eyes. Seek the truth. Seek... Selume.\"\n- Demo ends, maybe a congrats screen?\n\"The night of the poisoned daggers will continue...\n\nThank you so much if you've made it this far! This is the end of our Dungeon Crawler Jam entry, and \nwe hope that you've enjoyed it, feel free to leave feedback and let us know what you thought!\""
+						},
+						{
 							"x": 9,
 							"y": 22,
 							"monospaced": false,
@@ -21797,7 +21929,13 @@
 							"x": 25,
 							"y": 37,
 							"monospaced": false,
-							"__data": "Trap: \"(Party leader) pulls the lever, an electric shock courses through their body!\" (take 4 damage, lose 1 determination til next safe zone)#TAG EmptyChest\n#OBJECT oChest\nEmpty: \"The sight of the empty chest causes (party leader) to lose heart.\"\n(Subtract 1 camaraderie from party lead til next rest)"
+							"__data": "Trap: \"(Party leader) pulls the lever, an electric shock courses through their body!\" (take 4 damage, lose 1 determination til next safe zone)"
+						},
+						{
+							"x": 33,
+							"y": 37,
+							"monospaced": false,
+							"__data": "Trap: \"(Party leader) pulls the lever, an electric shock courses through their body!\" (take 4 damage, lose 1 determination til next safe zone)"
 						},
 						{
 							"x": 54,
@@ -21815,7 +21953,7 @@
 							"x": 45,
 							"y": 18,
 							"monospaced": false,
-							"__data": "#TAG Boulder\n#OBJECT oBoulder\nBoulders can be:\n- shifted (higher than a 6)\n- smashed (higher than a 6), \n\nCannot be:\ncut, prayed to, etc.\n\nSuccess: \"(Party member) (actioned) the boulder,\"\nFailure: \"(Party member) strained themselves trying to (action) the boulder.\"\nNo Spirit remaining: \"Nobody has the energy to deal with this.\"\nNo party member capable: \"Nobody understands how to deal with this.\"\n(subtract 1 SPT til next rest if failed)"
+							"__data": "Boulders can be:\n- shifted (higher than a 6)\n- smashed (higher than a 6), \n\nCannot be:\ncut, prayed to, etc.\n\nSuccess: \"(Party member) (actioned) the boulder,\"\nFailure: \"(Party member) strained themselves trying to (action) the boulder.\"\nNo Spirit remaining: \"Nobody has the energy to deal with this.\"\nNo party member capable: \"Nobody understands how to deal with this.\"\n(subtract 1 SPT til next rest if failed)"
 						},
 						{
 							"x": 32,
@@ -21827,7 +21965,7 @@
 							"x": 9,
 							"y": 21,
 							"monospaced": false,
-							"__data": "#TAG Sign\n#NUMBER messageDir,NORTH\n#STRING message,\"The Nightjar Construction Commitee welcomes you, we apologize if some things aren't working as intended! If this is your first time playing, try these tips:\\n- Write down all that you learn, you never know what lies between the lines.\\n- Events utilize certain stats, be mindful of your team.\\n- The bottom part of the HUD is interactable, try shifting your character marbles around on the overworld and in battle!\\n- Foes will only challenge you in their arenas, catch them off guard before they outmatch you!"
+							"__data": "#TAG Sign\n#NUMBER messageDir,NORTH\n#STRING message,\"The Nightjar construction commitee bids you welcome! If this is your first time in these halls, we recommend you read below this simulation or consult the enclosed readme if you've downloaded it.\\nHere's some tips to get you started:\\n- Explore thoroughly, but quickly and carefully. Watchful eyes are taking note of your every action.\\n- Write down all that you learn, you never know what lies between the lines.\\n- Events utilize certain stats, be mindful of your party's state and check up on them frequently.\\n- Every character has a unique specialty, experiment.\\n- Weapons, armor, and artifacts will grant your party new abilities. Seek them out!\\n- Foes will only challenge you in their arenas, catch them off guard before they outmatch you!\\n- Cherraphy and Mullanginan are always watching, be sure to put on a good show.\""
 						},
 						{
 							"x": 12,
@@ -21893,7 +22031,7 @@
 							"x": 35,
 							"y": 41,
 							"monospaced": false,
-							"__data": "#TAG SneedEncounter5\nSneed Crawler: \"The busy machine takes notice of you, bleeping loudly before burrowing away.\"\n(add 1 Sneed Crawler to next encounter)"
+							"__data": "Sneed Crawler: \"A group of Sneed Crawlers are creating new tunnels, one of their machine eyes darts your direction.\"\n- Roll higher than 7 to succeed\nSuccess: \"The group quickly ducks around the corner, the machine lurks for a moment, then carries on with it's digging.\"\nFailure: \"All three machines beep frantically, knocking (party leader) to the side and surely alerting enemy forces.\" \n(adds 3 sneed crawlers to next encounter, party leader sustains 1 damage to camaraderie til next save)"
 						},
 						{
 							"x": 23,
@@ -21917,7 +22055,7 @@
 							"x": 12,
 							"y": 36,
 							"monospaced": false,
-							"__data": "#TAG MartialistEncounter4\nMartialist: \"A martialist is propped against the wall, he seems to not care about your intrusion.\"\n- Just a strange interaction, maybe this guy shows up later in the final game"
+							"__data": "Martialist: \"A martialist is propped against the wall, he seems to not care about your intrusion.\"\n- Just a strange interaction, maybe this guy shows up later in the final game"
 						},
 						{
 							"x": 15,
@@ -21929,13 +22067,25 @@
 							"x": 29,
 							"y": 34,
 							"monospaced": false,
-							"__data": "#TAG SneedEncounter5\nSneed Crawler: \"The busy machine takes notice of you, bleeping loudly before burrowing away.\"\n(add 1 Sneed Crawler to next encounter)"
+							"__data": "Sneed Crawler: \"The busy machine takes notice of you, bleeping loudly before burrowing away.\"\n(add 1 Sneed Crawler to next encounter)"
 						},
 						{
 							"x": 42,
 							"y": 35,
 							"monospaced": false,
-							"__data": "#TAG ArenaAGateN\n#OPEN N\nLocking gate, closes behind player, opens after combat, remains open after combat for 10 minutes\n\"The gate to the arena slams shut behind you, the gods cheer for blood!\""
+							"__data": "#TAG ArenaBGateS\n#OPEN S\nLocking gate, closes behind player, opens after combat, remains open after combat for 10 minutes\n\"The gate to the arena slams shut behind you, the gods cheer for blood!\""
+						},
+						{
+							"x": 44,
+							"y": 33,
+							"monospaced": false,
+							"__data": "#TAG ArenaBGateE\n#OPEN E\nLocking gate, closes behind player, opens after combat, remains open after combat for 10 minutes\n\"The gate to the arena slams shut behind you, the gods cheer for blood!\""
+						},
+						{
+							"x": 27,
+							"y": 35,
+							"monospaced": false,
+							"__data": "#TAG Sign\n#NUMBER messageDir,NORTH\n#STRING message,\"A guide to fools:\\n- If you are reading this, you have strayed, fool!\\n- If you are not reading this, congratulations, o enlightened one.\""
 						},
 						{
 							"x": 3,
@@ -21953,7 +22103,7 @@
 							"x": 1,
 							"y": 40,
 							"monospaced": false,
-							"__data": "#OBJECT oChest\n#TAG Treasure\n#STRING item,Liquor"
+							"__data": "Libations"
 						},
 						{
 							"x": 42,
@@ -21971,7 +22121,7 @@
 							"x": 18,
 							"y": 44,
 							"monospaced": false,
-							"__data": "#OBJECT oChest\n#TAG Treasure\n#STRING item,Life Dew"
+							"__data": "LifeDew"
 						},
 						{
 							"x": 26,
@@ -21995,25 +22145,25 @@
 							"x": 8,
 							"y": 21,
 							"monospaced": false,
-							"__data": "#TAG Sign\n#NUMBER messageDir,NORTH\n#STRING message,\"The Nightjar Construction Committee guide to controls:\\nLeft Click: Confirm\/interact with the various interfaces\\nEnter: Interact using lead party member\\nArrow Keys\/WASDQE: Move\\nSpacebar: Toggle action log\""
+							"__data": "#TAG Sign\n#NUMBER messageDir,NORTH\n#STRING message,\"The Nightjar Construction Committee guide to controls:\\nLeft Click: Confirm\/interact with the various interfaces\\nEnter: Interact using lead party member\\nArrow Keys\/WASD: Move\\nQ and E: Strafe left or right\""
 						},
 						{
 							"x": 29,
 							"y": 29,
 							"monospaced": false,
-							"__data": "#TAG SageEncounter3\nNettle Sage: \"A nettle sage flits off down the hall as you approach.\"\n(add 1 Nettle Sage to next encounter)"
+							"__data": "Nettle Sage: \"A nettle sage flits off down the hall as you approach.\"\n(add 1 Nettle Sage to next encounter)"
 						},
 						{
 							"x": 61,
 							"y": 27,
 							"monospaced": false,
-							"__data": "#TAG ArenaAMiddle"
+							"__data": "Nettle Sage: \"A lone Nettle Sage seems to be frantically searching for someone, making them an easy target.\"\n- Roll a 7 or higher\nSuccess: \"The Nettle sage withers and falls to the floor.\"\nFailure: \"The Nettle Sage spots you and makes a strange gesture before fleeing. You feel eyes all around you.\"\n(add 2 Nettle sages and 1 Eve Scout to next encounter)"
 						},
 						{
 							"x": 49,
 							"y": 36,
 							"monospaced": false,
-							"__data": "#TAG ScoutEncounter1\nAn Eve Scout stands here: \"The Eve Scout sizes you up and looks to dart into the shadows, catch her quickly!\"\n- A dice roll occurs, it being the first one you only need to roll higher than a 3\nSuccess: \"Before the Eve Scout can move a muscle, she is struck down by (current party lead).\"\nFailure: \"You were unable to react in time, the Eve Scout slips into the darkness.\" (add 1 Eve Scout to next encounter)"
+							"__data": "Eve Scout: \"An eve scout spots you and lets loose a warning shot. You try to approach.\"\n- Roll higher than an 8\nSuccess: \"(party leader) charges towards the scout, striking them down. Footsteps are heard in the distance as someone else flees.\"\n(Add 1 Eve Scout to next encounter)\nFailure: \"The party fails to notice the carefully laid trip line and stumbles over eachother while the Eve Scout laughs and darts off.\"\n(Add 1 Eve Scout to next encounter, subtract 1 Camaraderie from entire party til next rest)"
 						},
 						{
 							"x": 46,
@@ -22025,7 +22175,7 @@
 							"x": 37,
 							"y": 39,
 							"monospaced": false,
-							"__data": "#OBJECT oChest\n#TAG Treasure\n#STRING item,Ration"
+							"__data": "Rations"
 						},
 						{
 							"x": 35,
@@ -22040,10 +22190,22 @@
 							"__data": "Trap: \"(Party leader) hears a click, from above a shower of rubble begins raining down.\"\n- Roll higher than a 6\nSuccess: \"Everyone successfully dives out of the way"
 						},
 						{
+							"x": 47,
+							"y": 31,
+							"monospaced": false,
+							"__data": "Web, can be:\n- Cut (roll higher than 4)\n- Smashed (roll higher than 6)\n- Shifted (roll higher than 4)\n\nCannot be:\n- Prayed to\n- Read well (lol)\n- Flagsinger'd\n\nSuccess: \"(Party member) (actioned) the web.\"\nFailure: \"(Party member) strained themselves trying to (action) the web.\"\nNo Spirit remaining: \"Nobody has the energy to deal with this.\"\nNo party member capable: \"Nobody understands how to deal with this.\"\n(subtract 1 SPT til next rest if failed)"
+						},
+						{
+							"x": 65,
+							"y": 27,
+							"monospaced": false,
+							"__data": "Web, can be:\n- Cut (roll higher than 4)\n- Smashed (roll higher than 6)\n- Shifted (roll higher than 4)\n\nCannot be:\n- Prayed to\n- Read well (lol)\n- Flagsinger'd\n\nSuccess: \"(Party member) (actioned) the web.\"\nFailure: \"(Party member) strained themselves trying to (action) the web.\"\nNo Spirit remaining: \"Nobody has the energy to deal with this.\"\nNo party member capable: \"Nobody understands how to deal with this.\"\n(subtract 1 SPT til next rest if failed)"
+						},
+						{
 							"x": 30,
 							"y": 39,
 							"monospaced": false,
-							"__data": "#OBJECT oChest\n#TAG Treasure\n#STRING item,Life Dew"
+							"__data": "LifeDew"
 						},
 						{
 							"x": 37,
@@ -22055,7 +22217,7 @@
 							"x": 17,
 							"y": 44,
 							"monospaced": false,
-							"__data": "#OBJECT oChest\n#TAG Treasure\n#STRING item,Mana Dew"
+							"__data": "ManaDew"
 						},
 						{
 							"x": 26,
@@ -22067,7 +22229,7 @@
 							"x": 22,
 							"y": 13,
 							"monospaced": false,
-							"__data": "#TAG GateE\nLocked Gate E"
+							"__data": "Final Gate"
 						},
 						{
 							"x": 51,
@@ -22079,43 +22241,61 @@
 							"x": 33,
 							"y": 12,
 							"monospaced": false,
-							"__data": "#TAG MixedEncounter8\nEve Scout: \"A set of eyes pass through the shadows, followed by the sound of rustling leaves.\"\n(add 1 eve scout and 1 nettle sage to next encounter)"
+							"__data": "Nettle Sage: \"A nettle sage flits off down the hall as you approach.\"\n(add 1 Nettle Sage to next encounter)"
 						},
 						{
 							"x": 29,
 							"y": 12,
 							"monospaced": false,
-							"__data": "#TAG ScoutEncounter1\nAn Eve Scout stands here: \"The Eve Scout sizes you up and looks to dart into the shadows, catch her quickly!\"\n- A dice roll occurs, it being the first one you only need to roll higher than a 3\nSuccess: \"Before the Eve Scout can move a muscle, she is struck down by (current party lead).\"\nFailure: \"You were unable to react in time, the Eve Scout slips into the darkness.\" (add 1 Eve Scout to next encounter)"
+							"__data": "Eve Scout: \"An eve scout spots you and lets loose a warning shot. You try to approach.\"\n- Roll higher than an 8\nSuccess: \"(party leader) charges towards the scout, striking them down. Footsteps are heard in the distance as someone else flees.\"\n(Add 1 Eve Scout to next encounter)\nFailure: \"The party fails to notice the carefully laid trip line and stumbles over eachother while the Eve Scout laughs and darts off.\"\n(Add 1 Eve Scout to next encounter, subtract 1 Camaraderie from entire party til next rest)"
 						},
 						{
 							"x": 31,
 							"y": 10,
 							"monospaced": false,
-							"__data": "#TAG SneedEncounter5\nSneed Crawler: \"The busy machine takes notice of you, bleeping loudly before burrowing away.\"\n(add 1 Sneed Crawler to next encounter)"
+							"__data": "Sneed Crawler: \"A group of Sneed Crawlers are creating new tunnels, one of their machine eyes darts your direction.\"\n- Roll higher than 7 to succeed\nSuccess: \"The group quickly ducks around the corner, the machine lurks for a moment, then carries on with it's digging.\"\nFailure: \"All three machines beep frantically, knocking (party leader) to the side and surely alerting enemy forces.\" \n(adds 3 sneed crawlers to next encounter, party leader sustains 1 damage to camaraderie til next save)"
 						},
 						{
 							"x": 33,
 							"y": 8,
 							"monospaced": false,
-							"__data": "#TAG Boulder\n#OBJECT oBoulder\nBoulders can be:\n- shifted (higher than a 6)\n- smashed (higher than a 6), \n\nCannot be:\ncut, prayed to, etc.\n\nSuccess: \"(Party member) (actioned) the boulder,\"\nFailure: \"(Party member) strained themselves trying to (action) the boulder.\"\nNo Spirit remaining: \"Nobody has the energy to deal with this.\"\nNo party member capable: \"Nobody understands how to deal with this.\"\n(subtract 1 SPT til next rest if failed)"
+							"__data": "Boulders can be:\n- shifted (higher than a 6)\n- smashed (higher than a 6), \n\nCannot be:\ncut, prayed to, etc.\n\nSuccess: \"(Party member) (actioned) the boulder,\"\nFailure: \"(Party member) strained themselves trying to (action) the boulder.\"\nNo Spirit remaining: \"Nobody has the energy to deal with this.\"\nNo party member capable: \"Nobody understands how to deal with this.\"\n(subtract 1 SPT til next rest if failed)"
 						},
 						{
 							"x": 38,
 							"y": 17,
 							"monospaced": false,
-							"__data": "#TAG MartialistEncounter6\n\"Martialists overseeing tunnel construction meet your eye, then slip into shadow.\"\n(add 2 martialists to next encounter)"
+							"__data": "Martialist: \"A couple of martialists are engaged in some form of game involving white and black stones. A loose grey stone rolls at (party leader's) feet.\"\n- Roll a 2 or higher, joke event basically\nSuccess: \"(party leader) sets the grey stone on the table. The martialists look on in astonishment before forfeiting the game and leaving Nightjar forever.\"\nFailure: \"You stare at the grey stone, and the grey stone stares back. By the time you look up the martialists have left.\"\n(add 2 martialists to next encounter on failure)"
 						},
 						{
 							"x": 40,
 							"y": 19,
 							"monospaced": false,
-							"__data": "#TAG SageEncounter3\nNettle Sage: \"A nettle sage flits off down the hall as you approach.\"\n(add 1 Nettle Sage to next encounter)"
+							"__data": "Nettle Sage: \"A sweet song emenates from within the room, the party is lulled in, drawn to it.\"\n- Roll higher than a 7\nSuccess: \"Though the song is sweet, victory is sweeter. (party leader) silences the nettle sage's song forever.\"\nFailure: \"Everyone falls into a gentle slumber, when they awaken they find themselves in song withdrawal.\"\n(subtract 1 DTM from entire party til next rest on failure)"
+						},
+						{
+							"x": 44,
+							"y": 29,
+							"monospaced": false,
+							"__data": "Gate B"
 						},
 						{
 							"x": 27,
 							"y": 37,
 							"monospaced": false,
-							"__data": "#TAG UnlockGateC\n#STRING message,The sound of clanking metal is heard in the distance."
+							"__data": "Switch C\n\"The sound of clanking metal is heard nearby.\""
+						},
+						{
+							"x": 27,
+							"y": 36,
+							"monospaced": false,
+							"__data": "Gate C"
+						},
+						{
+							"x": 29,
+							"y": 37,
+							"monospaced": false,
+							"__data": "Switch: \"The switch clanks into place, but it appears nothing has happened.\""
 						},
 						{
 							"x": 0,
@@ -22190,256 +22370,52 @@
 							"__data": "#TAG ArenaA"
 						},
 						{
+							"x": 41,
+							"y": 32,
+							"monospaced": false,
+							"__data": "#TAG ArenaB"
+						},
+						{
+							"x": 42,
+							"y": 32,
+							"monospaced": false,
+							"__data": "#TAG ArenaB"
+						},
+						{
 							"x": 43,
-							"y": 29,
-							"monospaced": false,
-							"__data": "#TAG GateB\nLocked Gate B"
-						},
-						{
-							"x": 31,
 							"y": 32,
 							"monospaced": false,
-							"__data": "#TAG MartialistEncounter6\n\"Martialists overseeing tunnel construction meet your eye, then slip into shadow.\"\n(add 2 martialists to next encounter)"
+							"__data": "#TAG ArenaB"
 						},
 						{
-							"x": 28,
-							"y": 36,
-							"monospaced": false,
-							"__data": "#TAG SneedEncounter7\n\"A duo of sneed crawlers are merrily digging through the tunnels, screeching past with reckless abandon.\"\n(add 2 sneed crawlers to next encounter)"
-						},
-						{
-							"x": 42,
-							"y": 37,
-							"monospaced": false,
-							"__data": "Dev note: This gate is unopenable for now, we'll work on this after the jam"
-						},
-						{
-							"x": 42,
-							"y": 36,
-							"monospaced": false,
-							"__data": "#TAG Sign\n#NUMBER messageDir,EAST\n#STRING message,\"The Nightjar Construction Committee apologizes once again, everything behind this gate's currently off limits. Check back again in the future!\""
-						},
-						{
-							"x": 42,
-							"y": 34,
-							"monospaced": false,
-							"__data": "#TAG GateD\nLocked Gate D"
-						},
-						{
-							"x": 42,
-							"y": 31,
-							"monospaced": false,
-							"__data": "#TAG UnlockGateD\n#STRING message,The sound of clanking metal is heard in the distance."
-						},
-						{
-							"x": 9,
-							"y": 39,
-							"monospaced": false,
-							"__data": "#TAG ScoutEncounter1\nAn Eve Scout stands here: \"The Eve Scout sizes you up and looks to dart into the shadows, catch her quickly!\"\n- A dice roll occurs, it being the first one you only need to roll higher than a 3\nSuccess: \"Before the Eve Scout can move a muscle, she is struck down by (current party lead).\"\nFailure: \"You were unable to react in time, the Eve Scout slips into the darkness.\" (add 1 Eve Scout to next encounter)"
-						},
-						{
-							"x": 2,
-							"y": 37,
-							"monospaced": false,
-							"__data": "#TAG MartialistEncounter6\n\"Martialists overseeing tunnel construction meet your eye, then slip into shadow.\"\n(add 2 martialists to next encounter)"
-						},
-						{
-							"x": 4,
-							"y": 32,
-							"monospaced": false,
-							"__data": "#TAG SneedEncounter7\n\"A duo of sneed crawlers are merrily digging through the tunnels, screeching past with reckless abandon.\"\n(add 2 sneed crawlers to next encounter)"
-						},
-						{
-							"x": 4,
-							"y": 29,
-							"monospaced": false,
-							"__data": "\"In the hall of a dozen prongs, a wisened soul seeks the southern oddity and sees through it's facade.\""
-						},
-						{
-							"x": 31,
-							"y": 38,
-							"monospaced": false,
-							"__data": "The southern oddity, it's the only one with two tiles to walk forward. No code necessary, just a map note"
-						},
-						{
-							"x": 27,
-							"y": 34,
-							"monospaced": false,
-							"__data": "#TAG Sign\n#NUMBER messageDir,NORTH\n#STRING message,\"A guide to fools:\\n- If you are reading this, you have strayed, fool!\\n- If you are not reading this, congratulations, o enlightened one.\""
-						},
-						{
-							"x": 53,
-							"y": 36,
-							"monospaced": false,
-							"__data": "#TAG Sign\n#NUMBER messageDir,EAST\n#STRING message,\"Gaze not this direction, for the god of Nightjar should not be perceived.\" "
-						},
-						{
-							"x": 61,
-							"y": 36,
-							"monospaced": false,
-							"__data": "#TAG Sign\n#NUMBER messageDir,WEST\n#STRING message,\"Gaze not this direction, for the god of Haringlee only deceives.\""
-						},
-						{
-							"x": 57,
-							"y": 37,
-							"monospaced": false,
-							"__data": "#TAG Sign\n#NUMBER messageDir,SOUTH\n#STRING message,\"Those that gaze between shall find the eventual truth.\""
-						},
-						{
-							"x": 61,
-							"y": 24,
-							"monospaced": false,
-							"__data": "#TAG UnlockGateE\n#STRING message,The sound of clanking metal is heard in the distance."
-						},
-						{
-							"x": 23,
-							"y": 39,
-							"monospaced": false,
-							"__data": "#TAG MixedEncounter8\nEve Scout: \"A set of eyes pass through the shadows, followed by the sound of rustling leaves.\"\n(add 1 eve scout and 1 nettle sage to next encounter)"
-						},
-						{
-							"x": 27,
-							"y": 35,
-							"monospaced": false,
-							"__data": "#TAG GateC\nLocked Gate C"
-						},
-						{
-							"x": 58,
-							"y": 36,
-							"monospaced": false,
-							"__data": "#TAG ScoutEncounter1\nAn Eve Scout stands here: \"The Eve Scout sizes you up and looks to dart into the shadows, catch her quickly!\"\n- A dice roll occurs, it being the first one you only need to roll higher than a 3\nSuccess: \"Before the Eve Scout can move a muscle, she is struck down by (current party lead).\"\nFailure: \"You were unable to react in time, the Eve Scout slips into the darkness.\" (add 1 Eve Scout to next encounter)"
-						},
-						{
-							"x": 52,
+							"x": 43,
 							"y": 33,
 							"monospaced": false,
-							"__data": "#TAG MixedEncounter8\nEve Scout: \"A set of eyes pass through the shadows, followed by the sound of rustling leaves.\"\n(add 1 eve scout and 1 nettle sage to next encounter)"
+							"__data": "#TAG ArenaB"
 						},
 						{
-							"x": 57,
-							"y": 27,
+							"x": 43,
+							"y": 34,
 							"monospaced": false,
-							"__data": "#TAG SageEncounter3\nNettle Sage: \"A nettle sage flits off down the hall as you approach.\"\n(add 1 Nettle Sage to next encounter)"
+							"__data": "#TAG ArenaB"
 						},
 						{
-							"x": 40,
-							"y": 29,
+							"x": 42,
+							"y": 34,
 							"monospaced": false,
-							"__data": "#TAG ScoutEncounter1\nAn Eve Scout stands here: \"The Eve Scout sizes you up and looks to dart into the shadows, catch her quickly!\"\n- A dice roll occurs, it being the first one you only need to roll higher than a 3\nSuccess: \"Before the Eve Scout can move a muscle, she is struck down by (current party lead).\"\nFailure: \"You were unable to react in time, the Eve Scout slips into the darkness.\" (add 1 Eve Scout to next encounter)"
+							"__data": "#TAG ArenaB"
 						},
 						{
-							"x": 61,
-							"y": 31,
+							"x": 41,
+							"y": 34,
 							"monospaced": false,
-							"__data": "#TAG SneedEncounter7\n\"A duo of sneed crawlers are merrily digging through the tunnels, screeching past with reckless abandon.\"\n(add 2 sneed crawlers to next encounter)"
+							"__data": "#TAG ArenaB"
 						},
 						{
-							"x": 40,
-							"y": 15,
+							"x": 41,
+							"y": 33,
 							"monospaced": false,
-							"__data": "#TAG Sign\n#NUMBER messageDir,NORTH\n#STRING message,\"Sneed crawler maintenance closet.\""
-						},
-						{
-							"x": 34,
-							"y": 23,
-							"monospaced": false,
-							"__data": "#OBJECT oChest\n#TAG Treasure\n#STRING item,Halberdigan"
-						},
-						{
-							"x": 16,
-							"y": 28,
-							"monospaced": false,
-							"__data": "#OBJECT oChest\n#TAG Treasure\n#STRING item,Varganglia"
-						},
-						{
-							"x": 17,
-							"y": 27,
-							"monospaced": false,
-							"__data": "#OBJECT oChest\n#TAG Treasure\n#STRING item,Life Dew"
-						},
-						{
-							"x": 3,
-							"y": 29,
-							"monospaced": false,
-							"__data": "#OBJECT oChest\n#TAG Treasure\n#STRING item,Liquor"
-						},
-						{
-							"x": 23,
-							"y": 27,
-							"monospaced": false,
-							"__data": "#TAG ScoutEncounter1\nAn Eve Scout stands here: \"The Eve Scout sizes you up and looks to dart into the shadows, catch her quickly!\"\n- A dice roll occurs, it being the first one you only need to roll higher than a 3\nSuccess: \"Before the Eve Scout can move a muscle, she is struck down by (current party lead).\"\nFailure: \"You were unable to react in time, the Eve Scout slips into the darkness.\" (add 1 Eve Scout to next encounter)"
-						},
-						{
-							"x": 4,
-							"y": 13,
-							"monospaced": false,
-							"__data": "#OBJECT oChest\n#TAG Treasure\n#STRING item,Liquor"
-						},
-						{
-							"x": 7,
-							"y": 12,
-							"monospaced": false,
-							"__data": "#OBJECT oChest\n#TAG Treasure\n#STRING item,Prying Poleaxe"
-						},
-						{
-							"x": 25,
-							"y": 42,
-							"monospaced": false,
-							"__data": "#TAG SneedEncounter7\n\"A duo of sneed crawlers are merrily digging through the tunnels, screeching past with reckless abandon.\"\n(add 2 sneed crawlers to next encounter)"
-						},
-						{
-							"x": 18,
-							"y": 42,
-							"monospaced": false,
-							"__data": "#TAG SageEncounter3\nNettle Sage: \"A nettle sage flits off down the hall as you approach.\"\n(add 1 Nettle Sage to next encounter)"
-						},
-						{
-							"x": 30,
-							"y": 43,
-							"monospaced": false,
-							"__data": "#OBJECT oChest\n#TAG Treasure\n#STRING item,Ration"
-						},
-						{
-							"x": 32,
-							"y": 26,
-							"monospaced": false,
-							"__data": "#TAG Sign\n#NUMBER messageDir,NORTH\n#STRING message,\"Two paces right, but how many forward?\""
-						},
-						{
-							"x": 37,
-							"y": 26,
-							"monospaced": false,
-							"__data": "#TAG Sign\n#NUMBER messageDir,NORTH\n#STRING message,\"Three paces forward, but how many sideways?\""
-						},
-						{
-							"x": 20,
-							"y": 16,
-							"monospaced": false,
-							"__data": "Demo end zone, final encounter\/dialogue here\n\nA martialist\/possibly unique boss: \"Ridiculous, do you not see our poisoned daggers laid at our feet? \nDo you not see the unusual emptiness around you, hear the sounds of laughter as we struggle?\nAll the same, it is our home you have come to uninvited, it is our kinsmen you cut down.\nYou shall suffer their fate, not in the name of Mullanginan, but in the name of progress and truth.\"\n- final battle begins, either large group of enemies or miniboss type guy flanked by a few dudes\nAfter martialist\/possibly unique boss defeat: \"Folly, til the very end, all of you and I both I suppose.\nDo what you must, I no longer bear meaning to Telnoth, and neither shall you so long as the two\nhalves of the whole pull wool over our eyes. Seek the truth. Seek... Selume.\"\n- Demo ends, maybe a congrats screen?\n\"The night of the poisoned daggers will continue...\n\nThank you so much if you've made it this far! This is the end of our Dungeon Crawler Jam entry, and \nwe hope that you've enjoyed it, feel free to leave feedback and let us know what you thought!\""
-						},
-						{
-							"x": 9,
-							"y": 16,
-							"monospaced": false,
-							"__data": "#TAG Sign\n#NUMBER messageDir,NORTH\n#STRING message,\"The Nightjar Construction Committee is:\\n- Coding: Paul \"LagDotCom\" Davies\\n- Writing: Jacob J. Ritz & Zanzanzawaveia\\n- Art: Jacob J. Ritz & inspired by Kyle Riley\\n- Music: Zanzanzawaveia"
-						},
-						{
-							"x": 36,
-							"y": 23,
-							"monospaced": false,
-							"__data": "#TAG Web\n#OBJECT oWeb\nWeb, can be:\n- Cut (roll higher than 4)\n- Smashed (roll higher than 6)\n- Shifted (roll higher than 4)\n\nCannot be:\n- Prayed to\n- Read well (lol)\n- Flagsinger'd\n\nSuccess: \"(Party member) (actioned) the web.\"\nFailure: \"(Party member) strained themselves trying to (action) the web.\"\nNo Spirit remaining: \"Nobody has the energy to deal with this.\"\nNo party member capable: \"Nobody understands how to deal with this.\"\n(subtract 1 SPT til next rest if failed)"
-						},
-						{
-							"x": 20,
-							"y": 15,
-							"monospaced": false,
-							"__data": "Maybe this final \"boss\" is an exceptionally strong martialist, double the HP, 2-3 extra SP, and slight DP with a unique name like \"Nelikhos\".\nIf there's no time to add this, then the final encounter is just whatever remaining enemies you had and a thanks message.\nDisregard all of the below if that ends up the case."
-						},
-						{
-							"x": 20,
-							"y": 17,
-							"monospaced": false,
-							"__data": "#TAG JamEncounter9\n\n\"The night of the poisoned daggers will continue...\n\nThank you so much if you've made it this far! This is the end of our Dungeon Crawler Jam entry, and \nwe hope that you've enjoyed it, feel free to leave feedback and let us know what you thought!\""
+							"__data": "#TAG ArenaB"
 						}
 					]
 				},
