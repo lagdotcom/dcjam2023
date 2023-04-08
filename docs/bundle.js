@@ -4152,37 +4152,37 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
   };
 
   // res/map.dscript
-  var map_default2 = "./map-V35IMN23.dscript";
+  var map_default2 = "./map-DTBMWECD.dscript";
 
   // res/atlas/flats.png
   var flats_default = "./flats-HZYMJUF6.png";
 
   // res/atlas/flats.json
-  var flats_default2 = "./flats-T5YNSK6F.json";
+  var flats_default2 = "./flats-V3RS32W5.json";
 
   // res/atlas/eveScout.png
   var eveScout_default = "./eveScout-GB6RQXWR.png";
 
   // res/atlas/eveScout.json
-  var eveScout_default2 = "./eveScout-CUUCANDE.json";
+  var eveScout_default2 = "./eveScout-3RSQGX7M.json";
 
   // res/atlas/martialist.png
   var martialist_default = "./martialist-KFK3S4GT.png";
 
   // res/atlas/martialist.json
-  var martialist_default2 = "./martialist-E5J5GXPU.json";
+  var martialist_default2 = "./martialist-NY4U3XPJ.json";
 
   // res/atlas/nettleSage.png
   var nettleSage_default = "./nettleSage-DUNOBTXQ.png";
 
   // res/atlas/nettleSage.json
-  var nettleSage_default2 = "./nettleSage-UBAECBNA.json";
+  var nettleSage_default2 = "./nettleSage-FLJBTR3U.json";
 
   // res/atlas/sneedCrawler.png
   var sneedCrawler_default = "./sneedCrawler-B5CE42IQ.png";
 
   // res/atlas/sneedCrawler.json
-  var sneedCrawler_default2 = "./sneedCrawler-6NQFCLQH.json";
+  var sneedCrawler_default2 = "./sneedCrawler-5IJWBAV5.json";
 
   // src/resources.ts
   var Resources = {
