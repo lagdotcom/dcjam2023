@@ -26,6 +26,7 @@ import {
   getCardinalOffset,
   move,
   getDirOffset,
+  sameXY,
 } from "./tools/geometry";
 import getCanvasContext from "./tools/getCanvasContext";
 import { wrap } from "./tools/numbers";
@@ -84,7 +85,7 @@ export default class Engine implements Game {
   inventory: Item[];
   jukebox: Jukebox;
   log: string[];
-  obstacle?: Dir;
+  obstacle?: XY;
   party: Player[];
   pendingArenaEnemies: EnemyName[];
   pendingNormalEnemies: EnemyName[];
@@ -345,11 +346,13 @@ export default class Engine implements Game {
 
   move(dir: Dir) {
     if (this.combat.inCombat) return false;
-    if (this.obstacle && dir !== this.obstacle) return false;
+
+    const destination = move(this.position, dir);
+    if (this.obstacle && !sameXY(destination, this.obstacle)) return false;
 
     if (this.canMove(dir)) {
       const old = this.position;
-      this.position = move(this.position, dir);
+      this.position = destination;
       this.markVisited();
       this.markNavigable(old, dir);
       this.draw();
@@ -878,6 +881,8 @@ export default class Engine implements Game {
   }
 
   setObstacle(obstacle: boolean) {
-    this.obstacle = obstacle ? rotate(this.facing, 2) : undefined;
+    this.obstacle = obstacle
+      ? move(this.position, rotate(this.facing, 2))
+      : undefined;
   }
 }

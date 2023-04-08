@@ -741,6 +741,9 @@
     x: Math.floor(x),
     y: Math.floor(y)
   });
+  function sameXY(a, b) {
+    return a.x === b.x && a.y === b.y;
+  }
   function addXY(a, b) {
     return { x: a.x + b.x, y: a.y + b.y };
   }
@@ -4758,11 +4761,12 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     move(dir) {
       if (this.combat.inCombat)
         return false;
-      if (this.obstacle && dir !== this.obstacle)
+      const destination = move(this.position, dir);
+      if (this.obstacle && !sameXY(destination, this.obstacle))
         return false;
       if (this.canMove(dir)) {
         const old = this.position;
-        this.position = move(this.position, dir);
+        this.position = destination;
         this.markVisited();
         this.markNavigable(old, dir);
         this.draw();
@@ -5195,7 +5199,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       this.screen = new DeathScreen(this, this.party[lastToDie]);
     }
     setObstacle(obstacle) {
-      this.obstacle = obstacle ? rotate(this.facing, 2) : void 0;
+      this.obstacle = obstacle ? move(this.position, rotate(this.facing, 2)) : void 0;
     }
   };
 

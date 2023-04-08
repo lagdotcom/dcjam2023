@@ -7,6 +7,10 @@ export const xyi = (x: number, y: number): XY => ({
   y: Math.floor(y),
 });
 
+export function sameXY(a: XY, b: XY) {
+  return a.x === b.x && a.y === b.y;
+}
+
 export function addXY(a: XY, b: XY): XY {
   return { x: a.x + b.x, y: a.y + b.y };
 }
