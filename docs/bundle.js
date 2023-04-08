@@ -256,7 +256,7 @@
     act({ g, me }) {
       g.addEffect((destroy) => ({
         name: "Deflect",
-        duration: Infinity,
+        duration: 2,
         affects: [me],
         onCalculateDamage(e) {
           if (this.affects.includes(e.target)) {
@@ -300,7 +300,7 @@
     name: "DuoStab",
     tags: ["attack"],
     sp: 3,
-    targets: opponents(Infinity, [0, 2]),
+    targets: opponents(2, [0, 2]),
     act({ g, me, targets }) {
       g.applyDamage(me, targets, 6, "hp", "normal");
     }
@@ -323,7 +323,7 @@
     act({ g, me }) {
       g.addEffect((destroy) => ({
         name: "Parry",
-        duration: Infinity,
+        duration: 2,
         affects: [me],
         onBeforeAction(e) {
           if (intersection(this.affects, e.targets).length && e.action.tags.includes("attack")) {
@@ -4914,7 +4914,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
         this.addToLog("No valid targets.");
         return false;
       }
-      if (possibilities.length > amount) {
+      if (possibilities.length > amount && action.targets.type === "ally") {
         if (amount !== 1)
           throw new Error(`Don't know how to pick ${amount} targets`);
         this.pickingTargets = { pc, action, possibilities };
@@ -5059,7 +5059,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     }
     applyDamage(attacker, targets, amount, type, origin) {
       let total = 0;
-      for (const target of targets) {
+      for (const target of targets.filter((x) => x.alive)) {
         const damage = this.fire("onCalculateDamage", {
           attacker,
           target,

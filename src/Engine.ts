@@ -510,7 +510,8 @@ export default class Engine implements Game {
       return false;
     }
 
-    if (possibilities.length > amount) {
+    // TODO allow picking of enemy targets
+    if (possibilities.length > amount && action.targets.type === "ally") {
       if (amount !== 1)
         throw new Error(`Don't know how to pick ${amount} targets`);
 
@@ -702,7 +703,7 @@ export default class Engine implements Game {
   ) {
     let total = 0;
 
-    for (const target of targets) {
+    for (const target of targets.filter((x) => x.alive)) {
       const damage = this.fire("onCalculateDamage", {
         attacker,
         target,

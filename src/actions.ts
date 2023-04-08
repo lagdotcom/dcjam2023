@@ -139,7 +139,7 @@ export const Deflect: CombatAction = {
   act({ g, me }) {
     g.addEffect((destroy) => ({
       name: "Deflect",
-      duration: Infinity,
+      duration: 2,
       affects: [me],
       onCalculateDamage(e) {
         if (this.affects.includes(e.target)) {
@@ -184,7 +184,7 @@ export const DuoStab: CombatAction = {
   name: "DuoStab",
   tags: ["attack"],
   sp: 3,
-  targets: opponents(Infinity, [0, 2]),
+  targets: opponents(2, [0, 2]),
   act({ g, me, targets }) {
     g.applyDamage(me, targets, 6, "hp", "normal");
   },
@@ -209,7 +209,7 @@ export const Parry: CombatAction = {
   act({ g, me }) {
     g.addEffect((destroy) => ({
       name: "Parry",
-      duration: Infinity,
+      duration: 2,
       affects: [me],
       onBeforeAction(e) {
         if (
