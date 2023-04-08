@@ -33,6 +33,19 @@ function UnlockGateA()
 end
 onTagInteract('UnlockGateA', UnlockGateA)
 
+function UnlockGateB()
+  if partyDir == NORTH then
+    removeTag(partyX, partyY, 'UnlockGateB')
+    setDecal(partyX, partyY, NORTH, dPulledLever)
+    selectTileWithTag('GateB')
+    unlock(selectedX, selectedY, EAST)
+    setDecal(selectedX, selectedY, EAST, dOpenGate)
+    setDecal(selectedX+1, selectedY, WEST, dOpenGate)
+    message(getString('message'))
+  end
+end
+onTagInteract('UnlockGateB', UnlockGateB)
+
 function UnlockGateC()
   if partyDir == SOUTH then
     removeTag(partyX, partyY, 'UnlockGateC')
@@ -40,6 +53,7 @@ function UnlockGateC()
     selectTileWithTag('GateC')
     unlock(selectedX, selectedY, SOUTH)
     setDecal(selectedX, selectedY, SOUTH, dOpenGate)
+    setDecal(selectedX, selectedY-1, SOUTH, dOpenGate)
     message(getString('message'))
   end
 end
@@ -65,6 +79,12 @@ function UnlockGateE()
     selectTileWithTag('GateE')
     unlock(selectedX, selectedY, SOUTH)
     setDecal(selectedX, selectedY, SOUTH, dOpenGate)
+    setDecal(selectedX, selectedY+1, NORTH, dOpenGate)
+    message(getString('message'))
+  end
+end
+onTagInteract('UnlockGateE', UnlockGateE)
+
 function WebEnter()
   message('A huge web blocks your path.')
   obstacle()
@@ -143,9 +163,6 @@ onTagInteract('Boulder', BoulderInteract)
 
 function ScoutEncounter1()
   removeTag(partyX, partyY, 'ScoutEncounter1')
-  message('The Eve Scout sizes you up and looks to dart into the shadows.')
-  if skillCheck('determination', 3) then
-    message('Before the Eve Scout can move a muscle, she is struck down by ' + getPCName(partyDir) + '.')
   message('The eve scout sizes you up and looks to dart into the shadows.')
   if skillCheck('determination', 12) then
     message('Before the Eve Scout can move a muscle, they are struck down by ' + getPCName(partyDir) + '.')
