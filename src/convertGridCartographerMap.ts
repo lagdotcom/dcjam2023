@@ -126,7 +126,8 @@ class GCMapConverter {
         if (tile.t) mt.floor = this.getTexture(tile.tc);
 
         // TODO different ceiling textures?
-        if (tile.c) mt.ceiling = this.getTexture(0);
+        // if (tile.c) mt.ceiling = this.getTexture(0);
+        mt.ceiling = this.getTexture(0);
 
         if (tile.b)
           this.setEdge(

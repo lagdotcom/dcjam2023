@@ -4143,13 +4143,6 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     }
     render() {
       if (!this.image) {
-        const { draw } = withTextStyle(this.g.ctx, {
-          textAlign: "center",
-          textBaseline: "middle",
-          fontSize: 24,
-          fillStyle: "white"
-        });
-        draw("Loading...", this.position.x, this.position.y);
         return;
       }
       this.g.ctx.drawImage(this.image, this.position.x, this.position.y);
@@ -4339,8 +4332,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
           const tag = xyToTag({ x, y });
           if (tile.t)
             mt.floor = this.getTexture(tile.tc);
-          if (tile.c)
-            mt.ceiling = this.getTexture(0);
+          mt.ceiling = this.getTexture(0);
           if (tile.b)
             this.setEdge(
               tile.b,
@@ -4685,6 +4677,43 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     }
   };
 
+  // res/sfx/buff1.ogg
+  var buff1_default = "./buff1-X33WXBHF.ogg";
+
+  // res/sfx/cry1.ogg
+  var cry1_default = "./cry1-J2YW3NUB.ogg";
+
+  // res/sfx/death1.ogg
+  var death1_default = "./death1-LNMY6PR7.ogg";
+
+  // res/sfx/woosh.ogg
+  var woosh_default = "./woosh-7BFHNSSE.ogg";
+
+  // src/Sounds.ts
+  var allSounds = {
+    buff1: buff1_default,
+    cry1: cry1_default,
+    death1: death1_default,
+    woosh: woosh_default
+  };
+  var Sounds = class {
+    constructor(g) {
+      this.g = g;
+      for (const url of Object.values(allSounds))
+        void g.res.loadAudio(url);
+      g.eventHandlers.onKilled.add(
+        ({ who }) => void this.play(who.isPC ? "cry1" : "death1")
+      );
+    }
+    play(name) {
+      return __async(this, null, function* () {
+        const audio = yield this.g.res.loadAudio(allSounds[name]);
+        audio.currentTime = 0;
+        yield audio.play();
+      });
+    }
+  };
+
   // src/Engine.ts
   var calculateEventName = {
     dr: "onCalculateDR",
@@ -4732,6 +4761,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       this.spotElements = [];
       this.party = [];
       this.jukebox = new Jukebox(this);
+      this.sfx = new Sounds(this);
       this.screen = new SplashScreen(this);
       canvas.addEventListener("keyup", (e) => this.screen.onKey(e));
       const transform = (e) => xyi(e.offsetX / this.zoomRatio, e.offsetY / this.zoomRatio);
@@ -5243,6 +5273,8 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
           this.addToLog(message);
           if (target.hp < 1)
             this.kill(target, attacker);
+          else
+            void this.sfx.play("woosh");
           this.fire("onAfterDamage", { attacker, target, amount, type, origin });
         } else {
           const message = type === "hp" ? `${target.name} ignores the blow.` : `${target.name} ignores the effect.`;
@@ -5252,16 +5284,20 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       return total;
     }
     heal(healer, targets, amount) {
+      let play = false;
       for (const target of targets) {
         const newHP = Math.min(target.hp + amount, target.maxHP);
         const gain = newHP - target.hp;
         if (gain) {
+          play = true;
           target.hp = newHP;
           this.draw();
           const message = `${target.name} heals for ${gain}.`;
           this.addToLog(message);
         }
       }
+      if (play)
+        void this.sfx.play("buff1");
     }
     kill(who, attacker) {
       who.hp = 0;

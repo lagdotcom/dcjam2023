@@ -34,13 +34,14 @@ export default class SplashScreen {
 
   render() {
     if (!this.image) {
-      const { draw } = withTextStyle(this.g.ctx, {
-        textAlign: "center",
-        textBaseline: "middle",
-        fontSize: 24,
-        fillStyle: "white",
-      });
-      draw("Loading...", this.position.x, this.position.y);
+      // TODO
+      // const { draw } = withTextStyle(this.g.ctx, {
+      //   textAlign: "center",
+      //   textBaseline: "middle",
+      //   fontSize: 24,
+      //   fillStyle: "white",
+      // });
+      // draw("Loading...", this.position.x, this.position.y);
       return;
     }
 

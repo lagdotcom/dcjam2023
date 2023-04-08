@@ -51,6 +51,7 @@ import {
 } from "./types/events";
 import { Predicate, matchAll } from "./types/logic";
 import DeathScreen from "./DeathScreen";
+import Sounds from "./Sounds";
 
 interface WallType {
   canSeeDoor: boolean;
@@ -94,6 +95,7 @@ export default class Engine implements Game {
   res: ResourceManager;
   screen: GameScreen;
   scripting: EngineScripting;
+  sfx: Sounds;
   showLog: boolean;
   spotElements: HasHotspots[];
   visited: Map<string, Set<XYTag>>;
@@ -133,6 +135,7 @@ export default class Engine implements Game {
     this.spotElements = [];
     this.party = [];
     this.jukebox = new Jukebox(this);
+    this.sfx = new Sounds(this);
     this.screen = new SplashScreen(this);
 
     canvas.addEventListener("keyup", (e) => this.screen.onKey(e));
@@ -761,6 +764,7 @@ export default class Engine implements Game {
         this.addToLog(message);
 
         if (target.hp < 1) this.kill(target, attacker);
+        else void this.sfx.play("woosh");
 
         this.fire("onAfterDamage", { attacker, target, amount, type, origin });
       } else {
@@ -776,10 +780,13 @@ export default class Engine implements Game {
   }
 
   heal(healer: Combatant, targets: Combatant[], amount: number) {
+    let play = false;
+
     for (const target of targets) {
       const newHP = Math.min(target.hp + amount, target.maxHP);
       const gain = newHP - target.hp;
       if (gain) {
+        play = true;
         target.hp = newHP;
         this.draw();
 
@@ -787,6 +794,8 @@ export default class Engine implements Game {
         this.addToLog(message);
       }
     }
+
+    if (play) void this.sfx.play("buff1");
   }
 
   kill(who: Combatant, attacker: Combatant) {
