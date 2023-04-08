@@ -1181,6 +1181,8 @@
     "<",
     "<=",
     "==",
+    "!",
+    // this is only for !=
     "!=",
     "+",
     "-",
@@ -2037,6 +2039,15 @@
         }
       );
       this.addNative(
+        "addTag",
+        ["number", "number", "string"],
+        void 0,
+        (x, y, tag) => {
+          const cell = getCell(x, y);
+          cell.tags.push(tag);
+        }
+      );
+      this.addNative(
         "removeTag",
         ["number", "number", "string"],
         void 0,
@@ -2849,7 +2860,7 @@
   var sad_folks_default = "./sad-folks-WT2RUZAU.png";
 
   // res/map.json
-  var map_default = "./map-F62K2GKU.json";
+  var map_default = "./map-S6WDJ4DU.json";
 
   // src/items/cleavesman.ts
   var cleavesman_exports = {};
@@ -3872,7 +3883,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       camaraderie: 6,
       spirit: 3,
       items: [CarvingKnife, SignedCasque],
-      skill: "???"
+      skill: "Sing"
     },
     "Loam Seer": {
       name: "Chiteri",
@@ -4162,7 +4173,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
   };
 
   // res/map.dscript
-  var map_default2 = "./map-XJZGFW4B.dscript";
+  var map_default2 = "./map-DFHFNJNH.dscript";
 
   // res/atlas/flats.png
   var flats_default = "./flats-YFBZMEC6.png";
@@ -5166,6 +5177,25 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       const e = this.fire(event, { who, value, multiplier: 1 });
       return Math.max(0, Math.floor(e.value * e.multiplier));
     }
+    makePermanentDuff(target, stat, amount) {
+      const effect = {
+        name: "Scorn",
+        duration: Infinity,
+        permanent: true,
+        affects: [target]
+      };
+      function calc(e) {
+        if (this.affects.includes(e.who))
+          e.value -= amount;
+      }
+      if (stat === "camaraderie")
+        effect.onCalculateCamaraderie = calc;
+      else if (stat === "determination")
+        effect.onCalculateDetermination = calc;
+      else if (stat === "spirit")
+        effect.onCalculateSpirit = calc;
+      return () => effect;
+    }
     applyDamage(attacker, targets, amount, type, origin) {
       let total = 0;
       for (const target of targets.filter((x) => x.alive)) {
@@ -5182,7 +5212,10 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
         const deal = Math.floor(calculated - resist);
         if (deal > 0) {
           total += deal;
-          target[type] -= deal;
+          if (target.isPC && (type === "camaraderie" || type === "determination" || type === "spirit"))
+            this.addEffect(this.makePermanentDuff(target, type, deal));
+          else
+            target[type] -= deal;
           this.draw();
           const message = type === "hp" ? `${target.name} takes ${deal} damage.` : `${target.name} loses ${deal} ${type}.`;
           this.addToLog(message);

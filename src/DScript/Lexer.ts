@@ -70,6 +70,7 @@ const punctuation = new Set([
   "<",
   "<=",
   "==",
+  "!", // this is only for !=
   "!=",
   "+",
   "-",

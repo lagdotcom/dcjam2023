@@ -331,3 +331,31 @@ function ArenaBMiddleEnter()
   end
 end
 onTagEnter('ArenaBMiddle', ArenaBMiddleEnter)
+
+function EmptyChestInteract()
+  removeTag(partyX, partyY, 'EmptyChest')
+  removeObject(partyX, partyY)
+  message('The sight of the empty chest causes ' + getPCName(pcIndex) + ' to lose heart.')
+  damagePC(pcIndex, 'camaraderie', 1)
+end
+onTagInteract('EmptyChest', EmptyChestInteract)
+
+function LoamSeerSignInteract(skill: string)
+  if partyDir == getNumber('messageDir') then
+    if skill != "Shift" then
+      message(getPCName(pcIndex) + " can't decipher it.")
+      return
+    end
+
+    if skillCheck('spirit', getNumber('difficulty')) then
+      message(getPCName(pcIndex) + ' deciphers the message.')
+      removeTag(partyX, partyY, 'LoamSeerSign')
+      addTag(partyX, partyY, 'Sign')
+      SignInteract()
+    else
+      message(getPCName(pcIndex) + ' becomes morose after being unable to decipher it.')
+      damagePC(pcIndex, 'spirit', 1)
+    end
+  end
+end
+onTagInteract('LoamSeerSign', LoamSeerSignInteract)

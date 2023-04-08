@@ -75,7 +75,7 @@ const classes: Record<ClassName, ClassData> = {
     camaraderie: 6,
     spirit: 3,
     items: [CarvingKnife, SignedCasque],
-    skill: "???",
+    skill: "Sing",
   },
   "Loam Seer": {
     name: "Chiteri",

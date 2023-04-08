@@ -33,6 +33,8 @@ All the boring normal stuff:
 - `pcIndex` the interacting PC (facing / skill use)
 - `addArenaEnemy(name)` now follows party
 - `addNormalEnemy(name)` preparation for calling `startNormalFight`
+- `addTag(x: number, y: number, tag: string)`
+- `clearObstacle()` undoes affect of `obstacle()`
 - `damagePC(number, stat, amount)`
 - `debug(any)` prints to console
 - `getNumber(key: string): number` get cell #NUMBER by key
@@ -44,6 +46,7 @@ All the boring normal stuff:
 - `makePartyFace(dir: number)`
 - `message(string)` adds in-game message
 - `movePartyToTag(tag: string)` teleports party
+- `obstacle()` prevents party from moving out of this square other than how they entered
 - `onTagEnter(tag: string, function)` sets up an enter trigger callback
   - the callback should be like `function callback(x: number, y: number)`
 - `onTagInteract(tag: string, function)` sets up an interact callback

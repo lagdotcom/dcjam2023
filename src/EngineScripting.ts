@@ -225,6 +225,16 @@ export default class EngineScripting extends DScriptHost {
     );
 
     this.addNative(
+      "addTag",
+      ["number", "number", "string"],
+      undefined,
+      (x: number, y: number, tag: string) => {
+        const cell = getCell(x, y);
+        cell.tags.push(tag);
+      }
+    );
+
+    this.addNative(
       "removeTag",
       ["number", "number", "string"],
       undefined,

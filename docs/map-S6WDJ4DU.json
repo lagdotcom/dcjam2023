@@ -2,7 +2,7 @@
 	"export": {
 		"from": "2022.5.1",
 		"date": "2023-04-08",
-		"time": "07:20:19"
+		"time": "07:46:45"
 	},
 	"regions": [
 		{
@@ -20194,7 +20194,7 @@
 									{
 										"r": 1,
 										"rc": 1,
-										"b": 1,
+										"b": 23,
 										"bc": 1,
 										"t": 31
 									},
@@ -21797,7 +21797,7 @@
 							"x": 25,
 							"y": 37,
 							"monospaced": false,
-							"__data": "Trap: \"(Party leader) pulls the lever, an electric shock courses through their body!\" (take 4 damage, lose 1 determination til next safe zone)#TAG EmptyChest\n#OBJECT oChest\nEmpty: \"The sight of the empty chest causes (party leader) to lose heart.\"\n(Subtract 1 camaraderie from party lead til next rest)"
+							"__data": "Trap: \"(Party leader) pulls the lever, an electric shock courses through their body!\" (take 4 damage, lose 1 determination til next safe zone)\n#TAG EmptyChest\n#OBJECT oChest\nEmpty: \"The sight of the empty chest causes (party leader) to lose heart.\"\n(Subtract 1 camaraderie from party lead til next rest)"
 						},
 						{
 							"x": 54,
@@ -21821,7 +21821,7 @@
 							"x": 32,
 							"y": 43,
 							"monospaced": false,
-							"__data": "Hint Loam Seer can read:\n- Have to roll a 5 or above\nSuccess: \"Trust not the gods, different as they are, only two sides of the same coin are unable to meet eye to eye.\"\nFailure: (Party member) strained to decipher the meaning to no avail.\nNo Spirit remaining: \"Nobody has the energy to decipher it's meaning.\"\nNo party member capable: \"Nobody understands this language.\"\n(subtract 1 SPT til next rest if failed)"
+							"__data": "#TAG LoamSeerSign\n#NUMBER messageDir,SOUTH\n#NUMBER difficulty,5\n#STRING message,\"Trust not the gods, different as they are, only two sides of the same coin are unable to meet eye to eye.\"\nHint Loam Seer can read:\n- Have to roll a 5 or above\nSuccess: \"Trust not the gods, different as they are, only two sides of the same coin are unable to meet eye to eye.\"\nFailure: (Party member) strained to decipher the meaning to no avail.\nNo Spirit remaining: \"Nobody has the energy to decipher it's meaning.\"\nNo party member capable: \"Nobody understands this language.\"\n(subtract 1 SPT til next rest if failed)"
 						},
 						{
 							"x": 9,
@@ -22337,7 +22337,7 @@
 							"x": 40,
 							"y": 15,
 							"monospaced": false,
-							"__data": "#TAG Sign\n#NUMBER messageDir,NORTH\n#STRING message,\"Sneed crawler maintenance closet.\""
+							"__data": "#TAG Sign\n#NUMBER messageDir,EAST\n#STRING message,\"Sneed crawler maintenance closet.\""
 						},
 						{
 							"x": 34,

@@ -694,6 +694,29 @@ export default class Engine implements Game {
     return Math.max(0, Math.floor(e.value * e.multiplier));
   }
 
+  makePermanentDuff(
+    target: Combatant,
+    stat: "camaraderie" | "determination" | "spirit",
+    amount: number
+  ) {
+    const effect: GameEffect = {
+      name: "Scorn",
+      duration: Infinity,
+      permanent: true,
+      affects: [target],
+    };
+
+    function calc(this: GameEffect, e: GameEvents["onCalculateCamaraderie"]) {
+      if (this.affects.includes(e.who)) e.value -= amount;
+    }
+
+    if (stat === "camaraderie") effect.onCalculateCamaraderie = calc;
+    else if (stat === "determination") effect.onCalculateDetermination = calc;
+    else if (stat === "spirit") effect.onCalculateSpirit = calc;
+
+    return () => effect;
+  }
+
   applyDamage(
     attacker: Combatant,
     targets: Combatant[],
@@ -719,7 +742,16 @@ export default class Engine implements Game {
       const deal = Math.floor(calculated - resist);
       if (deal > 0) {
         total += deal;
-        target[type] -= deal;
+
+        // make it a perma if it's a PC persistent stat
+        if (
+          target.isPC &&
+          (type === "camaraderie" ||
+            type === "determination" ||
+            type === "spirit")
+        )
+          this.addEffect(this.makePermanentDuff(target, type, deal));
+        else target[type] -= deal;
         this.draw();
 
         const message =
