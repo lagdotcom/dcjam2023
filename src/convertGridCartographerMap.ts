@@ -46,6 +46,7 @@ const EdgeDetails: Partial<Record<Edge, EdgeEntry>> = {
   [Edge.Wall_OneWayLU]: { main: wall, opposite: fake },
   [Edge.Message]: { main: sign, opposite: sign },
   [Edge.Gate]: { main: gate, opposite: gate },
+  [Edge.Bars]: { main: fake, opposite: fake },
   // this isn't a mistake...
   [Edge.LeverLU]: { main: lever, opposite: wall },
   [Edge.LeverRD]: { main: wall, opposite: lever },

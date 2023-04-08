@@ -4242,6 +4242,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     [7 /* Wall_OneWayLU */]: { main: wall, opposite: fake },
     [28 /* Message */]: { main: sign, opposite: sign },
     [27 /* Gate */]: { main: gate, opposite: gate },
+    [25 /* Bars */]: { main: fake, opposite: fake },
     // this isn't a mistake...
     [23 /* LeverLU */]: { main: lever, opposite: wall },
     [24 /* LeverRD */]: { main: wall, opposite: lever }
