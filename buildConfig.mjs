@@ -10,6 +10,7 @@ const config = {
   plugins: [CDNModule],
   loader: {
     ".dscript": "file",
+    ".ink": "file",
     ".json": "file",
     ".ogg": "file",
     ".png": "file",

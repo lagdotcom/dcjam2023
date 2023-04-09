@@ -2,11 +2,9 @@ import clone from "nanoclone";
 import CombatManager from "./CombatManager";
 import CombatRenderer from "./CombatRenderer";
 import { num } from "./DScript/logic";
-import parse from "./DScript/parser";
 import DefaultControls from "./DefaultControls";
 import DungeonRenderer from "./DungeonRenderer";
 import DungeonScreen from "./DungeonScreen";
-import EngineScripting from "./EngineScripting";
 import HUDRenderer from "./HUDRenderer";
 import Jukebox from "./Jukebox";
 import LoadingScreen from "./LoadingScreen";
@@ -52,6 +50,7 @@ import {
 import { Predicate, matchAll } from "./types/logic";
 import DeathScreen from "./DeathScreen";
 import Sounds from "./Sounds";
+import EngineInkScripting from "./EngineInkScripting";
 
 interface WallType {
   canSeeDoor: boolean;
@@ -94,7 +93,7 @@ export default class Engine implements Game {
   pickingTargets?: TargetPicking;
   res: ResourceManager;
   screen: GameScreen;
-  scripting: EngineScripting;
+  scripting: EngineInkScripting;
   sfx: Sounds;
   showLog: boolean;
   spotElements: HasHotspots[];
@@ -121,7 +120,7 @@ export default class Engine implements Game {
     this.worldSize = xyi(0, 0);
     this.res = new ResourceManager();
     this.drawSoon = new Soon(this.render);
-    this.scripting = new EngineScripting(this);
+    this.scripting = new EngineInkScripting(this);
     this.log = [];
     this.showLog = false;
     this.combat = new CombatManager(this);
@@ -258,16 +257,13 @@ export default class Engine implements Game {
     if (!atlases.length) throw new Error(`${jsonUrl} did not contain #ATLAS`);
 
     for (const [key, value] of definitions.entries()) {
-      this.scripting.env.set(key, num(value, true));
+      this.scripting.setConstant(key, num(value, true));
     }
 
     // TODO how about clearing old script stuff...?
-    const codeFiles = await Promise.all(
-      scripts.map((url) => this.res.loadScript(url))
-    );
-    for (const code of codeFiles) {
-      const program = parse(code);
-      this.scripting.run(program);
+    for (const url of scripts) {
+      const code = await this.res.loadScript(url);
+      this.scripting.parseAndRun(code, url);
     }
 
     return this.loadWorld({ name, atlases, cells, start, facing });

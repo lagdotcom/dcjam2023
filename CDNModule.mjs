@@ -1,6 +1,7 @@
 /*eslint-env node*/
 
 const externals = {
+  inkjs: "inkjs",
   moo: "moo",
   nearley: "nearley",
 };

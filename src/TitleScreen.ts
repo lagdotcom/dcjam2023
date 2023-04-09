@@ -1,14 +1,15 @@
-import mapJson from "../res/map.json";
+import { ClassName, ClassNames } from "./types/ClassName";
+
 import Colours from "./Colours";
 import Engine from "./Engine";
-import EngineScripting from "./EngineScripting";
+import EngineInkScripting from "./EngineInkScripting";
+import { GameScreen } from "./types/GameScreen";
 import Player from "./Player";
 import classes from "./classes";
-import { wrap } from "./tools/numbers";
+import mapJson from "../res/map.json";
 import textWrap from "./tools/textWrap";
 import withTextStyle from "./tools/withTextStyle";
-import { ClassName, ClassNames } from "./types/ClassName";
-import { GameScreen } from "./types/GameScreen";
+import { wrap } from "./tools/numbers";
 
 export default class TitleScreen implements GameScreen {
   index: number;
@@ -20,13 +21,18 @@ export default class TitleScreen implements GameScreen {
     g.log = [];
     g.pendingArenaEnemies = [];
     g.pendingNormalEnemies = [];
-    g.scripting = new EngineScripting(g);
+    g.scripting = new EngineInkScripting(g);
     g.showLog = false;
     g.visited.clear();
     g.walls.clear();
 
     this.index = 0;
-    this.selected = new Set();
+    this.selected = new Set<ClassName>([
+      "Cleavesman",
+      "Far Scout",
+      "Flag Singer",
+      "Loam Seer",
+    ]);
   }
 
   onKey(e: KeyboardEvent): void {

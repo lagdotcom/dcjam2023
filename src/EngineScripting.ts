@@ -1,3 +1,5 @@
+import { EnemyName, isEnemyName } from "./enemies";
+import { LiteralNumber, Program } from "./DScript/ast";
 import {
   RuntimeFunction,
   RuntimeValue,
@@ -12,12 +14,10 @@ import { AttackableStat } from "./types/Combatant";
 import DScriptHost from "./DScript/host";
 import Dir from "./types/Dir";
 import Engine from "./Engine";
-import { LiteralNumber, Program } from "./DScript/ast";
 import XY from "./types/XY";
+import { isSoundName } from "./Sounds";
 import isStat from "./tools/combatants";
 import { random } from "./tools/rng";
-import { EnemyName, isEnemyName } from "./enemies";
-import { isSoundName } from "./Sounds";
 
 export default class EngineScripting extends DScriptHost {
   onTagEnter: Map<string, RuntimeFunction>;
@@ -314,6 +314,10 @@ export default class EngineScripting extends DScriptHost {
       const sound = getSound(name);
       void g.sfx.play(sound);
     });
+  }
+
+  setConstant(key: string, value: RuntimeValue) {
+    this.env.set(key, value);
   }
 
   run(program: Program) {

@@ -50,10 +50,10 @@
     });
   };
 
-  // globalExternal:nearley
-  var require_nearley = __commonJS({
-    "globalExternal:nearley"(exports, module) {
-      module.exports = globalThis.nearley;
+  // globalExternal:inkjs
+  var require_inkjs = __commonJS({
+    "globalExternal:inkjs"(exports, module) {
+      module.exports = globalThis.inkjs;
     }
   });
 
@@ -878,608 +878,8 @@
   };
 
   // src/DScript/logic.ts
-  function bool(value, readOnly = false) {
-    return { _: "bool", value, readOnly };
-  }
   function num(value, readOnly = false) {
     return { _: "number", value, readOnly };
-  }
-  function str(value, readOnly = false) {
-    return { _: "string", value, readOnly };
-  }
-  function box(value) {
-    switch (typeof value) {
-      case "undefined":
-        return void 0;
-      case "boolean":
-        return bool(value);
-      case "number":
-        return num(value);
-      case "string":
-        return str(value);
-      default:
-        throw new Error(`Cannot box ${typeof value}`);
-    }
-  }
-  function unbox(value) {
-    if (value._ === "function" || value._ === "native")
-      return value;
-    return value.value;
-  }
-  function truthy(value) {
-    return !!value;
-  }
-  function unary(op, value) {
-    switch (op) {
-      case "-":
-        if (value._ === "number")
-          return num(-value.value);
-        throw new Error(`Cannot negate a ${value._}`);
-      case "not":
-        return bool(!truthy(value.value));
-    }
-  }
-  function binary(op, left, right) {
-    switch (op) {
-      case "+":
-        if (left._ === "string" && right._ === "string")
-          return str(left.value + right.value);
-        if (left._ === "number" && right._ === "number")
-          return num(left.value + right.value);
-        throw new Error(`Cannot add ${left._} and ${right._}`);
-      case "-":
-        if (left._ === "number" && right._ === "number")
-          return num(left.value - right.value);
-        throw new Error(`Cannot subtract ${left._} and ${right._}`);
-      case "*":
-        if (left._ === "number" && right._ === "number")
-          return num(left.value * right.value);
-        throw new Error(`Cannot multiply ${left._} and ${right._}`);
-      case "/":
-        if (left._ === "number" && right._ === "number")
-          return num(left.value / right.value);
-        throw new Error(`Cannot divide ${left._} and ${right._}`);
-      case "^":
-        if (left._ === "number" && right._ === "number")
-          return num(Math.pow(left.value, right.value));
-        throw new Error(`Cannot exponentiate ${left._} and ${right._}`);
-      case "==":
-        return bool(left.value === right.value);
-      case "!=":
-        return bool(left.value !== right.value);
-      case ">":
-        return bool(left.value > right.value);
-      case ">=":
-        return bool(left.value >= right.value);
-      case "<":
-        return bool(left.value < right.value);
-      case "<=":
-        return bool(left.value <= right.value);
-      case "and":
-        return truthy(left.value) ? right : left;
-      case "or":
-        return truthy(left.value) ? left : right;
-      case "xor": {
-        const lt = truthy(left.value);
-        const rt = truthy(right.value);
-        return bool(!(lt === rt));
-      }
-    }
-  }
-  function convertToFunction(stmt) {
-    return {
-      _: "function",
-      name: stmt.name.value,
-      args: stmt.args,
-      readOnly: true,
-      type: stmt.type === null ? void 0 : stmt.type,
-      value: stmt.program
-    };
-  }
-  function run(scope, prg) {
-    scope.exited = false;
-    scope.returned = void 0;
-    return runInScope(scope, prg, true);
-  }
-  function runInScope(scope, prg, checkReturnValue) {
-    var _a, _b, _c, _d;
-    for (const stmt of prg) {
-      switch (stmt._) {
-        case "assignment":
-          assignment(scope, stmt);
-          break;
-        case "call":
-          callFunction(
-            scope,
-            lookup(scope, stmt.fn.value),
-            stmt.args.map((arg) => evaluate(scope, arg))
-          );
-          break;
-        case "function":
-          scope.env.set(stmt.name.value, convertToFunction(stmt));
-          break;
-        case "if": {
-          if (truthy(evaluate(scope, stmt.expr).value)) {
-            runInScope(scope, stmt.positive, false);
-          } else if (stmt.negative) {
-            runInScope(scope, stmt.negative, false);
-          }
-          break;
-        }
-        case "return": {
-          const returnValue = stmt.expr ? evaluate(scope, stmt.expr) : void 0;
-          if (isTypeMatch(scope.type, returnValue == null ? void 0 : returnValue._)) {
-            scope.exited = true;
-            scope.returned = returnValue;
-            return returnValue;
-          }
-          throw new Error(
-            `trying to return ${(_a = returnValue == null ? void 0 : returnValue._) != null ? _a : "void"} when '${scope.name}' requires ${(_b = scope.type) != null ? _b : "void"}`
-          );
-        }
-      }
-      if (scope.exited)
-        break;
-    }
-    if (checkReturnValue && !isTypeMatch(scope.type, (_c = scope.returned) == null ? void 0 : _c._))
-      throw new Error(
-        `exited '${scope.name}' without returning ${(_d = scope.type) != null ? _d : "void"}`
-      );
-    return scope.returned;
-  }
-  function lookup(scope, name, canBeNew = false) {
-    let found;
-    let current = scope;
-    while (current) {
-      found = current.env.get(name);
-      if (found)
-        break;
-      current = current.parent;
-    }
-    if (!found && !canBeNew)
-      throw new Error(`Could not resolve: ${name}`);
-    return found;
-  }
-  function evaluate(scope, expr) {
-    switch (expr._) {
-      case "bool":
-      case "number":
-      case "string":
-        return expr;
-      case "id":
-        return lookup(scope, expr.value);
-      case "unary":
-        return unary(expr.op, evaluate(scope, expr.value));
-      case "binary":
-        return binary(
-          expr.op,
-          evaluate(scope, expr.left),
-          evaluate(scope, expr.right)
-        );
-      case "call": {
-        const value = callFunction(
-          scope,
-          lookup(scope, expr.fn.value),
-          expr.args.map((arg) => evaluate(scope, arg))
-        );
-        if (!value)
-          throw new Error(`${expr.fn.value}() returned no value`);
-        return value;
-      }
-    }
-  }
-  function isTypeMatch(want, got) {
-    if (want === "any")
-      return true;
-    if (want === got)
-      return true;
-    if (want === "function" && got === "native")
-      return true;
-    return false;
-  }
-  function checkFunctionArgs(fn, got) {
-    const argTypes = fn._ === "function" ? fn.args.map((arg) => arg.type) : fn.args;
-    const fail = () => {
-      throw new Error(
-        `${fn.name} wants (${argTypes.join(", ")}) but got (${got.map((arg) => arg._).join(", ")})`
-      );
-    };
-    if (argTypes.length !== got.length)
-      fail();
-    for (let i = 0; i < argTypes.length; i++) {
-      if (!isTypeMatch(argTypes[i], got[i]._))
-        fail();
-    }
-  }
-  function callFunction(parent, fn, args) {
-    if (fn._ !== "function" && fn._ !== "native")
-      throw new Error(`Cannot call a ${fn._}`);
-    checkFunctionArgs(fn, args);
-    if (fn._ === "native") {
-      const result = fn.value.call(void 0, ...args.map(unbox));
-      return box(result);
-    }
-    const scope = {
-      parent,
-      name: `function ${fn.name}`,
-      env: /* @__PURE__ */ new Map(),
-      type: fn.type
-    };
-    for (let i = 0; i < args.length; i++)
-      scope.env.set(fn.args[i].name.value, args[i]);
-    return run(scope, fn.value);
-  }
-  var opMapping = {
-    "+=": "+",
-    "-=": "-",
-    "*=": "*",
-    "/=": "/",
-    "^=": "^"
-  };
-  function assignment(scope, stmt) {
-    const right = evaluate(scope, stmt.expr);
-    const left = lookup(scope, stmt.name.value, true);
-    if (!left) {
-      if (stmt.op === "=") {
-        scope.env.set(stmt.name.value, src_default(right));
-        return;
-      }
-      throw new Error(`Could not resolve: ${stmt.name.value}`);
-    }
-    if (left._ !== right._)
-      throw new Error(`Cannot assign ${right._} to ${left._}`);
-    if (left.readOnly)
-      throw new Error(`Cannot assign to ${stmt.name.value}, it is read only`);
-    if (stmt.op === "=")
-      left.value = right.value;
-    else
-      left.value = binary(opMapping[stmt.op], left, right).value;
-  }
-
-  // src/DScript/parser.ts
-  var import_nearley = __toESM(require_nearley());
-
-  // src/tools/leftPad.ts
-  function leftPad(s, n, char = " ") {
-    return Array(n).join(char) + s;
-  }
-
-  // src/DScript/Lexer.ts
-  var wsPattern = /[ \r\n\t]/;
-  var isWhiteSpace = (ch) => wsPattern.test(ch);
-  var nlPattern = /[\r\n]/;
-  var isNewline = (ch) => nlPattern.test(ch);
-  var numberPattern = /^[0-9]+$/;
-  var isNumber = (w) => numberPattern.test(w);
-  var wordPattern = /^[a-zA-Z][a-zA-Z0-9_]*$/;
-  var isWord = (w) => wordPattern.test(w);
-  var keywords = [
-    "and",
-    "any",
-    "bool",
-    "else",
-    "end",
-    "false",
-    "function",
-    "if",
-    "not",
-    "number",
-    "or",
-    "return",
-    "string",
-    "true",
-    "xor"
-  ];
-  var isKeyword = (w) => keywords.includes(w);
-  var punctuation = /* @__PURE__ */ new Set([
-    "=",
-    "+=",
-    "-=",
-    "*=",
-    "/=",
-    "^=",
-    "(",
-    ")",
-    ":",
-    ",",
-    ">",
-    ">=",
-    "<",
-    "<=",
-    "==",
-    "!",
-    // this is only for !=
-    "!=",
-    "+",
-    "-",
-    "*",
-    "/",
-    "^"
-  ]);
-  var isPunctuation = (w) => punctuation.has(w);
-  var commentChar = ";";
-  var Lexer = class {
-    constructor() {
-      this.reset("");
-    }
-    get col() {
-      return this.index - this.lastLineBreak + 1;
-    }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    has(_type) {
-      return true;
-    }
-    reset(data, state) {
-      this.buffer = data;
-      this.index = 0;
-      this.line = state ? state.line : 1;
-      this.lastLineBreak = state ? -state.col : 0;
-    }
-    next() {
-      const { line, col, index } = this;
-      const [type, value] = this.getNextToken();
-      if (type === "EOF")
-        return;
-      return { line, col, offset: index, type, value };
-    }
-    save() {
-      const { line, col } = this;
-      return { line, col: col - 1 };
-    }
-    formatError(token, message = "Syntax error") {
-      const lines = this.buffer.replace(/\r/g, "").split("\n");
-      const min = Math.max(0, token.line - 3);
-      const max = Math.min(token.line + 2, lines.length - 1);
-      const lineNoSize = max.toString().length;
-      const context = [];
-      for (let i = min; i < max; i++) {
-        const line = lines[i];
-        const showLineNo = i + 1;
-        const raw = showLineNo.toString();
-        const lineNo = leftPad(raw, lineNoSize - raw.length);
-        context.push(`${lineNo} ${line}`);
-        if (showLineNo === token.line)
-          context.push(leftPad("^", token.col + lineNoSize + 1, "-"));
-      }
-      return [
-        `${message} at line ${token.line} col ${token.col}`,
-        ...context
-      ].join("\n");
-    }
-    isEOF() {
-      return this.index >= this.buffer.length;
-    }
-    peek() {
-      return this.buffer[this.index];
-    }
-    consume() {
-      const ch = this.peek();
-      this.consumed += ch;
-      this.index++;
-      if (ch === "\n") {
-        this.line++;
-        this.lastLineBreak = this.index;
-      }
-      return ch;
-    }
-    repeater(isValid) {
-      this.consume();
-      while (true) {
-        if (this.isEOF())
-          break;
-        const maybe = this.consumed + this.peek();
-        if (!isValid(maybe))
-          break;
-        this.consume();
-      }
-      return this.consumed;
-    }
-    getNextToken() {
-      this.consumed = "";
-      if (this.isEOF())
-        return ["EOF", ""];
-      const ch = this.peek();
-      if (isWhiteSpace(ch)) {
-        while (isWhiteSpace(this.peek()))
-          this.consume();
-        return ["ws", this.consumed];
-      }
-      if (isNumber(ch)) {
-        const number2 = this.repeater(isNumber);
-        return ["number", number2];
-      }
-      if (isWord(ch)) {
-        const word2 = this.repeater(isWord);
-        if (isKeyword(word2))
-          return ["keyword", word2];
-        return ["word", word2];
-      }
-      if (isPunctuation(ch)) {
-        const punctuation2 = this.repeater(isPunctuation);
-        return ["punctuation", punctuation2];
-      }
-      if (ch === '"' || ch === "'") {
-        this.consume();
-        while (true) {
-          if (this.isEOF())
-            return ["UNCLOSED_STRING", ch];
-          const next = this.consume();
-          if (next === ch)
-            return [ch === "'" ? "sqstring" : "dqstring", this.consumed];
-        }
-      }
-      if (ch === commentChar) {
-        this.consume();
-        while (!this.isEOF() && !isNewline(this.peek()))
-          this.consume();
-        return ["comment", this.consumed];
-      }
-      return ["INVALID", ch];
-    }
-  };
-
-  // src/DScript/grammar.ts
-  function id(d) {
-    return d[0];
-  }
-  var always = (value) => () => value;
-  var val = ([tok]) => tok.value;
-  var lexer = new Lexer();
-  var grammar = {
-    Lexer: lexer,
-    ParserRules: [
-      { "name": "document", "symbols": ["_", "program"], "postprocess": ([, prog]) => prog },
-      { "name": "program$ebnf$1", "symbols": [] },
-      { "name": "program$ebnf$1", "symbols": ["program$ebnf$1", "declp"], "postprocess": (d) => d[0].concat([d[1]]) },
-      { "name": "program", "symbols": ["program$ebnf$1"], "postprocess": id },
-      { "name": "declp", "symbols": ["decl", "_"], "postprocess": id },
-      { "name": "decl", "symbols": ["stmt"], "postprocess": id },
-      { "name": "stmt", "symbols": ["assignment"], "postprocess": id },
-      { "name": "stmt", "symbols": ["call"], "postprocess": id },
-      { "name": "stmt", "symbols": ["function_def"], "postprocess": id },
-      { "name": "stmt", "symbols": ["if_stmt"], "postprocess": id },
-      { "name": "stmt", "symbols": ["return_stmt"], "postprocess": id },
-      { "name": "assignment", "symbols": ["name", "_", "assignop", "_", "expr"], "postprocess": ([name, , op, , expr]) => ({ _: "assignment", name, op, expr }) },
-      { "name": "assignop", "symbols": [{ "literal": "=" }], "postprocess": val },
-      { "name": "assignop", "symbols": [{ "literal": "+=" }], "postprocess": val },
-      { "name": "assignop", "symbols": [{ "literal": "-=" }], "postprocess": val },
-      { "name": "assignop", "symbols": [{ "literal": "*=" }], "postprocess": val },
-      { "name": "assignop", "symbols": [{ "literal": "/=" }], "postprocess": val },
-      { "name": "assignop", "symbols": [{ "literal": "^=" }], "postprocess": val },
-      { "name": "function_def$ebnf$1", "symbols": ["function_type_clause"], "postprocess": id },
-      { "name": "function_def$ebnf$1", "symbols": [], "postprocess": () => null },
-      { "name": "function_def", "symbols": [{ "literal": "function" }, "__", "name", { "literal": "(" }, "function_args", { "literal": ")" }, "function_def$ebnf$1", "document", "__", { "literal": "end" }], "postprocess": ([, , name, , args, , type, program]) => ({ _: "function", name, args, type, program }) },
-      { "name": "function_type_clause", "symbols": [{ "literal": ":" }, "_", "vtype"], "postprocess": ([, , type]) => type },
-      { "name": "function_args", "symbols": [], "postprocess": always([]) },
-      { "name": "function_args", "symbols": ["name_with_type"] },
-      { "name": "function_args", "symbols": ["function_args", "_", { "literal": "," }, "_", "name_with_type"], "postprocess": ([list, , , , value]) => list.concat([value]) },
-      { "name": "if_stmt$ebnf$1", "symbols": ["else_clause"], "postprocess": id },
-      { "name": "if_stmt$ebnf$1", "symbols": [], "postprocess": () => null },
-      { "name": "if_stmt", "symbols": [{ "literal": "if" }, "__", "expr", "__", { "literal": "then" }, "document", "if_stmt$ebnf$1", "__", { "literal": "end" }], "postprocess": ([, , expr, , , positive, negative]) => ({ _: "if", expr, positive, negative }) },
-      { "name": "else_clause", "symbols": ["__", { "literal": "else" }, "document"], "postprocess": ([, , clause]) => clause },
-      { "name": "return_stmt$ebnf$1$subexpression$1", "symbols": ["__", "expr"], "postprocess": ([, expr]) => expr },
-      { "name": "return_stmt$ebnf$1", "symbols": ["return_stmt$ebnf$1$subexpression$1"], "postprocess": id },
-      { "name": "return_stmt$ebnf$1", "symbols": [], "postprocess": () => null },
-      { "name": "return_stmt", "symbols": [{ "literal": "return" }, "return_stmt$ebnf$1"], "postprocess": ([, expr]) => ({ _: "return", expr }) },
-      { "name": "expr", "symbols": ["maths"], "postprocess": id },
-      { "name": "maths", "symbols": ["logic"], "postprocess": id },
-      { "name": "logic", "symbols": ["logic", "_", "logicop", "_", "boolean"], "postprocess": ([left, , op, , right]) => ({ _: "binary", left, op, right }) },
-      { "name": "logic", "symbols": ["boolean"], "postprocess": id },
-      { "name": "boolean", "symbols": ["boolean", "_", "boolop", "_", "sum"], "postprocess": ([left, , op, , right]) => ({ _: "binary", left, op, right }) },
-      { "name": "boolean", "symbols": ["sum"], "postprocess": id },
-      { "name": "sum", "symbols": ["sum", "_", "sumop", "_", "product"], "postprocess": ([left, , op, , right]) => ({ _: "binary", left, op, right }) },
-      { "name": "sum", "symbols": ["product"], "postprocess": id },
-      { "name": "product", "symbols": ["product", "_", "mulop", "_", "exp"], "postprocess": ([left, , op, , right]) => ({ _: "binary", left, op, right }) },
-      { "name": "product", "symbols": ["exp"], "postprocess": id },
-      { "name": "exp", "symbols": ["unary", "_", "expop", "_", "exp"], "postprocess": ([left, , op, , right]) => ({ _: "binary", left, op, right }) },
-      { "name": "exp", "symbols": ["unary"], "postprocess": id },
-      { "name": "unary", "symbols": [{ "literal": "-" }, "value"], "postprocess": ([op, value]) => ({ _: "unary", op: op.value, value }) },
-      { "name": "unary", "symbols": [{ "literal": "not" }, "_", "value"], "postprocess": ([op, , value]) => ({ _: "unary", op: op.value, value }) },
-      { "name": "unary", "symbols": ["value"], "postprocess": id },
-      { "name": "logicop", "symbols": [{ "literal": "and" }], "postprocess": val },
-      { "name": "logicop", "symbols": [{ "literal": "or" }], "postprocess": val },
-      { "name": "logicop", "symbols": [{ "literal": "xor" }], "postprocess": val },
-      { "name": "boolop", "symbols": [{ "literal": ">" }], "postprocess": val },
-      { "name": "boolop", "symbols": [{ "literal": ">=" }], "postprocess": val },
-      { "name": "boolop", "symbols": [{ "literal": "<" }], "postprocess": val },
-      { "name": "boolop", "symbols": [{ "literal": "<=" }], "postprocess": val },
-      { "name": "boolop", "symbols": [{ "literal": "==" }], "postprocess": val },
-      { "name": "boolop", "symbols": [{ "literal": "!=" }], "postprocess": val },
-      { "name": "sumop", "symbols": [{ "literal": "+" }], "postprocess": val },
-      { "name": "sumop", "symbols": [{ "literal": "-" }], "postprocess": val },
-      { "name": "mulop", "symbols": [{ "literal": "*" }], "postprocess": val },
-      { "name": "mulop", "symbols": [{ "literal": "/" }], "postprocess": val },
-      { "name": "expop", "symbols": [{ "literal": "^" }], "postprocess": val },
-      { "name": "value", "symbols": ["literal_number"], "postprocess": id },
-      { "name": "value", "symbols": ["literal_boolean"], "postprocess": id },
-      { "name": "value", "symbols": ["literal_string"], "postprocess": id },
-      { "name": "value", "symbols": ["name"], "postprocess": id },
-      { "name": "value", "symbols": ["call"], "postprocess": id },
-      { "name": "call", "symbols": ["name", { "literal": "(" }, "call_args", { "literal": ")" }], "postprocess": ([fn, , args]) => ({ _: "call", fn, args }) },
-      { "name": "call_args", "symbols": [], "postprocess": always([]) },
-      { "name": "call_args", "symbols": ["expr"] },
-      { "name": "call_args", "symbols": ["call_args", "_", { "literal": "," }, "_", "expr"], "postprocess": ([list, , , , value]) => list.concat([value]) },
-      { "name": "literal_number", "symbols": [lexer.has("number") ? { type: "number" } : number], "postprocess": ([tok]) => ({ _: "number", value: Number(tok.value) }) },
-      { "name": "literal_number", "symbols": [lexer.has("number") ? { type: "number" } : number, { "literal": "." }, lexer.has("number") ? { type: "number" } : number], "postprocess": ([whole, , frac]) => ({ _: "number", value: Number(whole.value + "." + frac.value) }) },
-      { "name": "literal_boolean", "symbols": [{ "literal": "true" }], "postprocess": always({ _: "bool", value: true }) },
-      { "name": "literal_boolean", "symbols": [{ "literal": "false" }], "postprocess": always({ _: "bool", value: false }) },
-      { "name": "literal_string", "symbols": [lexer.has("sqstring") ? { type: "sqstring" } : sqstring], "postprocess": ([tok]) => ({ _: "string", value: tok.value.slice(1, -1) }) },
-      { "name": "literal_string", "symbols": [lexer.has("dqstring") ? { type: "dqstring" } : dqstring], "postprocess": ([tok]) => ({ _: "string", value: tok.value.slice(1, -1) }) },
-      { "name": "name_with_type", "symbols": ["name", { "literal": ":" }, "_", "vtype"], "postprocess": ([name, , , type]) => ({ _: "arg", type, name }) },
-      { "name": "vtype", "symbols": [{ "literal": "any" }], "postprocess": val },
-      { "name": "vtype", "symbols": [{ "literal": "bool" }], "postprocess": val },
-      { "name": "vtype", "symbols": [{ "literal": "function" }], "postprocess": val },
-      { "name": "vtype", "symbols": [{ "literal": "number" }], "postprocess": val },
-      { "name": "vtype", "symbols": [{ "literal": "string" }], "postprocess": val },
-      { "name": "name", "symbols": [lexer.has("word") ? { type: "word" } : word], "postprocess": ([tok]) => ({ _: "id", value: tok.value }) },
-      { "name": "_", "symbols": ["ws"], "postprocess": always(null) },
-      { "name": "_", "symbols": ["comment"], "postprocess": always(null) },
-      { "name": "_", "symbols": [], "postprocess": always(null) },
-      { "name": "__", "symbols": ["ws"], "postprocess": always(null) },
-      { "name": "ws", "symbols": [lexer.has("ws") ? { type: "ws" } : ws], "postprocess": always(null) },
-      { "name": "comment", "symbols": ["_", lexer.has("comment") ? { type: "comment" } : comment, "_"], "postprocess": always(null) }
-    ],
-    ParserStart: "document"
-  };
-  var grammar_default = grammar;
-
-  // src/tools/uniq.ts
-  function uniq(items) {
-    const set = new Set(items);
-    return Array.from(set.values());
-  }
-
-  // src/DScript/parser.ts
-  function makeEOFToken(p, src) {
-    var _a, _b, _c, _d;
-    return {
-      col: (_b = (_a = p.lexerState) == null ? void 0 : _a.col) != null ? _b : p.lexer.col,
-      line: (_d = (_c = p.lexerState) == null ? void 0 : _c.line) != null ? _d : p.lexer.line,
-      offset: src.length,
-      type: "EOF",
-      value: ""
-    };
-  }
-  var ParseError = class extends Error {
-    constructor(p, token, src) {
-      super("Syntax error");
-      this.p = p;
-      this.token = token;
-      this.src = src;
-      const col = p.table[p.current];
-      const expected = col.states.map((s) => {
-        const ns = s.rule.symbols[s.dot];
-        if (typeof ns === "object") {
-          if (ns.literal)
-            return `"${ns.literal}"`;
-          if (ns.type)
-            return ns.type;
-        }
-        if (typeof ns === "string")
-          return `(${ns})`;
-      }).filter(isDefined);
-      const message = token.type === "UNCLOSED_STRING" ? "Unclosed string" : `Got ${token.type} token${token.value ? ` "${token.value}"` : ""}, expected one of: ${uniq(expected).sort().join(", ")}`;
-      this.message = [p.lexer.formatError(token), message].join("\n");
-    }
-  };
-  function parse(src) {
-    const p = new import_nearley.Parser(import_nearley.Grammar.fromCompiled(grammar_default));
-    try {
-      p.feed(src.trim());
-    } catch (error) {
-      throw new ParseError(p, error.token, src);
-    }
-    const result = p.results;
-    if (result.length === 0)
-      throw new ParseError(p, makeEOFToken(p, src), src);
-    if (result.length > 1) {
-      for (let i = 0; i < result.length; i++) {
-        console.log(`--- PARSE #${i}`);
-        console.dir(result[0], { depth: Infinity });
-      }
-      throw new Error("Ambiguous parse.");
-    }
-    return result[0];
   }
 
   // src/DefaultControls.ts
@@ -1523,7 +923,13 @@
 
   // src/tools/xyTags.ts
   function xyToTag(pos) {
+    if (!pos)
+      return "-1,-1";
     return `${pos.x},${pos.y}`;
+  }
+  function tagToXy(tag) {
+    const [x, y] = tag.split(",");
+    return { x: Number(x), y: Number(y) };
   }
 
   // src/fov.ts
@@ -1611,7 +1017,7 @@
   }
 
   // src/DungeonRenderer.ts
-  var tileTag = (id2, type, tile) => `${type}${id2}:${tile.x},${tile.z}`;
+  var tileTag = (id, type, tile) => `${type}${id}:${tile.x},${tile.z}`;
   var DungeonRenderer = class {
     constructor(g, dungeon, atlasImage, offset = xy(91, 21)) {
       this.g = g;
@@ -1661,8 +1067,8 @@
       }
       return Promise.all(promises);
     }
-    getImage(id2, type, x, z) {
-      const tag = tileTag(id2, type, { x, z });
+    getImage(id, type, x, z) {
+      const tag = tileTag(id, type, { x, z });
       return this.imageData.get(tag);
     }
     flipImage(w, h, data) {
@@ -1705,13 +1111,13 @@
       const dy = result.screen.y;
       this.g.ctx.drawImage(result.image, dx + this.offset.x, dy + this.offset.y);
     }
-    drawImage(id2, type, x, z) {
-      const result = this.getImage(id2, type, x, z);
+    drawImage(id, type, x, z) {
+      const result = this.getImage(id, type, x, z);
       if (result)
         this.draw(result);
     }
-    drawFrontImage(id2, type, x, z) {
-      const result = this.getImage(id2, type, 0, z);
+    drawFrontImage(id, type, x, z) {
+      const result = this.getImage(id, type, 0, z);
       if (result)
         this.drawFront(result, x);
     }
@@ -1816,402 +1222,6 @@
         renderSetup.log.render();
       if (this.g.combat.inCombat)
         renderSetup.combat.render();
-    }
-  };
-
-  // src/DScript/host.ts
-  var DScriptHost = class {
-    constructor() {
-      this.env = /* @__PURE__ */ new Map();
-      this.name = "<Host>";
-    }
-    addNative(name, args, type, value) {
-      this.env.set(name, {
-        _: "native",
-        name,
-        args,
-        readOnly: true,
-        type,
-        value
-      });
-    }
-  };
-
-  // src/types/Combatant.ts
-  var AttackableStats = [
-    "hp",
-    "sp",
-    "camaraderie",
-    "determination",
-    "spirit"
-  ];
-
-  // src/tools/combatants.ts
-  function isStat(s) {
-    return AttackableStats.includes(s);
-  }
-
-  // res/sfx/buff1.ogg
-  var buff1_default = "./buff1-X33WXBHF.ogg";
-
-  // res/sfx/clank.ogg
-  var clank_default = "./clank-SVQ65PBR.ogg";
-
-  // res/sfx/cry1.ogg
-  var cry1_default = "./cry1-J2YW3NUB.ogg";
-
-  // res/sfx/death1.ogg
-  var death1_default = "./death1-LNMY6PR7.ogg";
-
-  // res/sfx/woosh.ogg
-  var woosh_default = "./woosh-7BFHNSSE.ogg";
-
-  // src/Sounds.ts
-  var allSounds = {
-    buff1: buff1_default,
-    clank: clank_default,
-    cry1: cry1_default,
-    death1: death1_default,
-    woosh: woosh_default
-  };
-  function isSoundName(name) {
-    return typeof allSounds[name] === "string";
-  }
-  var Sounds = class {
-    constructor(g) {
-      this.g = g;
-      for (const url of Object.values(allSounds))
-        void g.res.loadAudio(url);
-      g.eventHandlers.onKilled.add(
-        ({ who }) => void this.play(who.isPC ? "cry1" : "death1")
-      );
-    }
-    play(name) {
-      return __async(this, null, function* () {
-        const audio = yield this.g.res.loadAudio(allSounds[name]);
-        audio.currentTime = 0;
-        yield audio.play();
-      });
-    }
-  };
-
-  // src/EngineScripting.ts
-  var EngineScripting = class extends DScriptHost {
-    constructor(g) {
-      super();
-      this.g = g;
-      this.env.set("NORTH", num(Dir_default.N, true));
-      this.env.set("EAST", num(Dir_default.E, true));
-      this.env.set("SOUTH", num(Dir_default.S, true));
-      this.env.set("WEST", num(Dir_default.W, true));
-      this.onTagEnter = /* @__PURE__ */ new Map();
-      this.onTagInteract = /* @__PURE__ */ new Map();
-      const getCell = (x, y) => {
-        const cell = g.getCell(x, y);
-        if (!cell)
-          throw new Error(`Invalid cell: ${x},${y}`);
-        return cell;
-      };
-      const getDir = (dir) => {
-        if (dir < 0 || dir > 3)
-          throw new Error(`Invalid dir: ${dir}`);
-        return dir;
-      };
-      const getPC = (index) => {
-        if (index < 0 || index > 4)
-          throw new Error(`Tried to get PC ${index}`);
-        return g.party[index];
-      };
-      const getStat = (stat) => {
-        if (!isStat(stat))
-          throw new Error(`Invalid stat: ${stat}`);
-        return stat;
-      };
-      const getEnemy = (name) => {
-        if (!isEnemyName(name))
-          throw new Error(`Invalid enemy: ${name}`);
-        return name;
-      };
-      const getThisCell = () => getCell(g.position.x, g.position.y);
-      const getPositionByTag = (tag) => {
-        const position = g.findCellWithTag(tag);
-        if (!position)
-          throw new Error(`Cannot find tag: ${tag}`);
-        return position;
-      };
-      const getSide = (x, y, d) => {
-        const dir = getDir(d);
-        const cell = getCell(x, y);
-        const side = cell.sides[dir];
-        if (!side)
-          throw new Error(
-            `script tried to unlock ${x},${y},${d} -- side does not exist`
-          );
-        return side;
-      };
-      const getSound = (name) => {
-        if (!isSoundName(name))
-          throw new Error(`invalid sound name: ${name}`);
-        return name;
-      };
-      this.addNative("addArenaEnemy", ["string"], void 0, (name) => {
-        const enemy = getEnemy(name);
-        g.pendingArenaEnemies.push(enemy);
-      });
-      this.addNative("addNormalEnemy", ["string"], void 0, (name) => {
-        const enemy = getEnemy(name);
-        g.pendingNormalEnemies.push(enemy);
-      });
-      this.addNative(
-        "damagePC",
-        ["number", "string", "number"],
-        void 0,
-        (index, type, amount) => {
-          const pc = getPC(index);
-          const stat = getStat(type);
-          g.applyDamage(pc, [pc], amount, stat, "normal");
-        }
-      );
-      this.addNative(
-        "debug",
-        ["any"],
-        void 0,
-        (thing) => console.log("[debug]", thing)
-      );
-      this.addNative(
-        "getPCName",
-        ["number"],
-        "string",
-        (index) => getPC(index).name
-      );
-      this.addNative("getNumber", ["string"], "number", (key) => {
-        const cell = getThisCell();
-        if (!(key in cell.numbers))
-          throw new Error(
-            `Tried to get non-existant #NUMBER ${key} at ${g.position.x},${g.position.y}`
-          );
-        return cell.numbers[key];
-      });
-      this.addNative("getString", ["string"], "string", (key) => {
-        const cell = getThisCell();
-        if (!(key in cell.strings))
-          throw new Error(
-            `Tried to get non-existant #STRING ${key} at ${g.position.x},${g.position.y}`
-          );
-        return cell.strings[key];
-      });
-      this.addNative("giveItem", ["string"], void 0, (name) => {
-        if (!g.addToInventory(name))
-          throw new Error(`Invalid item: ${name}`);
-      });
-      this.addNative(
-        "isArenaFightPending",
-        [],
-        "bool",
-        () => g.pendingArenaEnemies.length > 0
-      );
-      this.addNative(
-        "isSolid",
-        ["number", "number", "number"],
-        "bool",
-        (x, y, d) => {
-          var _a, _b;
-          const dir = getDir(d);
-          const cell = getCell(x, y);
-          return (_b = (_a = cell.sides[dir]) == null ? void 0 : _a.solid) != null ? _b : false;
-        }
-      );
-      this.addNative("makePartyFace", ["number"], void 0, (d) => {
-        const dir = getDir(d);
-        g.facing = dir;
-        g.draw();
-      });
-      this.addNative(
-        "message",
-        ["string"],
-        void 0,
-        (msg) => g.addToLog(msg)
-      );
-      this.addNative("movePartyToTag", ["string"], void 0, (tag) => {
-        const position = getPositionByTag(tag);
-        g.position = position;
-        g.markVisited();
-        g.draw();
-      });
-      this.addNative(
-        "skillCheck",
-        ["string", "number"],
-        "bool",
-        (type, dc) => {
-          const stat = getStat(type);
-          const pcIndex = this.env.get("pcIndex").value;
-          const pc = g.party[pcIndex];
-          const roll = g.roll(pc) + pc[stat];
-          return roll >= dc;
-        }
-      );
-      this.addNative("startArenaFight", [], "bool", () => {
-        const count = g.pendingArenaEnemies.length;
-        if (!count)
-          return false;
-        const enemies2 = g.pendingArenaEnemies.splice(0, count);
-        g.combat.begin(enemies2, "arena");
-        return true;
-      });
-      this.addNative("startNormalFight", [], "bool", () => {
-        const count = g.pendingNormalEnemies.length;
-        if (!count)
-          return false;
-        const enemies2 = g.pendingNormalEnemies.splice(0, count);
-        g.combat.begin(enemies2, "normal");
-        return true;
-      });
-      this.addNative(
-        "onTagInteract",
-        ["string", "function"],
-        void 0,
-        (tag, cb) => {
-          this.onTagInteract.set(tag, cb);
-        }
-      );
-      this.addNative(
-        "onTagEnter",
-        ["string", "function"],
-        void 0,
-        (tag, cb) => {
-          this.onTagEnter.set(tag, cb);
-        }
-      );
-      this.addNative("random", ["number"], "number", random);
-      this.addNative(
-        "removeObject",
-        ["number", "number"],
-        void 0,
-        (x, y) => {
-          const cell = getCell(x, y);
-          cell.object = void 0;
-          g.draw();
-        }
-      );
-      this.addNative(
-        "addTag",
-        ["number", "number", "string"],
-        void 0,
-        (x, y, tag) => {
-          const cell = getCell(x, y);
-          cell.tags.push(tag);
-        }
-      );
-      this.addNative(
-        "removeTag",
-        ["number", "number", "string"],
-        void 0,
-        (x, y, tag) => {
-          const cell = getCell(x, y);
-          const index = cell.tags.indexOf(tag);
-          if (index >= 0)
-            cell.tags.splice(index, 1);
-          else
-            console.warn(
-              `script tried to remove tag ${tag} at ${x},${y} -- not present`
-            );
-        }
-      );
-      this.addNative(
-        "selectTileWithTag",
-        ["string"],
-        void 0,
-        (tag) => {
-          const position = getPositionByTag(tag);
-          this.env.set("selectedX", num(position.x, true));
-          this.env.set("selectedY", num(position.y, true));
-        }
-      );
-      this.addNative(
-        "setDecal",
-        ["number", "number", "number", "number"],
-        void 0,
-        (x, y, d, t) => {
-          const side = getSide(x, y, d);
-          side.decal = t;
-          g.draw();
-        }
-      );
-      this.addNative(
-        "setSolid",
-        ["number", "number", "number", "bool"],
-        void 0,
-        (x, y, d, solid) => {
-          const side = getSide(x, y, d);
-          side.solid = solid;
-        }
-      );
-      this.addNative(
-        "tileHasTag",
-        ["number", "number", "string"],
-        "bool",
-        (x, y, tag) => getCell(x, y).tags.includes(tag)
-      );
-      this.addNative(
-        "unlock",
-        ["number", "number", "number"],
-        void 0,
-        (x, y, d) => {
-          const side = getSide(x, y, d);
-          side.solid = false;
-          const otherSide = move({ x, y }, d);
-          const opposite = getSide(otherSide.x, otherSide.y, rotate(d, 2));
-          if (opposite)
-            opposite.solid = false;
-        }
-      );
-      this.addNative("obstacle", [], void 0, () => g.setObstacle(true));
-      this.addNative("clearObstacle", [], void 0, () => g.setObstacle(false));
-      this.addNative("playSound", ["string"], void 0, (name) => {
-        const sound = getSound(name);
-        void g.sfx.play(sound);
-      });
-    }
-    run(program) {
-      return run(this, program);
-    }
-    runCallback(fn, ...args) {
-      this.env.set("partyX", num(this.g.position.x, true));
-      this.env.set("partyY", num(this.g.position.y, true));
-      this.env.set("partyDir", num(this.g.facing, true));
-      this.env.delete("selectedX");
-      this.env.delete("selectedY");
-      if (fn._ === "function")
-        return callFunction(this, fn, args.slice(0, fn.args.length));
-      else
-        return fn.value(...args);
-    }
-    onEnter(newPos, oldPos) {
-      const tile = this.g.getCell(newPos.x, newPos.y);
-      if (!tile)
-        return;
-      for (const tag of tile.tags) {
-        const cb = this.onTagEnter.get(tag);
-        if (cb) {
-          this.env.set("pcIndex", num(this.g.facing, true));
-          this.runCallback(cb, num(oldPos.x), num(oldPos.y));
-        }
-      }
-    }
-    onInteract(pcIndex) {
-      const tile = this.g.getCell(this.g.position.x, this.g.position.y);
-      if (!tile)
-        return false;
-      let result = false;
-      for (const tag of tile.tags) {
-        const cb = this.onTagInteract.get(tag);
-        if (cb) {
-          this.env.set("pcIndex", num(pcIndex, true));
-          this.runCallback(cb, str(this.g.party[pcIndex].skill));
-          result = true;
-        }
-      }
-      return result;
     }
   };
 
@@ -2424,14 +1434,14 @@
       });
       const textX = position.x + offset.x;
       let textY = position.y + offset.y;
-      for (let id2 = 0; id2 < 4; id2++) {
-        const pc = this.g.party[id2];
+      for (let id = 0; id < 4; id++) {
+        const pc = this.g.party[id];
         if (pc.alive) {
           draw(pc.skill, textX, textY);
           const x = textX - 10;
           const y = textY - 8;
           this.spots.push({
-            id: id2,
+            id,
             x,
             y,
             ex: x + buttonSize.x,
@@ -2933,8 +1943,18 @@
   // res/sad-folks.png
   var sad_folks_default = "./sad-folks-WT2RUZAU.png";
 
-  // res/map.json
-  var map_default = "./map-S6WDJ4DU.json";
+  // src/types/ClassName.ts
+  var ClassNames = [
+    "Martialist",
+    "Cleavesman",
+    "Far Scout",
+    "War Caller",
+    "Flag Singer",
+    "Loam Seer"
+  ];
+
+  // src/EngineInkScripting.ts
+  var import_inkjs = __toESM(require_inkjs());
 
   // src/items/cleavesman.ts
   var cleavesman_exports = {};
@@ -3909,6 +2929,390 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
   CherClaspeGauntlet.lore = `A pair of iron gauntlets ensorcelled with a modest enchantment; upon the command of a priest, these matching metal gloves each lock into the shape of a fist and cannot be undone by the bearer; a stricture that War Callers willingly bear, that it may sustain their resolve and dismiss their idle habits.`;
   SaintGong.lore = `A brass percussive disc mounted on a seven foot banner-pole and hung from hinge-chains, letting it swing freely enough that its shuddering surface rings clean. Most effective when tuned to the frequency of a chosen knight's bellows, allowing it to crash loudly in accompaniment with each war cry.`;
 
+  // src/items/consumable.ts
+  var consumable_exports = {};
+  __export(consumable_exports, {
+    HolyDew: () => HolyDew,
+    LifeDew: () => LifeDew,
+    Liquor: () => Liquor,
+    ManaDew: () => ManaDew,
+    Ration: () => Ration
+  });
+  var LifeDew = {
+    name: "Life Dew",
+    type: "Consumable",
+    bonus: {},
+    action: {
+      name: "Scatter",
+      tags: ["heal"],
+      sp: 1,
+      targets: ally(1),
+      targetFilter: (c) => c.hp < c.maxHP,
+      act({ g, me, targets }) {
+        g.heal(me, targets, 3);
+      }
+    }
+  };
+  var ManaDew = {
+    name: "Mana Dew",
+    type: "Consumable",
+    bonus: {},
+    action: {
+      name: "Scatter",
+      tags: ["heal"],
+      sp: 1,
+      targets: ally(1),
+      targetFilter: (c) => c.sp < c.maxSP,
+      act({ g, targets }) {
+        for (const target of targets) {
+          const newSP = Math.min(target.maxSP, target.sp + 3);
+          const gain = newSP - target.maxSP;
+          if (gain) {
+            target.sp += gain;
+            g.addToLog(`${target.name} feels recharged.`);
+          }
+        }
+      }
+    }
+  };
+  var Liquor = {
+    name: "Liquor",
+    type: "Consumable",
+    bonus: {},
+    action: {
+      name: "Drink",
+      tags: ["heal"],
+      sp: 1,
+      targets: ally(1),
+      act({ g, targets }) {
+        for (const target of targets) {
+          target.camaraderie++;
+          g.addToLog(`${target.name} feels a little more convivial.`);
+        }
+      }
+    }
+  };
+  var Ration = {
+    name: "Ration",
+    type: "Consumable",
+    bonus: {},
+    action: {
+      name: "Eat",
+      tags: ["heal"],
+      sp: 1,
+      targets: ally(1),
+      act({ g, targets }) {
+        for (const target of targets) {
+          target.determination++;
+          g.addToLog(`${target.name} feels a little more determined.`);
+        }
+      }
+    }
+  };
+  var HolyDew = {
+    name: "Holy Dew",
+    type: "Consumable",
+    bonus: {},
+    action: {
+      name: "Scatter",
+      tags: ["heal"],
+      sp: 1,
+      targets: ally(1),
+      act({ g, targets }) {
+        for (const target of targets) {
+          target.spirit++;
+          g.addToLog(`${target.name} feels their hopes lift.`);
+        }
+      }
+    }
+  };
+
+  // src/items/index.ts
+  var allItems = Object.fromEntries(
+    [
+      cleavesman_exports,
+      farScout_exports,
+      flagSinger_exports,
+      loamSeer_exports,
+      martialist_exports,
+      warCaller_exports,
+      consumable_exports
+    ].flatMap(
+      (repository) => Object.values(repository).map((item) => [item.name, item])
+    )
+  );
+  function getItem(s) {
+    return allItems[s];
+  }
+
+  // res/sfx/buff1.ogg
+  var buff1_default = "./buff1-X33WXBHF.ogg";
+
+  // res/sfx/clank.ogg
+  var clank_default = "./clank-SVQ65PBR.ogg";
+
+  // res/sfx/cry1.ogg
+  var cry1_default = "./cry1-J2YW3NUB.ogg";
+
+  // res/sfx/death1.ogg
+  var death1_default = "./death1-LNMY6PR7.ogg";
+
+  // res/sfx/woosh.ogg
+  var woosh_default = "./woosh-7BFHNSSE.ogg";
+
+  // src/Sounds.ts
+  var allSounds = {
+    buff1: buff1_default,
+    clank: clank_default,
+    cry1: cry1_default,
+    death1: death1_default,
+    woosh: woosh_default
+  };
+  function isSoundName(name) {
+    return typeof allSounds[name] === "string";
+  }
+  var Sounds = class {
+    constructor(g) {
+      this.g = g;
+      for (const url of Object.values(allSounds))
+        void g.res.loadAudio(url);
+      g.eventHandlers.onKilled.add(
+        ({ who }) => void this.play(who.isPC ? "cry1" : "death1")
+      );
+    }
+    play(name) {
+      return __async(this, null, function* () {
+        const audio = yield this.g.res.loadAudio(allSounds[name]);
+        audio.currentTime = 0;
+        yield audio.play();
+      });
+    }
+  };
+
+  // src/types/Combatant.ts
+  var AttackableStats = [
+    "hp",
+    "sp",
+    "camaraderie",
+    "determination",
+    "spirit"
+  ];
+
+  // src/tools/combatants.ts
+  function isStat(s) {
+    return AttackableStats.includes(s);
+  }
+
+  // src/EngineInkScripting.ts
+  var EngineInkScripting = class {
+    constructor(g) {
+      this.g = g;
+      this.onTagEnter = /* @__PURE__ */ new Map();
+      this.onTagInteract = /* @__PURE__ */ new Map();
+    }
+    parseAndRun(source, filename) {
+      const compiler = new import_inkjs.Compiler(source, {
+        sourceFilename: filename,
+        errorHandler: (msg, type) => {
+          console.log(msg, type);
+        },
+        pluginNames: [],
+        countAllVisits: false,
+        fileHandler: {
+          LoadInkFileContents(filename2) {
+            console.log("LoadInkFileContents", filename2);
+          },
+          ResolveInkFilename(filename2) {
+            return filename2;
+          }
+        }
+      });
+      const program = compiler.Compile();
+      this.run(program);
+    }
+    run(program) {
+      var _a;
+      this.onTagEnter.clear();
+      this.onTagInteract.clear();
+      this.story = program;
+      const getCell = (xy2) => {
+        const pos = tagToXy(xy2);
+        const cell = this.g.getCell(pos.x, pos.y);
+        if (!cell)
+          throw new Error(`Invalid cell: ${xy2}`);
+        return cell;
+      };
+      const getDir = (dir) => {
+        if (dir < 0 || dir > 3)
+          throw new Error(`Invalid dir: ${dir}`);
+        return dir;
+      };
+      const getPC = (index) => {
+        if (index < 0 || index > 4)
+          throw new Error(`Tried to get PC ${index}`);
+        return this.g.party[index];
+      };
+      const getStat = (stat) => {
+        if (!isStat(stat))
+          throw new Error(`Invalid stat: ${stat}`);
+        return stat;
+      };
+      const getEnemy = (name) => {
+        if (!isEnemyName(name))
+          throw new Error(`Invalid enemy: ${name}`);
+        return name;
+      };
+      const getPositionByTag = (tag) => {
+        const position = this.g.findCellWithTag(tag);
+        if (!position)
+          throw new Error(`Cannot find tag: ${tag}`);
+        return position;
+      };
+      const getSide = (xy2, d) => {
+        const dir = getDir(d);
+        const cell = getCell(xy2);
+        const side = cell.sides[dir];
+        if (!side)
+          throw new Error(
+            `script tried to unlock ${xy2},${d} -- side does not exist`
+          );
+        return side;
+      };
+      const getSound = (name) => {
+        if (!isSoundName(name))
+          throw new Error(`invalid sound name: ${name}`);
+        return name;
+      };
+      program.BindExternalFunction("active", () => this.active);
+      program.BindExternalFunction(
+        "damagePC",
+        (index, type, amount) => {
+          const pc = getPC(index);
+          const stat = getStat(type);
+          this.g.applyDamage(pc, [pc], amount, stat, "normal");
+        }
+      );
+      program.BindExternalFunction("facing", () => this.g.facing);
+      program.BindExternalFunction(
+        "getNumber",
+        (name) => {
+          var _a2, _b;
+          return (_b = (_a2 = this.g.currentCell) == null ? void 0 : _a2.numbers[name]) != null ? _b : 0;
+        }
+      );
+      program.BindExternalFunction(
+        "getString",
+        (name) => {
+          var _a2, _b;
+          return (_b = (_a2 = this.g.currentCell) == null ? void 0 : _a2.strings[name]) != null ? _b : "";
+        }
+      );
+      program.BindExternalFunction(
+        "getTagPosition",
+        (tag) => xyToTag(this.g.findCellWithTag(tag))
+      );
+      program.BindExternalFunction("giveItem", (name) => {
+        const item = getItem(name);
+        if (item)
+          this.g.inventory.push(item);
+      });
+      program.BindExternalFunction("here", () => xyToTag(this.g.position));
+      program.BindExternalFunction(
+        "move",
+        (xy2, dir) => xyToTag(move(tagToXy(xy2), dir))
+      );
+      program.BindExternalFunction("name", (dir) => this.g.party[dir].name);
+      program.BindExternalFunction("playSound", (name) => {
+        const sound = getSound(name);
+        void this.g.sfx.play(sound);
+      });
+      program.BindExternalFunction("removeObject", (xy2) => {
+        const cell = getCell(xy2);
+        cell.object = void 0;
+      });
+      program.BindExternalFunction("removeTag", (xy2, tag) => {
+        const cell = getCell(xy2);
+        const index = cell.tags.indexOf(tag);
+        if (index >= 0)
+          cell.tags.splice(index, 1);
+        else
+          console.warn(
+            `script tried to remove tag ${tag} at ${xy2} -- not present`
+          );
+      });
+      program.BindExternalFunction(
+        "rotate",
+        (dir, quarters) => rotate(dir, quarters)
+      );
+      program.BindExternalFunction(
+        "setDecal",
+        (xy2, dir, decal) => {
+          const side = getSide(xy2, dir);
+          side.decal = decal;
+        }
+      );
+      program.BindExternalFunction(
+        "setObstacle",
+        (blocked) => this.g.setObstacle(blocked)
+      );
+      program.BindExternalFunction(
+        "setSolid",
+        (xy2, dir, solid) => {
+          const side = getSide(xy2, dir);
+          side.solid = solid;
+        }
+      );
+      program.BindExternalFunction("skill", () => this.skill);
+      program.BindExternalFunction("skillCheck", (type, dc) => {
+        const stat = getStat(type);
+        const pc = this.g.party[this.active];
+        const roll = this.g.roll(pc) + pc[stat];
+        return roll >= dc;
+      });
+      program.ContinueMaximally();
+      for (const [name] of program.mainContentContainer.namedContent) {
+        const tags = (_a = program.TagsForContentAtPath(name)) != null ? _a : [];
+        for (const tag of tags) {
+          const [left, right] = tag.split(":");
+          if (left === "enter")
+            this.onTagEnter.set(right.trim(), name);
+          else if (left === "interact")
+            this.onTagInteract.set(right.trim(), name);
+        }
+      }
+    }
+    setConstant(key, value) {
+    }
+    onEnter(pos, old) {
+      var _a;
+      this.active = this.g.facing;
+      const cell = this.g.getCell(pos.x, pos.y);
+      for (const tag of (_a = cell == null ? void 0 : cell.tags) != null ? _a : []) {
+        const path = this.onTagEnter.get(tag);
+        if (path) {
+          this.story.ChoosePathString(path);
+          const result = this.story.ContinueMaximally();
+          if (result)
+            this.g.addToLog(result);
+        }
+      }
+    }
+    onInteract(pcIndex) {
+      var _a, _b;
+      this.active = pcIndex;
+      this.skill = this.g.party[pcIndex].skill;
+      for (const tag of (_b = (_a = this.g.currentCell) == null ? void 0 : _a.tags) != null ? _b : []) {
+        const path = this.onTagInteract.get(tag);
+        if (path) {
+          this.story.ChoosePathString(path);
+          const result = this.story.ContinueMaximally();
+          if (result)
+            this.g.addToLog(result);
+        }
+      }
+    }
+  };
+
   // src/classes.ts
   var classes = {
     Martialist: {
@@ -4080,15 +3484,8 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     }
   };
 
-  // src/types/ClassName.ts
-  var ClassNames = [
-    "Martialist",
-    "Cleavesman",
-    "Far Scout",
-    "War Caller",
-    "Flag Singer",
-    "Loam Seer"
-  ];
+  // res/map.json
+  var map_default = "./map-FGMGM7UX.json";
 
   // src/TitleScreen.ts
   var TitleScreen = class {
@@ -4099,12 +3496,17 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       g.log = [];
       g.pendingArenaEnemies = [];
       g.pendingNormalEnemies = [];
-      g.scripting = new EngineScripting(g);
+      g.scripting = new EngineInkScripting(g);
       g.showLog = false;
       g.visited.clear();
       g.walls.clear();
       this.index = 0;
-      this.selected = /* @__PURE__ */ new Set();
+      this.selected = /* @__PURE__ */ new Set([
+        "Cleavesman",
+        "Far Scout",
+        "Flag Singer",
+        "Loam Seer"
+      ]);
     }
     onKey(e) {
       this.g.jukebox.tryPlay();
@@ -4258,8 +3660,11 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     }
   };
 
-  // res/map.dscript
-  var map_default2 = "./map-ZR4AD5RX.dscript";
+  // res/atlas/eveScout.png
+  var eveScout_default = "./eveScout-GB6RQXWR.png";
+
+  // res/atlas/eveScout.json
+  var eveScout_default2 = "./eveScout-3RSQGX7M.json";
 
   // res/atlas/flats.png
   var flats_default = "./flats-YFBZMEC6.png";
@@ -4267,11 +3672,11 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
   // res/atlas/flats.json
   var flats_default2 = "./flats-GGEKOGMO.json";
 
-  // res/atlas/eveScout.png
-  var eveScout_default = "./eveScout-GB6RQXWR.png";
+  // res/map.dscript
+  var map_default2 = "./map-ZR4AD5RX.dscript";
 
-  // res/atlas/eveScout.json
-  var eveScout_default2 = "./eveScout-3RSQGX7M.json";
+  // res/map.ink
+  var map_default3 = "./map-C6XBS5UD.ink";
 
   // res/atlas/martialist.png
   var martialist_default = "./martialist-KFK3S4GT.png";
@@ -4294,6 +3699,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
   // src/resources.ts
   var Resources = {
     "map.dscript": map_default2,
+    "map.ink": map_default3,
     "flats.png": flats_default,
     "flats.json": flats_default2,
     "eveScout.png": eveScout_default,
@@ -4305,10 +3711,10 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     "sneedCrawler.png": sneedCrawler_default,
     "sneedCrawler.json": sneedCrawler_default2
   };
-  function getResourceURL(id2) {
-    const value = Resources[id2];
+  function getResourceURL(id) {
+    const value = Resources[id];
     if (!value)
-      throw new Error(`Invalid resource ID: ${id2}`);
+      throw new Error(`Invalid resource ID: ${id}`);
     return value;
   }
 
@@ -4485,8 +3891,8 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
           break;
         }
         case "#SCRIPT":
-          for (const id2 of arg.split(","))
-            this.scripts.push(getResourceURL(id2));
+          for (const id of arg.split(","))
+            this.scripts.push(getResourceURL(id));
           break;
         case "#OBJECT":
           this.tile(x, y).object = this.eval(arg);
@@ -4535,122 +3941,6 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
   function convertGridCartographerMap(j, region = 0, floor = 0, env = {}) {
     const converter = new GCMapConverter(env);
     return converter.convert(j, region, floor);
-  }
-
-  // src/items/consumable.ts
-  var consumable_exports = {};
-  __export(consumable_exports, {
-    HolyDew: () => HolyDew,
-    LifeDew: () => LifeDew,
-    Liquor: () => Liquor,
-    ManaDew: () => ManaDew,
-    Ration: () => Ration
-  });
-  var LifeDew = {
-    name: "Life Dew",
-    type: "Consumable",
-    bonus: {},
-    action: {
-      name: "Scatter",
-      tags: ["heal"],
-      sp: 1,
-      targets: ally(1),
-      targetFilter: (c) => c.hp < c.maxHP,
-      act({ g, me, targets }) {
-        g.heal(me, targets, 3);
-      }
-    }
-  };
-  var ManaDew = {
-    name: "Mana Dew",
-    type: "Consumable",
-    bonus: {},
-    action: {
-      name: "Scatter",
-      tags: ["heal"],
-      sp: 1,
-      targets: ally(1),
-      targetFilter: (c) => c.sp < c.maxSP,
-      act({ g, targets }) {
-        for (const target of targets) {
-          const newSP = Math.min(target.maxSP, target.sp + 3);
-          const gain = newSP - target.maxSP;
-          if (gain) {
-            target.sp += gain;
-            g.addToLog(`${target.name} feels recharged.`);
-          }
-        }
-      }
-    }
-  };
-  var Liquor = {
-    name: "Liquor",
-    type: "Consumable",
-    bonus: {},
-    action: {
-      name: "Drink",
-      tags: ["heal"],
-      sp: 1,
-      targets: ally(1),
-      act({ g, targets }) {
-        for (const target of targets) {
-          target.camaraderie++;
-          g.addToLog(`${target.name} feels a little more convivial.`);
-        }
-      }
-    }
-  };
-  var Ration = {
-    name: "Ration",
-    type: "Consumable",
-    bonus: {},
-    action: {
-      name: "Eat",
-      tags: ["heal"],
-      sp: 1,
-      targets: ally(1),
-      act({ g, targets }) {
-        for (const target of targets) {
-          target.determination++;
-          g.addToLog(`${target.name} feels a little more determined.`);
-        }
-      }
-    }
-  };
-  var HolyDew = {
-    name: "Holy Dew",
-    type: "Consumable",
-    bonus: {},
-    action: {
-      name: "Scatter",
-      tags: ["heal"],
-      sp: 1,
-      targets: ally(1),
-      act({ g, targets }) {
-        for (const target of targets) {
-          target.spirit++;
-          g.addToLog(`${target.name} feels their hopes lift.`);
-        }
-      }
-    }
-  };
-
-  // src/items/index.ts
-  var allItems = Object.fromEntries(
-    [
-      cleavesman_exports,
-      farScout_exports,
-      flagSinger_exports,
-      loamSeer_exports,
-      martialist_exports,
-      warCaller_exports,
-      consumable_exports
-    ].flatMap(
-      (repository) => Object.values(repository).map((item) => [item.name, item])
-    )
-  );
-  function getItem(s) {
-    return allItems[s];
   }
 
   // src/tools/aabb.ts
@@ -4781,7 +4071,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       this.worldSize = xyi(0, 0);
       this.res = new ResourceManager();
       this.drawSoon = new Soon(this.render);
-      this.scripting = new EngineScripting(this);
+      this.scripting = new EngineInkScripting(this);
       this.log = [];
       this.showLog = false;
       this.combat = new CombatManager(this);
@@ -4906,14 +4196,11 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
         if (!atlases.length)
           throw new Error(`${jsonUrl} did not contain #ATLAS`);
         for (const [key, value] of definitions.entries()) {
-          this.scripting.env.set(key, num(value, true));
+          this.scripting.setConstant(key, num(value, true));
         }
-        const codeFiles = yield Promise.all(
-          scripts.map((url) => this.res.loadScript(url))
-        );
-        for (const code of codeFiles) {
-          const program = parse(code);
-          this.scripting.run(program);
+        for (const url of scripts) {
+          const code = yield this.res.loadScript(url);
+          this.scripting.parseAndRun(code, url);
         }
         return this.loadWorld({ name, atlases, cells, start, facing });
       });

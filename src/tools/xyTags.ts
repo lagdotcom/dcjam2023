@@ -2,7 +2,8 @@ import XY from "../types/XY";
 
 export type XYTag = `${number},${number}`;
 
-export function xyToTag(pos: XY): XYTag {
+export function xyToTag(pos?: XY): XYTag {
+  if (!pos) return "-1,-1";
   return `${pos.x},${pos.y}`;
 }
 
