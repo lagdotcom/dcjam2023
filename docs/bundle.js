@@ -877,11 +877,6 @@
     }
   };
 
-  // src/DScript/logic.ts
-  function num(value, readOnly = false) {
-    return { _: "number", value, readOnly };
-  }
-
   // src/DefaultControls.ts
   var DefaultControls = [
     ["ArrowUp", ["Forward", "MenuUp"]],
@@ -3103,12 +3098,24 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     return AttackableStats.includes(s);
   }
 
+  // src/tools/arrays.ts
+  function removeItem(array, item) {
+    const index = array.indexOf(item);
+    if (index >= 0) {
+      array.splice(index, 1);
+      return true;
+    }
+    return false;
+  }
+
   // src/EngineInkScripting.ts
   var EngineInkScripting = class {
     constructor(g) {
       this.g = g;
       this.onTagEnter = /* @__PURE__ */ new Map();
       this.onTagInteract = /* @__PURE__ */ new Map();
+      this.active = 0;
+      this.skill = "NONE";
     }
     parseAndRun(source, filename) {
       const compiler = new import_inkjs.Compiler(source, {
@@ -3120,7 +3127,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
         countAllVisits: false,
         fileHandler: {
           LoadInkFileContents(filename2) {
-            console.log("LoadInkFileContents", filename2);
+            throw new Error(`LoadInkFileContents: ${filename2}`);
           },
           ResolveInkFilename(filename2) {
             return filename2;
@@ -3169,13 +3176,12 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
         return position;
       };
       const getSide = (xy2, d) => {
+        var _a2;
         const dir = getDir(d);
         const cell = getCell(xy2);
-        const side = cell.sides[dir];
-        if (!side)
-          throw new Error(
-            `script tried to unlock ${xy2},${d} -- side does not exist`
-          );
+        const side = (_a2 = cell.sides[dir]) != null ? _a2 : {};
+        if (!cell.sides[dir])
+          cell.sides[dir] = side;
         return side;
       };
       const getSound = (name) => {
@@ -3183,7 +3189,15 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
           throw new Error(`invalid sound name: ${name}`);
         return name;
       };
-      program.BindExternalFunction("active", () => this.active);
+      program.BindExternalFunction("active", () => this.active, true);
+      program.BindExternalFunction("addArenaEnemy", (name) => {
+        const enemy = getEnemy(name);
+        this.g.pendingArenaEnemies.push(enemy);
+      });
+      program.BindExternalFunction("addTag", (xy2, tag) => {
+        const cell = getCell(xy2);
+        cell.tags.push(tag);
+      });
       program.BindExternalFunction(
         "damagePC",
         (index, type, amount) => {
@@ -3192,36 +3206,66 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
           this.g.applyDamage(pc, [pc], amount, stat, "normal");
         }
       );
-      program.BindExternalFunction("facing", () => this.g.facing);
+      program.BindExternalFunction("facing", () => this.g.facing, true);
+      program.BindExternalFunction(
+        "forEachTaggedTile",
+        (tag, callback) => {
+          for (const pos of this.g.findCellsWithTag(tag))
+            this.story.EvaluateFunction(callback.componentsString, [
+              xyToTag(pos)
+            ]);
+        }
+      );
+      program.BindExternalFunction(
+        "getDecal",
+        (xy2, dir) => {
+          var _a2;
+          return (_a2 = getSide(xy2, dir).decal) != null ? _a2 : 0;
+        },
+        true
+      );
       program.BindExternalFunction(
         "getNumber",
         (name) => {
           var _a2, _b;
           return (_b = (_a2 = this.g.currentCell) == null ? void 0 : _a2.numbers[name]) != null ? _b : 0;
-        }
+        },
+        true
       );
       program.BindExternalFunction(
         "getString",
         (name) => {
           var _a2, _b;
           return (_b = (_a2 = this.g.currentCell) == null ? void 0 : _a2.strings[name]) != null ? _b : "";
-        }
+        },
+        true
       );
       program.BindExternalFunction(
         "getTagPosition",
-        (tag) => xyToTag(this.g.findCellWithTag(tag))
+        (tag) => xyToTag(getPositionByTag(tag)),
+        true
       );
       program.BindExternalFunction("giveItem", (name) => {
         const item = getItem(name);
         if (item)
           this.g.inventory.push(item);
       });
-      program.BindExternalFunction("here", () => xyToTag(this.g.position));
+      program.BindExternalFunction("here", () => xyToTag(this.g.position), true);
+      program.BindExternalFunction(
+        "isArenaFightPending",
+        () => this.g.pendingArenaEnemies.length > 0,
+        true
+      );
       program.BindExternalFunction(
         "move",
-        (xy2, dir) => xyToTag(move(tagToXy(xy2), dir))
+        (xy2, dir) => xyToTag(move(tagToXy(xy2), dir)),
+        true
       );
-      program.BindExternalFunction("name", (dir) => this.g.party[dir].name);
+      program.BindExternalFunction(
+        "name",
+        (dir) => this.g.party[dir].name,
+        true
+      );
       program.BindExternalFunction("playSound", (name) => {
         const sound = getSound(name);
         void this.g.sfx.play(sound);
@@ -3232,17 +3276,15 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       });
       program.BindExternalFunction("removeTag", (xy2, tag) => {
         const cell = getCell(xy2);
-        const index = cell.tags.indexOf(tag);
-        if (index >= 0)
-          cell.tags.splice(index, 1);
-        else
+        if (!removeItem(cell.tags, tag))
           console.warn(
             `script tried to remove tag ${tag} at ${xy2} -- not present`
           );
       });
       program.BindExternalFunction(
         "rotate",
-        (dir, quarters) => rotate(dir, quarters)
+        (dir, quarters) => rotate(dir, quarters),
+        true
       );
       program.BindExternalFunction(
         "setDecal",
@@ -3262,35 +3304,49 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
           side.solid = solid;
         }
       );
-      program.BindExternalFunction("skill", () => this.skill);
+      program.BindExternalFunction("skill", () => this.skill, true);
       program.BindExternalFunction("skillCheck", (type, dc) => {
         const stat = getStat(type);
         const pc = this.g.party[this.active];
         const roll = this.g.roll(pc) + pc[stat];
         return roll >= dc;
       });
+      program.BindExternalFunction("startArenaFight", () => {
+        const count = this.g.pendingArenaEnemies.length;
+        if (!count)
+          return false;
+        const enemies2 = this.g.pendingArenaEnemies.splice(0, count);
+        this.g.combat.begin(enemies2, "arena");
+        return true;
+      });
       program.ContinueMaximally();
       for (const [name] of program.mainContentContainer.namedContent) {
+        const entry = { name };
         const tags = (_a = program.TagsForContentAtPath(name)) != null ? _a : [];
         for (const tag of tags) {
           const [left, right] = tag.split(":");
           if (left === "enter")
-            this.onTagEnter.set(right.trim(), name);
+            this.onTagEnter.set(right.trim(), entry);
           else if (left === "interact")
-            this.onTagInteract.set(right.trim(), name);
+            this.onTagInteract.set(right.trim(), entry);
+          else if (left === "once")
+            entry.once = true;
+          else
+            throw new Error(`Unknown knot tag: ${left}`);
         }
       }
     }
-    setConstant(key, value) {
-    }
-    onEnter(pos, old) {
-      var _a;
-      this.active = this.g.facing;
+    onEnter(pos) {
       const cell = this.g.getCell(pos.x, pos.y);
-      for (const tag of (_a = cell == null ? void 0 : cell.tags) != null ? _a : []) {
-        const path = this.onTagEnter.get(tag);
-        if (path) {
-          this.story.ChoosePathString(path);
+      if (!cell)
+        return;
+      this.active = this.g.facing;
+      for (const tag of cell.tags) {
+        const entry = this.onTagEnter.get(tag);
+        if (entry) {
+          this.story.ChoosePathString(entry.name);
+          if (entry.once)
+            removeItem(cell.tags, tag);
           const result = this.story.ContinueMaximally();
           if (result)
             this.g.addToLog(result);
@@ -3298,18 +3354,25 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       }
     }
     onInteract(pcIndex) {
-      var _a, _b;
+      const cell = this.g.currentCell;
+      if (!cell)
+        return false;
+      let interacted = false;
       this.active = pcIndex;
       this.skill = this.g.party[pcIndex].skill;
-      for (const tag of (_b = (_a = this.g.currentCell) == null ? void 0 : _a.tags) != null ? _b : []) {
-        const path = this.onTagInteract.get(tag);
-        if (path) {
-          this.story.ChoosePathString(path);
+      for (const tag of cell.tags) {
+        const entry = this.onTagInteract.get(tag);
+        if (entry) {
+          this.story.ChoosePathString(entry.name);
+          if (entry.once)
+            removeItem(cell.tags, tag);
+          interacted = true;
           const result = this.story.ContinueMaximally();
           if (result)
             this.g.addToLog(result);
         }
       }
+      return interacted;
     }
   };
 
@@ -3485,7 +3548,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
   };
 
   // res/map.json
-  var map_default = "./map-FGMGM7UX.json";
+  var map_default = "./map-HXD5COAC.json";
 
   // src/TitleScreen.ts
   var TitleScreen = class {
@@ -3501,12 +3564,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       g.visited.clear();
       g.walls.clear();
       this.index = 0;
-      this.selected = /* @__PURE__ */ new Set([
-        "Cleavesman",
-        "Far Scout",
-        "Flag Singer",
-        "Loam Seer"
-      ]);
+      this.selected = /* @__PURE__ */ new Set();
     }
     onKey(e) {
       this.g.jukebox.tryPlay();
@@ -3672,11 +3730,8 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
   // res/atlas/flats.json
   var flats_default2 = "./flats-GGEKOGMO.json";
 
-  // res/map.dscript
-  var map_default2 = "./map-ZR4AD5RX.dscript";
-
   // res/map.ink
-  var map_default3 = "./map-C6XBS5UD.ink";
+  var map_default2 = "./map-XWTFTB4C.ink";
 
   // res/atlas/martialist.png
   var martialist_default = "./martialist-KFK3S4GT.png";
@@ -3698,8 +3753,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
 
   // src/resources.ts
   var Resources = {
-    "map.dscript": map_default2,
-    "map.ink": map_default3,
+    "map.ink": map_default2,
     "flats.png": flats_default,
     "flats.json": flats_default2,
     "eveScout.png": eveScout_default,
@@ -3848,9 +3902,9 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       const def = this.definitions.get(s);
       if (typeof def !== "undefined")
         return def;
-      const num2 = Number(s);
-      if (!isNaN(num2))
-        return num2;
+      const num = Number(s);
+      if (!isNaN(num))
+        return num;
       throw new Error(`Could not evaluate: ${s}`);
     }
     applyCommand(cmd, arg, x, y) {
@@ -4192,12 +4246,9 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       return __async(this, null, function* () {
         this.screen = new LoadingScreen(this);
         const map = yield this.res.loadGCMap(jsonUrl);
-        const { atlases, cells, definitions, scripts, start, facing, name } = convertGridCartographerMap(map, region, floor, EnemyObjects);
+        const { atlases, cells, scripts, start, facing, name } = convertGridCartographerMap(map, region, floor, EnemyObjects);
         if (!atlases.length)
           throw new Error(`${jsonUrl} did not contain #ATLAS`);
-        for (const [key, value] of definitions.entries()) {
-          this.scripting.setConstant(key, num(value, true));
-        }
         for (const url of scripts) {
           const code = yield this.res.loadScript(url);
           this.scripting.parseAndRun(code, url);
@@ -4240,6 +4291,18 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
         }
       }
     }
+    findCellsWithTag(tag) {
+      if (!this.world)
+        return [];
+      const matches = [];
+      for (let y = 0; y < this.worldSize.y; y++) {
+        for (let x = 0; x < this.worldSize.x; x++) {
+          if (this.world.cells[y][x].tags.includes(tag))
+            matches.push({ x, y });
+        }
+      }
+      return matches;
+    }
     draw() {
       this.drawSoon.schedule();
     }
@@ -4270,7 +4333,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
         this.draw();
         this.setObstacle(false);
         this.fire("onPartyMove", { from: old, to: this.position });
-        this.scripting.onEnter(this.position, old);
+        this.scripting.onEnter(this.position);
         return true;
       }
       this.markUnnavigable(this.position, dir);
@@ -4520,9 +4583,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       }
     }
     removeEffect(effect) {
-      const index = this.combat.effects.indexOf(effect);
-      if (index >= 0)
-        this.combat.effects.splice(index, 1);
+      removeItem(this.combat.effects, effect);
       for (const name of GameEventNames) {
         const handler = effect[name];
         if (handler)
@@ -4534,9 +4595,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     }
     removeEffectsFrom(effects, who) {
       for (const e of effects) {
-        const index = e.affects.indexOf(who);
-        if (index > 0)
-          e.affects.splice(index, 1);
+        removeItem(e.affects, who);
         if (!e.affects.length)
           this.removeEffect(e);
       }

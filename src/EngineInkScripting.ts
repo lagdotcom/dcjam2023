@@ -11,17 +11,26 @@ import XY from "./types/XY";
 import { getItem } from "./items";
 import { isSoundName } from "./Sounds";
 import isStat from "./tools/combatants";
+import removeItem from "./tools/arrays";
+import { Path } from "inkjs/engine/Path";
+
+interface KnotEntry {
+  name: string;
+  once?: boolean;
+}
 
 export default class EngineInkScripting {
-  onTagEnter: Map<string, string>;
-  onTagInteract: Map<string, string>;
+  onTagEnter: Map<string, KnotEntry>;
+  onTagInteract: Map<string, KnotEntry>;
   active: Dir;
   skill: string;
-  story: Story;
+  story!: Story;
 
   constructor(public g: Engine) {
     this.onTagEnter = new Map();
     this.onTagInteract = new Map();
+    this.active = 0;
+    this.skill = "NONE";
   }
 
   parseAndRun(source: string, filename: string) {
@@ -34,7 +43,7 @@ export default class EngineInkScripting {
       countAllVisits: false,
       fileHandler: {
         LoadInkFileContents(filename) {
-          console.log("LoadInkFileContents", filename);
+          throw new Error(`LoadInkFileContents: ${filename}`);
         },
         ResolveInkFilename(filename) {
           return filename;
@@ -81,11 +90,8 @@ export default class EngineInkScripting {
     const getSide = (xy: XYTag, d: Dir) => {
       const dir = getDir(d);
       const cell = getCell(xy);
-      const side = cell.sides[dir];
-      if (!side)
-        throw new Error(
-          `script tried to unlock ${xy},${d} -- side does not exist`
-        );
+      const side = cell.sides[dir] ?? {};
+      if (!cell.sides[dir]) cell.sides[dir] = side;
 
       return side;
     };
@@ -94,7 +100,15 @@ export default class EngineInkScripting {
       return name;
     };
 
-    program.BindExternalFunction("active", () => this.active);
+    program.BindExternalFunction("active", () => this.active, true);
+    program.BindExternalFunction("addArenaEnemy", (name: string) => {
+      const enemy = getEnemy(name);
+      this.g.pendingArenaEnemies.push(enemy);
+    });
+    program.BindExternalFunction("addTag", (xy: XYTag, tag: string) => {
+      const cell = getCell(xy);
+      cell.tags.push(tag);
+    });
     program.BindExternalFunction(
       "damagePC",
       (index: number, type: string, amount: number) => {
@@ -103,27 +117,56 @@ export default class EngineInkScripting {
         this.g.applyDamage(pc, [pc], amount, stat, "normal");
       }
     );
-    program.BindExternalFunction("facing", () => this.g.facing);
+    program.BindExternalFunction("facing", () => this.g.facing, true);
+    program.BindExternalFunction(
+      "forEachTaggedTile",
+      (tag: string, callback: Path) => {
+        for (const pos of this.g.findCellsWithTag(tag))
+          this.story.EvaluateFunction(callback.componentsString, [
+            xyToTag(pos),
+          ]);
+      }
+    );
+    program.BindExternalFunction(
+      "getDecal",
+      (xy: XYTag, dir: Dir) => getSide(xy, dir).decal ?? 0,
+      true
+    );
     program.BindExternalFunction(
       "getNumber",
-      (name: string) => this.g.currentCell?.numbers[name] ?? 0
+      (name: string) => this.g.currentCell?.numbers[name] ?? 0,
+      true
     );
     program.BindExternalFunction(
       "getString",
-      (name: string) => this.g.currentCell?.strings[name] ?? ""
+      (name: string) => this.g.currentCell?.strings[name] ?? "",
+      true
     );
-    program.BindExternalFunction("getTagPosition", (tag: string) =>
-      xyToTag(this.g.findCellWithTag(tag))
+    program.BindExternalFunction(
+      "getTagPosition",
+      (tag: string) => xyToTag(getPositionByTag(tag)),
+      true
     );
     program.BindExternalFunction("giveItem", (name: string) => {
       const item = getItem(name);
       if (item) this.g.inventory.push(item);
     });
-    program.BindExternalFunction("here", () => xyToTag(this.g.position));
-    program.BindExternalFunction("move", (xy: XYTag, dir: Dir) =>
-      xyToTag(move(tagToXy(xy), dir))
+    program.BindExternalFunction("here", () => xyToTag(this.g.position), true);
+    program.BindExternalFunction(
+      "isArenaFightPending",
+      () => this.g.pendingArenaEnemies.length > 0,
+      true
     );
-    program.BindExternalFunction("name", (dir: Dir) => this.g.party[dir].name);
+    program.BindExternalFunction(
+      "move",
+      (xy: XYTag, dir: Dir) => xyToTag(move(tagToXy(xy), dir)),
+      true
+    );
+    program.BindExternalFunction(
+      "name",
+      (dir: Dir) => this.g.party[dir].name,
+      true
+    );
     program.BindExternalFunction("playSound", (name: string) => {
       const sound = getSound(name);
       void this.g.sfx.play(sound);
@@ -134,15 +177,15 @@ export default class EngineInkScripting {
     });
     program.BindExternalFunction("removeTag", (xy: XYTag, tag: string) => {
       const cell = getCell(xy);
-      const index = cell.tags.indexOf(tag);
-      if (index >= 0) cell.tags.splice(index, 1);
-      else
+      if (!removeItem(cell.tags, tag))
         console.warn(
           `script tried to remove tag ${tag} at ${xy} -- not present`
         );
     });
-    program.BindExternalFunction("rotate", (dir: Dir, quarters: number) =>
-      rotate(dir, quarters)
+    program.BindExternalFunction(
+      "rotate",
+      (dir: Dir, quarters: number) => rotate(dir, quarters),
+      true
     );
     program.BindExternalFunction(
       "setDecal",
@@ -161,37 +204,50 @@ export default class EngineInkScripting {
         side.solid = solid;
       }
     );
-    program.BindExternalFunction("skill", () => this.skill);
+    program.BindExternalFunction("skill", () => this.skill, true);
     program.BindExternalFunction("skillCheck", (type: string, dc: number) => {
       const stat = getStat(type);
       const pc = this.g.party[this.active];
       const roll = this.g.roll(pc) + pc[stat];
       return roll >= dc;
     });
+    program.BindExternalFunction("startArenaFight", () => {
+      const count = this.g.pendingArenaEnemies.length;
+      if (!count) return false;
+
+      const enemies = this.g.pendingArenaEnemies.splice(0, count);
+      this.g.combat.begin(enemies, "arena");
+      return true;
+    });
 
     program.ContinueMaximally();
     for (const [name] of program.mainContentContainer.namedContent) {
+      const entry: KnotEntry = { name };
       const tags = program.TagsForContentAtPath(name) ?? [];
 
       for (const tag of tags) {
         const [left, right] = tag.split(":");
 
-        if (left === "enter") this.onTagEnter.set(right.trim(), name);
+        if (left === "enter") this.onTagEnter.set(right.trim(), entry);
         else if (left === "interact")
-          this.onTagInteract.set(right.trim(), name);
+          this.onTagInteract.set(right.trim(), entry);
+        else if (left === "once") entry.once = true;
+        else throw new Error(`Unknown knot tag: ${left}`);
       }
     }
   }
 
-  setConstant(key, value) {}
-
-  onEnter(pos: XY, old: XY) {
-    this.active = this.g.facing;
+  onEnter(pos: XY) {
     const cell = this.g.getCell(pos.x, pos.y);
-    for (const tag of cell?.tags ?? []) {
-      const path = this.onTagEnter.get(tag);
-      if (path) {
-        this.story.ChoosePathString(path);
+    if (!cell) return;
+
+    this.active = this.g.facing;
+    for (const tag of cell.tags) {
+      const entry = this.onTagEnter.get(tag);
+      if (entry) {
+        this.story.ChoosePathString(entry.name);
+        if (entry.once) removeItem(cell.tags, tag);
+
         const result = this.story.ContinueMaximally();
         if (result) this.g.addToLog(result);
       }
@@ -199,15 +255,24 @@ export default class EngineInkScripting {
   }
 
   onInteract(pcIndex: number) {
+    const cell = this.g.currentCell;
+    if (!cell) return false;
+
+    let interacted = false;
     this.active = pcIndex;
     this.skill = this.g.party[pcIndex].skill;
-    for (const tag of this.g.currentCell?.tags ?? []) {
-      const path = this.onTagInteract.get(tag);
-      if (path) {
-        this.story.ChoosePathString(path);
+    for (const tag of cell.tags) {
+      const entry = this.onTagInteract.get(tag);
+      if (entry) {
+        this.story.ChoosePathString(entry.name);
+        if (entry.once) removeItem(cell.tags, tag);
+        interacted = true;
+
         const result = this.story.ContinueMaximally();
         if (result) this.g.addToLog(result);
       }
     }
+
+    return interacted;
   }
 }

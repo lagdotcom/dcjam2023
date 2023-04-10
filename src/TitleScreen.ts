@@ -27,12 +27,7 @@ export default class TitleScreen implements GameScreen {
     g.walls.clear();
 
     this.index = 0;
-    this.selected = new Set<ClassName>([
-      "Cleavesman",
-      "Far Scout",
-      "Flag Singer",
-      "Loam Seer",
-    ]);
+    this.selected = new Set();
   }
 
   onKey(e: KeyboardEvent): void {

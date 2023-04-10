@@ -1,8 +1,8 @@
 {
   "export": {
     "from": "2022.5.1",
-    "date": "2023-04-08",
-    "time": "07:46:45"
+    "date": "2023-04-10",
+    "time": "10:52:40"
   },
   "regions": [
     {
@@ -19721,7 +19721,7 @@
               "x": 42,
               "y": 33,
               "monospaced": false,
-              "__data": "#TAG ArenaAMiddle\nArena/Save\n- If entering for first time: \"The forces of Mullanginan rally around you!\"\n- If entering after winning: \"This is a safe haven... for now.\"\n- If returning after 10 minutes have elapsed: \"This battleground has been reclaimed in the name of Mullanginan!\""
+              "__data": "#TAG ArenaMiddle\nArena/Save\n- If entering for first time: \"The forces of Mullanginan rally around you!\"\n- If entering after winning: \"This is a safe haven... for now.\"\n- If returning after 10 minutes have elapsed: \"This battleground has been reclaimed in the name of Mullanginan!\""
             },
             {
               "x": 9,
@@ -19733,7 +19733,7 @@
               "x": 16,
               "y": 32,
               "monospaced": false,
-              "__data": "#TAG ArenaAMiddle\nArena/Save\n- If entering for first time: \"The forces of Mullanginan rally around you!\"\n- If entering after winning: \"This is a safe haven... for now.\"\n- If returning after 10 minutes have elapsed: \"This battleground has been reclaimed in the name of Mullanginan!\""
+              "__data": "#TAG ArenaMiddle\nArena/Save\n- If entering for first time: \"The forces of Mullanginan rally around you!\"\n- If entering after winning: \"This is a safe haven... for now.\"\n- If returning after 10 minutes have elapsed: \"This battleground has been reclaimed in the name of Mullanginan!\""
             },
             {
               "x": 51,
@@ -19823,25 +19823,25 @@
               "x": 14,
               "y": 32,
               "monospaced": false,
-              "__data": "#TAG ArenaAGateE\n#OPEN E\nLocking gate, closes behind player, opens after combat, remains open after combat for 10 minutes\n\"The gate to the arena slams shut behind you, the gods cheer for blood!\""
+              "__data": "#TAG ArenaGate\n#OPEN"
             },
             {
               "x": 18,
               "y": 32,
               "monospaced": false,
-              "__data": "#TAG ArenaAGateW\n#OPEN W\nLocking gate, closes behind player, opens after combat, remains open after combat for 10 minutes\n\"The gate to the arena slams shut behind you, the gods cheer for blood!\""
+              "__data": "#TAG ArenaGate"
             },
             {
               "x": 16,
               "y": 29,
               "monospaced": false,
-              "__data": "#TAG ArenaAGateS\n#OPEN S\nLocking gate, closes behind player, opens after combat, remains open after combat for 10 minutes\n\"The gate to the arena slams shut behind you, the gods cheer for blood!\""
+              "__data": "#TAG ArenaGate"
             },
             {
               "x": 16,
               "y": 35,
               "monospaced": false,
-              "__data": "#TAG ArenaAGateN\n#OPEN N\nLocking gate, closes behind player, opens after combat, remains open after combat for 10 minutes\n\"The gate to the arena slams shut behind you, the gods cheer for blood!\""
+              "__data": "#TAG ArenaGate"
             },
             {
               "x": 35,
@@ -19884,12 +19884,6 @@
               "y": 34,
               "monospaced": false,
               "__data": "#OBJECT oSneedCrawler\n#TAG SneedEncounter5\nSneed Crawler: \"The busy machine takes notice of you, bleeping loudly before burrowing away.\"\n(add 1 Sneed Crawler to next encounter)"
-            },
-            {
-              "x": 42,
-              "y": 35,
-              "monospaced": false,
-              "__data": "#TAG ArenaAGateN\n#OPEN N\nLocking gate, closes behind player, opens after combat, remains open after combat for 10 minutes\n\"The gate to the arena slams shut behind you, the gods cheer for blood!\""
             },
             {
               "x": 3,
@@ -19961,7 +19955,7 @@
               "x": 61,
               "y": 27,
               "monospaced": false,
-              "__data": "#TAG ArenaAMiddle"
+              "__data": "#TAG ArenaMiddle"
             },
             {
               "x": 49,
@@ -20069,7 +20063,7 @@
               "x": 27,
               "y": 37,
               "monospaced": false,
-							"__data": "#TAG GateLever\n#NUMBER leverDir,SOUTH\n#STRING gateTag,GateC\n#NUMBER gateDir,SOUTH\n#STRING message,The sound of clanking metal is heard in the distance."
+              "__data": "#TAG GateLever\n#NUMBER leverDir,SOUTH\n#STRING gateTag,GateC\n#NUMBER gateDir,SOUTH\n#STRING message,The sound of clanking metal is heard in the distance."
             },
             {
               "x": 0,
@@ -20087,61 +20081,61 @@
               "x": 15,
               "y": 31,
               "monospaced": false,
-              "__data": "#TAG ArenaA"
+              "__data": "#TAG Arena"
             },
             {
               "x": 16,
               "y": 31,
               "monospaced": false,
-              "__data": "#TAG ArenaA"
+              "__data": "#TAG Arena"
             },
             {
               "x": 17,
               "y": 31,
               "monospaced": false,
-              "__data": "#TAG ArenaA"
+              "__data": "#TAG Arena"
             },
             {
               "x": 17,
               "y": 32,
               "monospaced": false,
-              "__data": "#TAG ArenaA"
+              "__data": "#TAG Arena"
             },
             {
               "x": 17,
               "y": 33,
               "monospaced": false,
-              "__data": "#TAG ArenaA"
+              "__data": "#TAG Arena"
             },
             {
               "x": 16,
               "y": 33,
               "monospaced": false,
-              "__data": "#TAG ArenaA"
+              "__data": "#TAG Arena"
             },
             {
               "x": 15,
               "y": 33,
               "monospaced": false,
-              "__data": "#TAG ArenaA"
+              "__data": "#TAG Arena"
             },
             {
               "x": 15,
               "y": 32,
               "monospaced": false,
-              "__data": "#TAG ArenaA"
+              "__data": "#TAG Arena"
             },
             {
               "x": 16,
               "y": 30,
               "monospaced": false,
-              "__data": "#TAG ArenaA"
+              "__data": "#TAG Arena"
             },
             {
               "x": 16,
               "y": 34,
               "monospaced": false,
-              "__data": "#TAG ArenaA"
+              "__data": "#TAG Arena"
             },
             {
               "x": 43,
@@ -20183,7 +20177,7 @@
               "x": 42,
               "y": 31,
               "monospaced": false,
-							"__data": "#TAG GateLever\n#NUMBER leverDir,NORTH\n#STRING gateTag,GateD\n#NUMBER gateDir,SOUTH\n#STRING message,The sound of clanking metal is heard in the distance."
+              "__data": "#TAG GateLever\n#NUMBER leverDir,NORTH\n#STRING gateTag,GateD\n#NUMBER gateDir,SOUTH\n#STRING message,The sound of clanking metal is heard in the distance."
             },
             {
               "x": 9,
@@ -20243,7 +20237,7 @@
               "x": 61,
               "y": 24,
               "monospaced": false,
-							"__data": "#TAG GateLever\n#NUMBER leverDir,NORTH\n#STRING gateTag,GateE\n#NUMBER gateDir,SOUTH\n#STRING message,The sound of clanking metal is heard in the distance."
+              "__data": "#TAG GateLever\n#NUMBER leverDir,NORTH\n#STRING gateTag,GateE\n#NUMBER gateDir,SOUTH\n#STRING message,The sound of clanking metal is heard in the distance."
             },
             {
               "x": 23,

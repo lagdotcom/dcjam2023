@@ -2,7 +2,6 @@ import sadFolksPng from "../res/sad-folks.png";
 import Engine from "./Engine";
 import TitleScreen from "./TitleScreen";
 import { xyi } from "./tools/geometry";
-import withTextStyle from "./tools/withTextStyle";
 import XY from "./types/XY";
 
 export default class SplashScreen {

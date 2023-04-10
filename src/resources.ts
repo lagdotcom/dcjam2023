@@ -2,7 +2,6 @@ import eveScoutImage from "../res/atlas/eveScout.png";
 import eveScoutJson from "../res/atlas/eveScout.json";
 import flatsImage from "../res/atlas/flats.png";
 import flatsJson from "../res/atlas/flats.json";
-import mapDScript from "../res/map.dscript";
 import mapInk from "../res/map.ink";
 import martialistImage from "../res/atlas/martialist.png";
 import martialistJson from "../res/atlas/martialist.json";
@@ -12,7 +11,6 @@ import sneedCrawlerImage from "../res/atlas/sneedCrawler.png";
 import sneedCrawlerJson from "../res/atlas/sneedCrawler.json";
 
 const Resources: Record<string, string> = {
-  "map.dscript": mapDScript,
   "map.ink": mapInk,
 
   "flats.png": flatsImage,

@@ -1,7 +1,6 @@
 import clone from "nanoclone";
 import CombatManager from "./CombatManager";
 import CombatRenderer from "./CombatRenderer";
-import { num } from "./DScript/logic";
 import DefaultControls from "./DefaultControls";
 import DungeonRenderer from "./DungeonRenderer";
 import DungeonScreen from "./DungeonScreen";
@@ -51,6 +50,7 @@ import { Predicate, matchAll } from "./types/logic";
 import DeathScreen from "./DeathScreen";
 import Sounds from "./Sounds";
 import EngineInkScripting from "./EngineInkScripting";
+import removeItem from "./tools/arrays";
 
 interface WallType {
   canSeeDoor: boolean;
@@ -252,13 +252,9 @@ export default class Engine implements Game {
     this.screen = new LoadingScreen(this);
 
     const map = await this.res.loadGCMap(jsonUrl);
-    const { atlases, cells, definitions, scripts, start, facing, name } =
+    const { atlases, cells, scripts, start, facing, name } =
       convertGridCartographerMap(map, region, floor, EnemyObjects);
     if (!atlases.length) throw new Error(`${jsonUrl} did not contain #ATLAS`);
-
-    for (const [key, value] of definitions.entries()) {
-      this.scripting.setConstant(key, num(value, true));
-    }
 
     // TODO how about clearing old script stuff...?
     for (const url of scripts) {
@@ -310,6 +306,19 @@ export default class Engine implements Game {
     }
   }
 
+  findCellsWithTag(tag: string) {
+    if (!this.world) return [];
+
+    const matches: XY[] = [];
+    for (let y = 0; y < this.worldSize.y; y++) {
+      for (let x = 0; x < this.worldSize.x; x++) {
+        if (this.world.cells[y][x].tags.includes(tag)) matches.push({ x, y });
+      }
+    }
+
+    return matches;
+  }
+
   draw() {
     this.drawSoon.schedule();
   }
@@ -358,7 +367,7 @@ export default class Engine implements Game {
 
       this.setObstacle(false);
       this.fire("onPartyMove", { from: old, to: this.position });
-      this.scripting.onEnter(this.position, old);
+      this.scripting.onEnter(this.position);
       return true;
     }
 
@@ -658,8 +667,7 @@ export default class Engine implements Game {
   }
 
   removeEffect(effect: GameEffect) {
-    const index = this.combat.effects.indexOf(effect);
-    if (index >= 0) this.combat.effects.splice(index, 1);
+    removeItem(this.combat.effects, effect);
 
     for (const name of GameEventNames) {
       const handler = effect[name];
@@ -675,8 +683,7 @@ export default class Engine implements Game {
 
   removeEffectsFrom(effects: GameEffect[], who: Combatant) {
     for (const e of effects) {
-      const index = e.affects.indexOf(who);
-      if (index > 0) e.affects.splice(index, 1);
+      removeItem(e.affects, who);
       if (!e.affects.length) this.removeEffect(e);
     }
   }

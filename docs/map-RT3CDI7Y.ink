@@ -72,8 +72,9 @@ EXTERNAL startArenaFight()
 # once
 # interact: EmptyChest
     ~ removeObject(here())
+    The sight of the empty chest causes {name(active())} to lose heart.
     ~ damagePC(active(), "camaraderie", 1)
-    The sight of the empty chest causes {name(active())} to lose heart. -> DONE
+    -> DONE
 
 === function double_sided(pos, dir, -> fn) ===
     ~ fn(pos, dir)
@@ -181,7 +182,6 @@ EXTERNAL startArenaFight()
 === sage ===
 # once
 # enter: SageEncounter3
-    ~ removeObject(here())
     ~ addArenaEnemy("Nettle Sage")
     A nettle sage flits off down the hall as you approach. -> DONE
 
