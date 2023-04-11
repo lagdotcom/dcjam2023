@@ -19,10 +19,10 @@ const module = {
     build.onResolve({ filter, namespace: "file" }, (args) => {
       return {
         path: args.path,
-        namespace: "globalExternal",
+        namespace: "cdn",
       };
     });
-    build.onLoad({ filter: /.*/, namespace: "globalExternal" }, (args) => {
+    build.onLoad({ filter: /.*/, namespace: "cdn" }, (args) => {
       const glob = externals[args.path];
       const exports =
         typeof glob === "function" ? glob() : `globalThis.${glob}`;

@@ -1,4 +1,5 @@
 import CDNModule from "./CDNModule.mjs";
+import InkModule from "./InkModule.mjs";
 
 /** @type {import('esbuild').BuildOptions} */
 const config = {
@@ -7,9 +8,8 @@ const config = {
   sourcemap: true,
   outfile: "docs/bundle.js",
   // minify: true,
-  plugins: [CDNModule],
+  plugins: [CDNModule, InkModule()],
   loader: {
-    ".ink": "file",
     ".json": "file",
     ".ogg": "file",
     ".png": "file",

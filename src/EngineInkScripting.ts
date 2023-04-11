@@ -3,7 +3,6 @@ import { XYTag, tagToXy, xyToTag } from "./tools/xyTags";
 import { move, rotate } from "./tools/geometry";
 
 import { AttackableStat } from "./types/Combatant";
-import { Compiler } from "inkjs";
 import Dir from "./types/Dir";
 import Engine from "./Engine";
 import { Story } from "inkjs/engine/Story";
@@ -33,25 +32,8 @@ export default class EngineInkScripting {
     this.skill = "NONE";
   }
 
-  parseAndRun(source: string, filename: string) {
-    const compiler = new Compiler(source, {
-      sourceFilename: filename,
-      errorHandler: (msg, type) => {
-        console.log(msg, type);
-      },
-      pluginNames: [],
-      countAllVisits: false,
-      fileHandler: {
-        LoadInkFileContents(filename) {
-          throw new Error(`LoadInkFileContents: ${filename}`);
-        },
-        ResolveInkFilename(filename) {
-          return filename;
-        },
-      },
-    });
-
-    const program = compiler.Compile();
+  parseAndRun(source: string) {
+    const program = new Story(source);
     this.run(program);
   }
 

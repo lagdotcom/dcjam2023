@@ -256,10 +256,10 @@ export default class Engine implements Game {
       convertGridCartographerMap(map, region, floor, EnemyObjects);
     if (!atlases.length) throw new Error(`${jsonUrl} did not contain #ATLAS`);
 
-    // TODO how about clearing old script stuff...?
+    // TODO this will NOT work with multiple scripts
     for (const url of scripts) {
       const code = await this.res.loadScript(url);
-      this.scripting.parseAndRun(code, url);
+      this.scripting.parseAndRun(code);
     }
 
     return this.loadWorld({ name, atlases, cells, start, facing });
