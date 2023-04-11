@@ -50,6 +50,13 @@
     });
   };
 
+  // globalExternal:gameanalytics
+  var require_gameanalytics = __commonJS({
+    "globalExternal:gameanalytics"(exports, module) {
+      module.exports = globalThis.gameanalytics;
+    }
+  });
+
   // globalExternal:nearley
   var require_nearley = __commonJS({
     "globalExternal:nearley"(exports, module) {
@@ -100,6 +107,65 @@
   }
   function src_default(src) {
     return clone(src, /* @__PURE__ */ new Map());
+  }
+
+  // src/analytics.ts
+  var import_gameanalytics = __toESM(require_gameanalytics());
+
+  // src/tools/xyTags.ts
+  function xyToTag(pos) {
+    return `${pos.x}_${pos.y}`;
+  }
+
+  // src/analytics.ts
+  var GA = import_gameanalytics.GameAnalytics;
+  var gameKey = "0cccc807c1bc3cf03c04c4484781b3e3";
+  var secretKey = "e5c1f07cb81d0d2e8c97cfa96d0f068f216b482f";
+  var debugAnalytics = true;
+  var disableKey = "disableAnalytics";
+  var disableValue = "TRUE";
+  function isAnalyticsDisabled() {
+    return localStorage.getItem(disableKey) === disableValue;
+  }
+  function startAnalytics() {
+    GA.setEnabledInfoLog(debugAnalytics);
+    GA.setEnabledVerboseLog(debugAnalytics);
+    GA.configureBuild("1.0.0");
+    GA.initialize(gameKey, secretKey);
+    GA.setEnabledEventSubmission(!isAnalyticsDisabled());
+  }
+  function sanitise(s) {
+    return s.replace(/ /g, "_");
+  }
+  function startGame(classes2) {
+    for (const cn of classes2)
+      GA.addDesignEvent(`Game:StartingParty:${sanitise(cn)}`);
+  }
+  var currentArea = "";
+  function startArea(name) {
+    currentArea = sanitise(name);
+    GA.addProgressionEvent(import_gameanalytics.EGAProgressionStatus.Start, name);
+  }
+  function partyDied() {
+    GA.addProgressionEvent(import_gameanalytics.EGAProgressionStatus.Fail, currentArea, "Floor");
+  }
+  function startFight(pos, enemies2) {
+    GA.addProgressionEvent(
+      import_gameanalytics.EGAProgressionStatus.Start,
+      currentArea,
+      "Fight",
+      xyToTag(pos)
+    );
+    for (const enemy of enemies2)
+      GA.addDesignEvent(`Fight:Begin:${sanitise(enemy)}`);
+  }
+  function winFight(pos) {
+    GA.addProgressionEvent(
+      import_gameanalytics.EGAProgressionStatus.Complete,
+      currentArea,
+      "Fight",
+      xyToTag(pos)
+    );
   }
 
   // src/tools/isDefined.ts
@@ -653,6 +719,7 @@
       ];
     }
     begin(enemies2, type) {
+      startFight(this.g.position, enemies2);
       for (const e of this.effects.slice())
         if (!e.permanent)
           this.g.removeEffect(e);
@@ -720,9 +787,10 @@
       const alive = this.g.party.find((pc) => pc.alive);
       const winners = alive ? this.allEnemies.length === 0 ? "party" : void 0 : "enemies";
       if (winners) {
-        if (alive)
+        if (alive) {
           this.g.addToLog(`You have vanquished your foes.`);
-        else
+          winFight(this.g.position);
+        } else
           this.g.addToLog(`You have failed.`);
         this.g.fire("onCombatOver", { winners });
       }
@@ -1519,11 +1587,6 @@
     if (!ctx)
       throw new Error(`canvas.getContext(${type})`);
     return ctx;
-  }
-
-  // src/tools/xyTags.ts
-  function xyToTag(pos) {
-    return `${pos.x},${pos.y}`;
   }
 
   // src/fov.ts
@@ -2934,7 +2997,7 @@
   var sad_folks_default = "./sad-folks-WT2RUZAU.png";
 
   // res/map.json
-  var map_default = "./map-S6WDJ4DU.json";
+  var map_default = "./map-SSOWVFO4.json";
 
   // src/items/cleavesman.ts
   var cleavesman_exports = {};
@@ -4139,6 +4202,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
             this.g.party = [];
             for (const cn of this.selected)
               this.g.party.push(new Player(this.g, cn));
+            startGame(this.selected);
             void this.g.loadGCMap(map_default, 0, -1);
           }
           break;
@@ -4428,7 +4492,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
         }
       }
       const { atlases, definitions, scripts, start, facing } = this;
-      const name = `${r.name}:${f.index}`;
+      const name = `${r.name}_F${f.index}`;
       const cells = this.grid.asArray();
       return { name, atlases, cells, definitions, scripts, start, facing };
     }
@@ -4895,6 +4959,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
         this.markVisited();
         this.spotElements = [hud.skills, hud.stats];
         this.screen = new DungeonScreen(this, { combat, dungeon, hud, log });
+        startArea(this.world.name);
         return this.draw();
       });
     }
@@ -5436,6 +5501,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     }
     partyIsDead(lastToDie) {
       this.screen = new DeathScreen(this, this.party[lastToDie]);
+      partyDied();
     }
     setObstacle(obstacle) {
       this.obstacle = obstacle ? move(this.position, rotate(this.facing, 2)) : void 0;
@@ -5444,6 +5510,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
 
   // src/index.ts
   function loadEngine(parent) {
+    startAnalytics();
     const container = document.createElement("div");
     parent.appendChild(container);
     const canvas = document.createElement("canvas");

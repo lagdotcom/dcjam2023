@@ -9,7 +9,7 @@
 			"floor_count": 5,
 			"lowest_floor": -4,
 			"grid_shape": "square",
-			"name": "Region 1",
+			"name": "Nightjar",
 			"setup": {
 				"origin": "tl"
 			},

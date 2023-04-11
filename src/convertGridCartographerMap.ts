@@ -156,7 +156,7 @@ class GCMapConverter {
     }
 
     const { atlases, definitions, scripts, start, facing } = this;
-    const name = `${r.name}:${f.index}`;
+    const name = `${r.name}_F${f.index}`;
     const cells = this.grid.asArray();
     return { name, atlases, cells, definitions, scripts, start, facing };
   }

@@ -1,5 +1,6 @@
 import Engine from "./Engine";
 import Player from "./Player";
+import { startFight, winFight } from "./analytics";
 import { Enemy, EnemyName, spawn } from "./enemies";
 import isDefined from "./tools/isDefined";
 import { wrap } from "./tools/numbers";
@@ -61,6 +62,8 @@ export default class CombatManager {
   }
 
   begin(enemies: EnemyName[], type: "normal" | "arena") {
+    startFight(this.g.position, enemies);
+
     for (const e of this.effects.slice())
       if (!e.permanent) this.g.removeEffect(e);
 
@@ -211,9 +214,10 @@ export default class CombatManager {
       : "enemies";
 
     if (winners) {
-      if (alive) this.g.addToLog(`You have vanquished your foes.`);
-      else this.g.addToLog(`You have failed.`);
-
+      if (alive) {
+        this.g.addToLog(`You have vanquished your foes.`);
+        winFight(this.g.position);
+      } else this.g.addToLog(`You have failed.`);
       this.g.fire("onCombatOver", { winners });
       // TODO item drops
     }

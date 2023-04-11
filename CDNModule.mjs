@@ -1,6 +1,7 @@
 /*eslint-env node*/
 
 const externals = {
+  gameanalytics: "gameanalytics",
   moo: "moo",
   nearley: "nearley",
 };

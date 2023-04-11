@@ -11,6 +11,8 @@
     "lint": "eslint src"
   },
   "dependencies": {
+    "dotenv": "^16.0.3",
+    "gameanalytics": "^4.4.5",
     "nanoclone": "^1.0.1",
     "nearley": "^2.20.1"
   },
