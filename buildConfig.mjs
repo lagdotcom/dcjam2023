@@ -2,13 +2,17 @@
 import { config as loadDotEnvConfig } from "dotenv";
 import CDNModule from "./CDNModule.mjs";
 
-loadDotEnvConfig();
+const envConfig = loadDotEnvConfig();
 const define = {};
 
-for (const k in process.env)
-  if (k.startsWith("APP_"))
+if (envConfig.parsed) {
+  for (const k in envConfig.parsed)
     define[`process.env.${k}`] = JSON.stringify(process.env[k]);
-console.log(`Loaded ${Object.keys(define).length} values from .env`);
+  console.log(`[env] loaded ${Object.keys(define).length} values`);
+} else
+  console.warn(
+    `[env] failed to load, ` + envConfig.error.message ?? "unknown error"
+  );
 
 /** @type {import('esbuild').BuildOptions} */
 const config = {
