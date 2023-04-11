@@ -13,7 +13,6 @@ module.exports = {
     "plugin:promise/recommended",
     "plugin:prettier/recommended",
   ],
-  ignorePatterns: ["src/DScript/grammar.ts"],
   rules: {
     "prettier/prettier": ["error", { endOfLine: "crlf" }],
     "no-unused-vars": "off",
