@@ -36,6 +36,7 @@ const InkModule = (options = {}) => ({
       const warnings = [];
       /** @type {import("esbuild").PartialMessage[]} */
       const errors = [];
+      const dir = path.dirname(args.path);
       let contents = "";
       try {
         const source = readFileSync(args.path, { encoding: "utf-8" });
@@ -45,7 +46,7 @@ const InkModule = (options = {}) => ({
           fileHandler: {
             ResolveInkFilename: (filename) => filename,
             LoadInkFileContents: (filename) =>
-              readFileSync(filename, { encoding: "utf-8" }),
+              readFileSync(path.join(dir, filename), { encoding: "utf-8" }),
           },
           errorHandler: (message, type) => {
             // console.log(compiler);

@@ -10688,7 +10688,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
   var flats_default2 = "./flats-GGEKOGMO.json";
 
   // ink:D:\Code\dcjam2023\res\map.ink
-  var map_default2 = "./map-XOXVFBKG.ink";
+  var map_default2 = "./map-BNQ2L6SR.ink";
 
   // res/atlas/martialist.png
   var martialist_default = "./martialist-KFK3S4GT.png";
