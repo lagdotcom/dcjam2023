@@ -1,7 +1,7 @@
+import classes from "./classes";
 import Engine from "./Engine";
 import Player from "./Player";
 import TitleScreen from "./TitleScreen";
-import classes from "./classes";
 import textWrap from "./tools/textWrap";
 import withTextStyle from "./tools/withTextStyle";
 import { GameScreen } from "./types/GameScreen";

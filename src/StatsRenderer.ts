@@ -1,12 +1,12 @@
 import Colours from "./Colours";
 import Engine from "./Engine";
 import Player from "./Player";
-import XY from "./types/XY";
-import withTextStyle from "./tools/withTextStyle";
 import { lerpXY, xy } from "./tools/geometry";
 import Hotspot from "./tools/Hotspot";
-import HasHotspots from "./types/HasHotspots";
+import withTextStyle from "./tools/withTextStyle";
 import Dir from "./types/Dir";
+import HasHotspots from "./types/HasHotspots";
+import XY from "./types/XY";
 
 type SwapData = { from: Dir; to: Dir }[];
 

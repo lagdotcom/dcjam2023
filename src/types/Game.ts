@@ -1,6 +1,5 @@
 import Combatant, { AttackableStat } from "./Combatant";
 import Dir from "./Dir";
-
 import { GameEventHandler } from "./events";
 
 export interface GameEffect extends Partial<GameEventHandler> {

@@ -1,17 +1,17 @@
-import { EnemyName, isEnemyName } from "./enemies";
-import { XYTag, tagToXy, xyToTag } from "./tools/xyTags";
-import { move, rotate } from "./tools/geometry";
-
-import { AttackableStat } from "./types/Combatant";
-import Dir from "./types/Dir";
-import Engine from "./Engine";
+import { Path } from "inkjs/engine/Path";
 import { Story } from "inkjs/engine/Story";
-import XY from "./types/XY";
+
+import { EnemyName, isEnemyName } from "./enemies";
+import Engine from "./Engine";
 import { getItem } from "./items";
 import { isSoundName } from "./Sounds";
-import isStat from "./tools/combatants";
 import removeItem from "./tools/arrays";
-import { Path } from "inkjs/engine/Path";
+import isStat from "./tools/combatants";
+import { move, rotate } from "./tools/geometry";
+import { tagToXy, XYTag, xyToTag } from "./tools/xyTags";
+import { AttackableStat } from "./types/Combatant";
+import Dir from "./types/Dir";
+import XY from "./types/XY";
 
 interface KnotEntry {
   name: string;

@@ -1,4 +1,4 @@
-import { Bravery, Defy, Scar, allAllies, ally, oneOpponent } from "../actions";
+import { allAllies, ally, Bravery, Defy, oneOpponent, Scar } from "../actions";
 import { niceList, pluralS } from "../tools/lists";
 import { oneOf } from "../tools/rng";
 import Item from "../types/Item";

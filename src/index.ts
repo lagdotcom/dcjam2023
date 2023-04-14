@@ -1,5 +1,5 @@
-import Engine from "./Engine";
 import { startAnalytics } from "./analytics";
+import Engine from "./Engine";
 
 function loadEngine(parent: HTMLElement) {
   startAnalytics();

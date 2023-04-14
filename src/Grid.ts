@@ -1,5 +1,4 @@
 import { XYTag, xyToTag } from "./tools/xyTags";
-
 import XY from "./types/XY";
 
 export default class Grid<Item> {

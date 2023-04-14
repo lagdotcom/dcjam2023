@@ -1,11 +1,10 @@
-import Combatant, { AttackableStat, BoostableStat } from "./types/Combatant";
-import Item from "./types/Item";
-
-import { ClassName } from "./types/ClassName";
 import { endTurnAction, generateAttack } from "./actions";
 import classes from "./classes";
 import Engine from "./Engine";
 import isDefined from "./tools/isDefined";
+import { ClassName } from "./types/ClassName";
+import Combatant, { AttackableStat, BoostableStat } from "./types/Combatant";
+import Item from "./types/Item";
 
 function getBaseStat(
   className: ClassName,

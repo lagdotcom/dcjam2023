@@ -1,12 +1,11 @@
 // adapted from https://dungeoncrawlers.org/tools/dungeonrenderer/
 
-import Atlas, { AtlasLayer, AtlasTile } from "./types/Atlas";
-import { rotate, xy } from "./tools/geometry";
-
-import Dir from "./types/Dir";
 import Engine from "./Engine";
-import getCanvasContext from "./tools/getCanvasContext";
 import getFieldOfView from "./fov";
+import { rotate, xy } from "./tools/geometry";
+import getCanvasContext from "./tools/getCanvasContext";
+import Atlas, { AtlasLayer, AtlasTile } from "./types/Atlas";
+import Dir from "./types/Dir";
 
 export const tileTag = (
   id: number,

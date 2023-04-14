@@ -1,7 +1,7 @@
 import Colours from "./Colours";
 import Engine from "./Engine";
-import withTextStyle from "./tools/withTextStyle";
 import { xy } from "./tools/geometry";
+import withTextStyle from "./tools/withTextStyle";
 
 const facingChars = ["^", ">", "v", "<"];
 

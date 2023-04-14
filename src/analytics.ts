@@ -1,7 +1,8 @@
 import { EGAProgressionStatus, GameAnalytics } from "gameanalytics";
+
+import { xyToTag } from "./tools/xyTags";
 import { ClassName } from "./types/ClassName";
 import XY from "./types/XY";
-import { xyToTag } from "./tools/xyTags";
 
 const GA = GameAnalytics;
 

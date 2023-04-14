@@ -1,4 +1,4 @@
-import { Sand, oneOpponent, opponents } from "../actions";
+import { oneOpponent, opponents, Sand } from "../actions";
 import { niceList } from "../tools/lists";
 import Item from "../types/Item";
 

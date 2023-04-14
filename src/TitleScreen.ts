@@ -1,16 +1,15 @@
-import { ClassName, ClassNames } from "./types/ClassName";
-
+import mapJson from "../res/map.json";
+import { startGame } from "./analytics";
+import classes from "./classes";
 import Colours from "./Colours";
 import Engine from "./Engine";
 import EngineInkScripting from "./EngineInkScripting";
-import { GameScreen } from "./types/GameScreen";
 import Player from "./Player";
-import { startGame } from "./analytics";
-import classes from "./classes";
-import mapJson from "../res/map.json";
+import { wrap } from "./tools/numbers";
 import textWrap from "./tools/textWrap";
 import withTextStyle from "./tools/withTextStyle";
-import { wrap } from "./tools/numbers";
+import { ClassName, ClassNames } from "./types/ClassName";
+import { GameScreen } from "./types/GameScreen";
 
 export default class TitleScreen implements GameScreen {
   index: number;

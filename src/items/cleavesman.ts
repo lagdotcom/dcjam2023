@@ -1,9 +1,9 @@
 import {
+  allAllies,
   Barb,
   Brace,
   Deflect,
   DuoStab,
-  allAllies,
   oneOpponent,
   opponents,
 } from "../actions";

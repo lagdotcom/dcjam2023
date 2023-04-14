@@ -1,18 +1,17 @@
+import Grid from "./Grid";
+import { getResourceURL } from "./resources";
+import { dirFromInitial, xy } from "./tools/geometry";
+import { openGate } from "./tools/sides";
+import { XYTag, xyToTag } from "./tools/xyTags";
+import Dir from "./types/Dir";
+import { Edge, GCMap, Note } from "./types/GCMap";
 import {
   AtlasReference,
   WallDecalType,
   WorldCell,
   WorldSide,
 } from "./types/World";
-import { Edge, GCMap, Note } from "./types/GCMap";
-import { dirFromInitial, xy } from "./tools/geometry";
-
-import Dir from "./types/Dir";
-import Grid from "./Grid";
 import XY from "./types/XY";
-import { getResourceURL } from "./resources";
-import { XYTag, xyToTag } from "./tools/xyTags";
-import { openGate } from "./tools/sides";
 
 interface EdgeSide {
   decal?: WallDecalType;

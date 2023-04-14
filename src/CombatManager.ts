@@ -1,7 +1,7 @@
-import Engine from "./Engine";
-import Player from "./Player";
 import { startFight, winFight } from "./analytics";
 import { Enemy, EnemyName, spawn } from "./enemies";
+import Engine from "./Engine";
+import Player from "./Player";
 import isDefined from "./tools/isDefined";
 import { wrap } from "./tools/numbers";
 import { oneOf, pickN } from "./tools/rng";

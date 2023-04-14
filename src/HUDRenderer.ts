@@ -1,16 +1,15 @@
-import Engine from "./Engine";
-
 import baseUrl from "../res/hud/base.png";
 import buttonsUrl from "../res/hud/buttons.png";
 import mapBorderUrl from "../res/hud/map-border.png";
 import marbleUrl from "../res/hud/marble.png";
 import ringUrl from "../res/hud/ring.png";
-import StatsRenderer from "./StatsRenderer";
+import Engine from "./Engine";
 import MinimapRenderer from "./MinimapRenderer";
-import XY from "./types/XY";
+import SkillRenderer from "./SkillRenderer";
+import StatsRenderer from "./StatsRenderer";
 import { xyi } from "./tools/geometry";
 import withTextStyle from "./tools/withTextStyle";
-import SkillRenderer from "./SkillRenderer";
+import XY from "./types/XY";
 
 type HUDData<T> = { base: T; buttons: T; mapBorder: T; marble: T; ring: T };
 

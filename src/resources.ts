@@ -1,14 +1,14 @@
-import eveScoutImage from "../res/atlas/eveScout.png";
 import eveScoutJson from "../res/atlas/eveScout.json";
-import flatsImage from "../res/atlas/flats.png";
+import eveScoutImage from "../res/atlas/eveScout.png";
 import flatsJson from "../res/atlas/flats.json";
-import mapInk from "../res/map.ink";
-import martialistImage from "../res/atlas/martialist.png";
+import flatsImage from "../res/atlas/flats.png";
 import martialistJson from "../res/atlas/martialist.json";
-import nettleSageImage from "../res/atlas/nettleSage.png";
+import martialistImage from "../res/atlas/martialist.png";
 import nettleSageJson from "../res/atlas/nettleSage.json";
-import sneedCrawlerImage from "../res/atlas/sneedCrawler.png";
+import nettleSageImage from "../res/atlas/nettleSage.png";
 import sneedCrawlerJson from "../res/atlas/sneedCrawler.json";
+import sneedCrawlerImage from "../res/atlas/sneedCrawler.png";
+import mapInk from "../res/map.ink";
 
 const Resources: Record<string, string> = {
   "map.ink": mapInk,

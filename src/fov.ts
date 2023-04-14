@@ -1,8 +1,7 @@
-import { XYTag, xyToTag } from "./tools/xyTags";
-import { move, rotate } from "./tools/geometry";
-
-import Dir from "./types/Dir";
 import Engine from "./Engine";
+import { move, rotate } from "./tools/geometry";
+import { XYTag, xyToTag } from "./tools/xyTags";
+import Dir from "./types/Dir";
 import XY from "./types/XY";
 
 interface FovEntry {

@@ -1,6 +1,6 @@
 import Engine from "./Engine";
-import Hotspot from "./tools/Hotspot";
 import { xy } from "./tools/geometry";
+import Hotspot from "./tools/Hotspot";
 import withTextStyle from "./tools/withTextStyle";
 import HasHotspots from "./types/HasHotspots";
 

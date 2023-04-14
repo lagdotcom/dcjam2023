@@ -1,23 +1,22 @@
-import CombatAction from "./types/CombatAction";
-
-import Combatant, { BoostableStat } from "./types/Combatant";
 import {
-  generateAttack,
-  Defy,
-  Bless,
-  oneOpponent,
-  Deflect,
-  Scar,
   Barb,
-  Parry,
-  Flight,
+  Bless,
   Bravery,
+  Deflect,
+  Defy,
+  Flight,
+  generateAttack,
+  oneOpponent,
+  Parry,
   Sand,
+  Scar,
   Trick,
 } from "./actions";
 import Engine from "./Engine";
-import { wrap } from "./tools/numbers";
 import { niceList, pluralS } from "./tools/lists";
+import { wrap } from "./tools/numbers";
+import CombatAction from "./types/CombatAction";
+import Combatant, { BoostableStat } from "./types/Combatant";
 
 export interface EnemyAnimation {
   delay: number;

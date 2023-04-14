@@ -1,12 +1,11 @@
-import Engine from "./Engine";
-
 import footprintUrl from "../res/music/footprint-of-the-elephant.ogg";
 import komfortZoneUrl from "../res/music/komfort-zone.ogg";
 import modDotVigorUrl from "../res/music/mod-dot-vigor.ogg";
 import ringingSteelUrl from "../res/music/ringing-steel.ogg";
 import selumeUrl from "../res/music/selume.ogg";
-import { random } from "./tools/rng";
+import Engine from "./Engine";
 import { wrap } from "./tools/numbers";
+import { random } from "./tools/rng";
 
 interface Track {
   url: string;

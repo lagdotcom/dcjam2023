@@ -1,29 +1,35 @@
 import clone from "nanoclone";
+
+import { endTurnAction } from "./actions";
+import { partyDied, startArea } from "./analytics";
 import CombatManager from "./CombatManager";
 import CombatRenderer from "./CombatRenderer";
+import convertGridCartographerMap from "./convertGridCartographerMap";
+import DeathScreen from "./DeathScreen";
 import DefaultControls from "./DefaultControls";
 import DungeonRenderer from "./DungeonRenderer";
 import DungeonScreen from "./DungeonScreen";
+import { EnemyName, EnemyObjects } from "./enemies";
+import EngineInkScripting from "./EngineInkScripting";
 import HUDRenderer from "./HUDRenderer";
+import { getItem } from "./items";
 import Jukebox from "./Jukebox";
 import LoadingScreen from "./LoadingScreen";
 import LogRenderer from "./LogRenderer";
 import Player from "./Player";
 import ResourceManager from "./ResourceManager";
 import Soon from "./Soon";
+import Sounds from "./Sounds";
 import SplashScreen from "./SplashScreen";
-import { endTurnAction } from "./actions";
-import convertGridCartographerMap from "./convertGridCartographerMap";
-import { EnemyName, EnemyObjects } from "./enemies";
-import { getItem } from "./items";
 import { contains } from "./tools/aabb";
+import removeItem from "./tools/arrays";
 import {
-  xyi,
-  rotate,
   getCardinalOffset,
-  move,
   getDirOffset,
+  move,
+  rotate,
   sameXY,
+  xyi,
 } from "./tools/geometry";
 import getCanvasContext from "./tools/getCanvasContext";
 import { wrap } from "./tools/numbers";
@@ -31,27 +37,22 @@ import { pickN, random } from "./tools/rng";
 import { WallTag, wallToTag } from "./tools/wallTags";
 import { XYTag, xyToTag } from "./tools/xyTags";
 import CombatAction from "./types/CombatAction";
-import Combatant, { BoostableStat, AttackableStat } from "./types/Combatant";
+import Combatant, { AttackableStat, BoostableStat } from "./types/Combatant";
 import Dir from "./types/Dir";
+import {
+  GameEventListeners,
+  GameEventName,
+  GameEventNames,
+  GameEvents,
+} from "./types/events";
 import Game, { GameEffect } from "./types/Game";
 import GameInput from "./types/GameInput";
 import { GameScreen } from "./types/GameScreen";
 import HasHotspots from "./types/HasHotspots";
 import Item from "./types/Item";
+import { matchAll, Predicate } from "./types/logic";
 import World from "./types/World";
 import XY from "./types/XY";
-import {
-  GameEventName,
-  GameEventListeners,
-  GameEventNames,
-  GameEvents,
-} from "./types/events";
-import { Predicate, matchAll } from "./types/logic";
-import DeathScreen from "./DeathScreen";
-import Sounds from "./Sounds";
-import EngineInkScripting from "./EngineInkScripting";
-import removeItem from "./tools/arrays";
-import { partyDied, startArea } from "./analytics";
 
 interface WallType {
   canSeeDoor: boolean;
