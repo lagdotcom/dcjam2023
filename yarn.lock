@@ -475,6 +475,11 @@ doctrine@^3.0.0:
   dependencies:
     esutils "^2.0.2"
 
+dotenv@^16.0.3:
+  version "16.0.3"
+  resolved "https://registry.yarnpkg.com/dotenv/-/dotenv-16.0.3.tgz#115aec42bac5053db3c456db30cc243a5a836a07"
+  integrity sha512-7GO6HghkA5fYG9TYnNxi14/7K9f5occMlp3zXAuSxn7CKCxt9xbNWG7yF8hTCSUchlfWSe3uLmlPfigevRItzQ==
+
 esbuild@^0.17.14:
   version "0.17.14"
   resolved "https://registry.yarnpkg.com/esbuild/-/esbuild-0.17.14.tgz#d61a22de751a3133f3c6c7f9c1c3e231e91a3245"
@@ -714,6 +719,11 @@ fs.realpath@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/fs.realpath/-/fs.realpath-1.0.0.tgz#1504ad2523158caa40db4a2787cb01411994ea4f"
   integrity sha512-OO0pH2lK6a0hZnAdau5ItzHPI6pUlvI7jMVnxUQRtw4owF2wk8lOSabtGDCTP4Ggrg2MbGnWO9X8K1t4+fGMDw==
+
+gameanalytics@^4.4.5:
+  version "4.4.5"
+  resolved "https://registry.yarnpkg.com/gameanalytics/-/gameanalytics-4.4.5.tgz#b1ae22e81bba3b268e245bf8a25d1f04f43ee5e5"
+  integrity sha512-o+UbfOem0o4hym4OhSu8ZsvZjtVeZhS2e91egyWJGzg57Ew8jzumxrgBVk6LU9GBa8tzXPbZat/SZgLrM+7KJw==
 
 glob-parent@^5.1.2:
   version "5.1.2"

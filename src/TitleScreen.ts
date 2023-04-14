@@ -5,6 +5,7 @@ import Engine from "./Engine";
 import EngineInkScripting from "./EngineInkScripting";
 import { GameScreen } from "./types/GameScreen";
 import Player from "./Player";
+import { startGame } from "./analytics";
 import classes from "./classes";
 import mapJson from "../res/map.json";
 import textWrap from "./tools/textWrap";
@@ -66,6 +67,7 @@ export default class TitleScreen implements GameScreen {
           for (const cn of this.selected)
             this.g.party.push(new Player(this.g, cn));
 
+          startGame(this.selected);
           void this.g.loadGCMap(mapJson, 0, -1);
         }
         break;

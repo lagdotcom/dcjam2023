@@ -2,6 +2,7 @@
 
 const externals = {
   inkjs: "inkjs",
+  gameanalytics: "gameanalytics",
   moo: "moo",
   nearley: "nearley",
 };

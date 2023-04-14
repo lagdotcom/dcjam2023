@@ -51,6 +51,7 @@ import DeathScreen from "./DeathScreen";
 import Sounds from "./Sounds";
 import EngineInkScripting from "./EngineInkScripting";
 import removeItem from "./tools/arrays";
+import { partyDied, startArea } from "./analytics";
 
 interface WallType {
   canSeeDoor: boolean;
@@ -245,6 +246,7 @@ export default class Engine implements Game {
 
     this.spotElements = [hud.skills, hud.stats];
     this.screen = new DungeonScreen(this, { combat, dungeon, hud, log });
+    startArea(this.world.name);
     return this.draw();
   }
 
@@ -923,6 +925,7 @@ export default class Engine implements Game {
 
   partyIsDead(lastToDie: number) {
     this.screen = new DeathScreen(this, this.party[lastToDie]);
+    partyDied();
   }
 
   setObstacle(obstacle: boolean) {

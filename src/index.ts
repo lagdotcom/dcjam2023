@@ -1,6 +1,9 @@
 import Engine from "./Engine";
+import { startAnalytics } from "./analytics";
 
 function loadEngine(parent: HTMLElement) {
+  startAnalytics();
+
   const container = document.createElement("div");
   parent.appendChild(container);
   const canvas = document.createElement("canvas");
