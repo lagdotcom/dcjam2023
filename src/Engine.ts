@@ -14,9 +14,10 @@ import EngineInkScripting from "./EngineInkScripting";
 import HUDRenderer from "./HUDRenderer";
 import { getItem } from "./items";
 import Jukebox from "./Jukebox";
+import KnownMapData, { SerializedKnownMap, WallType } from "./KnownMapData";
 import LoadingScreen from "./LoadingScreen";
 import LogRenderer from "./LogRenderer";
-import Player from "./Player";
+import Player, { SerializedPlayer } from "./Player";
 import ResourceManager from "./ResourceManager";
 import Soon from "./Soon";
 import Sounds from "./Sounds";
@@ -32,10 +33,10 @@ import {
   xyi,
 } from "./tools/geometry";
 import getCanvasContext from "./tools/getCanvasContext";
+import isDefined from "./tools/isDefined";
 import { wrap } from "./tools/numbers";
 import { pickN, random } from "./tools/rng";
-import { WallTag, wallToTag } from "./tools/wallTags";
-import { XYTag, xyToTag } from "./tools/xyTags";
+import { tagToXy, XYTag, xyToTag } from "./tools/xyTags";
 import CombatAction from "./types/CombatAction";
 import Combatant, { AttackableStat, BoostableStat } from "./types/Combatant";
 import Dir from "./types/Dir";
@@ -54,10 +55,16 @@ import { matchAll, Predicate } from "./types/logic";
 import World from "./types/World";
 import XY from "./types/XY";
 
-interface WallType {
-  canSeeDoor: boolean;
-  isSolid: boolean;
-  canSeeWall: boolean;
+interface SerializedEngine {
+  facing: Dir;
+  inventory: string[];
+  knownMap: SerializedKnownMap;
+  obstacle?: XYTag;
+  party: SerializedPlayer[];
+  pendingArenaEnemies: EnemyName[];
+  pendingNormalEnemies: EnemyName[];
+  position: XYTag;
+  script: Record<string, any>;
 }
 
 interface TargetPicking {
@@ -86,6 +93,7 @@ export default class Engine implements Game {
   facing: Dir;
   inventory: Item[];
   jukebox: Jukebox;
+  knownMap: KnownMapData;
   log: string[];
   obstacle?: XY;
   party: Player[];
@@ -99,12 +107,8 @@ export default class Engine implements Game {
   sfx: Sounds;
   showLog: boolean;
   spotElements: HasHotspots[];
-  visited: Map<string, Set<XYTag>>;
-  walls: Map<string, Map<WallTag, WallType>>;
   world?: World;
   worldSize: XY;
-  worldVisited: Set<XYTag>;
-  worldWalls: Map<WallTag, WallType>;
   zoomRatio: number;
 
   constructor(public canvas: HTMLCanvasElement) {
@@ -126,10 +130,7 @@ export default class Engine implements Game {
     this.log = [];
     this.showLog = false;
     this.combat = new CombatManager(this);
-    this.visited = new Map();
-    this.walls = new Map();
-    this.worldVisited = new Set();
-    this.worldWalls = new Map();
+    this.knownMap = new KnownMapData();
     this.inventory = [];
     this.pendingArenaEnemies = [];
     this.pendingNormalEnemies = [];
@@ -229,20 +230,7 @@ export default class Engine implements Game {
       if (i > 1) dungeon.dungeon.layers.push(...atlases[i].layers);
     }
 
-    const visited = this.visited.get(w.name);
-    if (visited) this.worldVisited = visited;
-    else {
-      this.worldVisited = new Set();
-      this.visited.set(w.name, this.worldVisited);
-    }
-
-    const walls = this.walls.get(w.name);
-    if (walls) this.worldWalls = walls;
-    else {
-      this.worldWalls = new Map();
-      this.walls.set(w.name, this.worldWalls);
-    }
-
+    this.knownMap.enter(w.name);
     this.markVisited();
 
     this.spotElements = [hud.skills, hud.stats];
@@ -269,8 +257,7 @@ export default class Engine implements Game {
   }
 
   isVisited(x: number, y: number) {
-    const tag = xyToTag({ x, y });
-    return this.worldVisited.has(tag);
+    return this.knownMap.isVisited({ x, y });
   }
 
   getCell(x: number, y: number) {
@@ -393,11 +380,10 @@ export default class Engine implements Game {
 
   markVisited() {
     const pos = this.position;
-    const tag = xyToTag(pos);
     const cell = this.getCell(pos.x, pos.y);
 
-    if (!this.worldVisited.has(tag) && cell) {
-      this.worldVisited.add(tag);
+    if (!this.knownMap.isVisited(pos) && cell) {
+      this.knownMap.visit(pos);
 
       for (let dir = 0; dir <= 3; dir++) {
         const wall = cell.sides[dir as Dir];
@@ -410,36 +396,21 @@ export default class Engine implements Game {
           canSeeWall: hasTexture,
         };
 
-        this.worldWalls.set(wallToTag(pos, dir), data);
+        this.knownMap.setWall(pos, dir, data);
       }
     }
   }
 
   markNavigable(pos: XY, dir: Dir) {
-    const tag = wallToTag(pos, dir);
-    const data: WallType = this.worldWalls.get(tag) ?? {
-      canSeeDoor: false,
-      isSolid: false,
-      canSeeWall: false,
-    };
-
-    if (data.isSolid) {
-      data.isSolid = false;
-      this.worldWalls.set(tag, data);
-    }
+    const data = this.knownMap.getWall(pos, dir);
+    if (data.isSolid) data.isSolid = false;
   }
 
   markUnnavigable(pos: XY, dir: Dir) {
-    const tag = wallToTag(pos, dir);
-    const data: WallType = this.worldWalls.get(tag) ?? {
-      canSeeDoor: false,
-      isSolid: false,
-      canSeeWall: false,
-    };
+    const data = this.knownMap.getWall(pos, dir);
 
     if (!data.isSolid) {
       data.isSolid = true;
-      this.worldWalls.set(tag, data);
       this.draw();
     }
   }
@@ -456,12 +427,7 @@ export default class Engine implements Game {
   }
 
   getWallData(x: number, y: number, dir: Dir) {
-    const wallData = this.worldWalls.get(wallToTag({ x, y }, dir));
-
-    const dTag = wallData?.canSeeDoor ? "d" : "";
-    const sTag = wallData?.isSolid ? "s" : "";
-    const wTag = wallData?.canSeeWall ? "w" : "";
-    return `${dTag}${sTag}${wTag}` as const;
+    return this.knownMap.getWallCondensed({ x, y }, dir);
   }
 
   turn(clockwise: number) {
@@ -933,5 +899,54 @@ export default class Engine implements Game {
     this.obstacle = obstacle
       ? move(this.position, rotate(this.facing, 2))
       : undefined;
+  }
+
+  save(): SerializedEngine {
+    const {
+      facing,
+      inventory,
+      knownMap,
+      obstacle,
+      party,
+      pendingArenaEnemies,
+      pendingNormalEnemies,
+      position,
+      scripting,
+    } = this;
+
+    return {
+      facing,
+      inventory: inventory.map((i) => i.name),
+      knownMap: knownMap.serialize(),
+      obstacle: obstacle ? xyToTag(obstacle) : undefined,
+      party: party.map((p) => p.serialize()),
+      pendingArenaEnemies,
+      pendingNormalEnemies,
+      position: xyToTag(position),
+      script: JSON.parse(
+        scripting.story.state.ToJson()
+      ) as SerializedEngine["script"],
+    };
+  }
+
+  load(save: SerializedEngine) {
+    this.facing = save.facing;
+    this.inventory = save.inventory
+      .map((name) => getItem(name))
+      .filter(isDefined);
+    this.knownMap.load(save.knownMap);
+    if (this.world) this.knownMap.enter(this.world.name);
+    this.obstacle = save.obstacle ? tagToXy(save.obstacle) : undefined;
+    this.party = save.party.map((data) => Player.load(this, data));
+    this.pendingArenaEnemies = save.pendingArenaEnemies;
+    this.pendingNormalEnemies = save.pendingNormalEnemies;
+    this.position = tagToXy(save.position);
+    this.scripting.story.state.LoadJsonObj(save.script);
+
+    // stuff that isn't saved
+    this.log = [];
+    this.showLog = false;
+
+    this.draw();
   }
 }

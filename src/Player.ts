@@ -1,6 +1,7 @@
 import { endTurnAction, generateAttack } from "./actions";
 import classes from "./classes";
 import Engine from "./Engine";
+import { getItem } from "./items";
 import isDefined from "./tools/isDefined";
 import { ClassName } from "./types/ClassName";
 import Combatant, { AttackableStat, BoostableStat } from "./types/Combatant";
@@ -13,6 +14,17 @@ function getBaseStat(
   bonusIfTrue = 1
 ) {
   return classes[className][stat] + (bonusStat === stat ? bonusIfTrue : 0);
+}
+
+export interface SerializedPlayer {
+  name: string;
+  className: ClassName;
+  hp: number;
+  sp: number;
+  LeftHand?: string;
+  RightHand?: string;
+  Body?: string;
+  Special?: string;
 }
 
 export default class Player implements Combatant {
@@ -68,6 +80,34 @@ export default class Player implements Combatant {
     return [this.LeftHand, this.RightHand, this.Body, this.Special].filter(
       isDefined
     );
+  }
+
+  static load(g: Engine, data: SerializedPlayer): Player {
+    const p = new Player(g, data.className);
+    p.name = data.name;
+    p.hp = data.hp;
+    p.sp = data.sp;
+    p.LeftHand = getItem(data.LeftHand);
+    p.RightHand = getItem(data.RightHand);
+    p.Body = getItem(data.Body);
+    p.Special = getItem(data.Special);
+
+    return p;
+  }
+
+  serialize(): SerializedPlayer {
+    const { name, className, hp, sp, LeftHand, RightHand, Body, Special } =
+      this;
+    return {
+      name,
+      className,
+      hp,
+      sp,
+      LeftHand: LeftHand?.name,
+      RightHand: RightHand?.name,
+      Body: Body?.name,
+      Special: Special?.name,
+    };
   }
 
   getStat(stat: BoostableStat, base = 0): number {

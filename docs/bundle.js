@@ -2437,7 +2437,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     )
   );
   function getItem(s) {
-    return allItems[s];
+    return s ? allItems[s] : void 0;
   }
 
   // res/sfx/buff1.ogg
@@ -2795,6 +2795,30 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
         isDefined
       );
     }
+    static load(g, data) {
+      const p = new Player(g, data.className);
+      p.name = data.name;
+      p.hp = data.hp;
+      p.sp = data.sp;
+      p.LeftHand = getItem(data.LeftHand);
+      p.RightHand = getItem(data.RightHand);
+      p.Body = getItem(data.Body);
+      p.Special = getItem(data.Special);
+      return p;
+    }
+    serialize() {
+      const { name, className, hp, sp, LeftHand, RightHand, Body, Special } = this;
+      return {
+        name,
+        className,
+        hp,
+        sp,
+        LeftHand: LeftHand == null ? void 0 : LeftHand.name,
+        RightHand: RightHand == null ? void 0 : RightHand.name,
+        Body: Body == null ? void 0 : Body.name,
+        Special: Special == null ? void 0 : Special.name
+      };
+    }
     getStat(stat, base = 0) {
       var _a;
       let value = base;
@@ -2923,8 +2947,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       g.pendingNormalEnemies = [];
       g.scripting = new EngineInkScripting(g);
       g.showLog = false;
-      g.visited.clear();
-      g.walls.clear();
+      g.knownMap.clear();
       this.index = 0;
       this.selected = /* @__PURE__ */ new Set();
     }
@@ -3896,6 +3919,118 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     }
   };
 
+  // src/tools/wallTags.ts
+  function wallToTag(pos, dir) {
+    return `${pos.x},${pos.y},${dir}`;
+  }
+  function tagToWall(tag) {
+    const [x, y, dir] = tag.split(",");
+    return [{ x: Number(x), y: Number(y) }, Number(dir)];
+  }
+
+  // src/KnownMapData.ts
+  function condense(data) {
+    const dTag = data.canSeeDoor ? "d" : "";
+    const sTag = data.isSolid ? "s" : "";
+    const wTag = data.canSeeWall ? "w" : "";
+    return `${dTag}${sTag}${wTag}`;
+  }
+  var KnownMapData = class {
+    constructor() {
+      this.allCells = /* @__PURE__ */ new Map();
+      this.cells = /* @__PURE__ */ new Set();
+      this.allWalls = /* @__PURE__ */ new Map();
+      this.walls = /* @__PURE__ */ new Map();
+    }
+    clear() {
+      this.allCells.clear();
+      this.cells.clear();
+      this.allWalls.clear();
+      this.walls.clear();
+    }
+    enter(name) {
+      const cells = this.allCells.get(name);
+      const walls = this.allWalls.get(name);
+      if (cells)
+        this.cells = cells;
+      else {
+        this.cells = /* @__PURE__ */ new Set();
+        this.allCells.set(name, this.cells);
+      }
+      if (walls)
+        this.walls = walls;
+      else {
+        this.walls = /* @__PURE__ */ new Map();
+        this.allWalls.set(name, this.walls);
+      }
+    }
+    isVisited(pos) {
+      return this.cells.has(xyToTag(pos));
+    }
+    visit(pos) {
+      this.cells.add(xyToTag(pos));
+    }
+    setWall(pos, dir, data) {
+      this.walls.set(wallToTag(pos, dir), data);
+    }
+    getWall(pos, dir) {
+      const tag = wallToTag(pos, dir);
+      const data = this.walls.get(tag);
+      if (data)
+        return data;
+      const newData = {
+        canSeeDoor: false,
+        isSolid: false,
+        canSeeWall: false
+      };
+      this.walls.set(tag, newData);
+      return newData;
+    }
+    getWallCondensed(pos, dir) {
+      const data = this.getWall(pos, dir);
+      return condense(data);
+    }
+    serialize() {
+      const allCells = {};
+      const allWalls = {};
+      for (const [name, cells] of this.allCells.entries())
+        allCells[name] = Array.from(cells.values());
+      for (const [name, walls] of this.allWalls.entries()) {
+        allWalls[name] = Object.fromEntries(
+          Array.from(walls.entries()).map(([key, data]) => [key, condense(data)])
+        );
+      }
+      return { cells: allCells, walls: allWalls };
+    }
+    load(data) {
+      this.clear();
+      for (const name in data.cells) {
+        this.enter(name);
+        for (const tag of data.cells[name])
+          this.visit(tagToXy(tag));
+      }
+      for (const name in data.walls) {
+        this.enter(name);
+        for (const tag in data.walls[name]) {
+          const [pos, dir] = tagToWall(tag);
+          const wall2 = {
+            canSeeDoor: false,
+            isSolid: false,
+            canSeeWall: false
+          };
+          const condensed = data.walls[name][tag];
+          if (condensed.includes("d"))
+            wall2.canSeeDoor = true;
+          if (condensed.includes("s"))
+            wall2.isSolid = true;
+          if (condensed.includes("w"))
+            wall2.canSeeWall = true;
+          this.setWall(pos, dir, wall2);
+        }
+      }
+    }
+  };
+
   // src/LoadingScreen.ts
   var LoadingScreen = class {
     constructor(g) {
@@ -4104,11 +4239,6 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     return pos.x >= spot.x && pos.y >= spot.y && pos.x < spot.ex && pos.y < spot.ey;
   }
 
-  // src/tools/wallTags.ts
-  function wallToTag(pos, dir) {
-    return `${pos.x},${pos.y},${dir}`;
-  }
-
   // src/types/events.ts
   var GameEventNames = [
     "onAfterAction",
@@ -4177,10 +4307,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       this.log = [];
       this.showLog = false;
       this.combat = new CombatManager(this);
-      this.visited = /* @__PURE__ */ new Map();
-      this.walls = /* @__PURE__ */ new Map();
-      this.worldVisited = /* @__PURE__ */ new Set();
-      this.worldWalls = /* @__PURE__ */ new Map();
+      this.knownMap = new KnownMapData();
       this.inventory = [];
       this.pendingArenaEnemies = [];
       this.pendingNormalEnemies = [];
@@ -4270,20 +4397,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
           if (i > 1)
             dungeon.dungeon.layers.push(...atlases[i].layers);
         }
-        const visited = this.visited.get(w.name);
-        if (visited)
-          this.worldVisited = visited;
-        else {
-          this.worldVisited = /* @__PURE__ */ new Set();
-          this.visited.set(w.name, this.worldVisited);
-        }
-        const walls = this.walls.get(w.name);
-        if (walls)
-          this.worldWalls = walls;
-        else {
-          this.worldWalls = /* @__PURE__ */ new Map();
-          this.walls.set(w.name, this.worldWalls);
-        }
+        this.knownMap.enter(w.name);
         this.markVisited();
         this.spotElements = [hud.skills, hud.stats];
         this.screen = new DungeonScreen(this, { combat, dungeon, hud, log });
@@ -4306,8 +4420,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       });
     }
     isVisited(x, y) {
-      const tag = xyToTag({ x, y });
-      return this.worldVisited.has(tag);
+      return this.knownMap.isVisited({ x, y });
     }
     getCell(x, y) {
       var _a;
@@ -4402,10 +4515,9 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     }
     markVisited() {
       const pos = this.position;
-      const tag = xyToTag(pos);
       const cell = this.getCell(pos.x, pos.y);
-      if (!this.worldVisited.has(tag) && cell) {
-        this.worldVisited.add(tag);
+      if (!this.knownMap.isVisited(pos) && cell) {
+        this.knownMap.visit(pos);
         for (let dir = 0; dir <= 3; dir++) {
           const wall2 = cell.sides[dir];
           const canSeeDoor = (wall2 == null ? void 0 : wall2.decalType) === "Door";
@@ -4416,34 +4528,19 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
             isSolid: looksSolid && !canSeeDoor,
             canSeeWall: hasTexture
           };
-          this.worldWalls.set(wallToTag(pos, dir), data);
+          this.knownMap.setWall(pos, dir, data);
         }
       }
     }
     markNavigable(pos, dir) {
-      var _a;
-      const tag = wallToTag(pos, dir);
-      const data = (_a = this.worldWalls.get(tag)) != null ? _a : {
-        canSeeDoor: false,
-        isSolid: false,
-        canSeeWall: false
-      };
-      if (data.isSolid) {
+      const data = this.knownMap.getWall(pos, dir);
+      if (data.isSolid)
         data.isSolid = false;
-        this.worldWalls.set(tag, data);
-      }
     }
     markUnnavigable(pos, dir) {
-      var _a;
-      const tag = wallToTag(pos, dir);
-      const data = (_a = this.worldWalls.get(tag)) != null ? _a : {
-        canSeeDoor: false,
-        isSolid: false,
-        canSeeWall: false
-      };
+      const data = this.knownMap.getWall(pos, dir);
       if (!data.isSolid) {
         data.isSolid = true;
-        this.worldWalls.set(tag, data);
         this.draw();
       }
     }
@@ -4458,11 +4555,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       return { cell, north, east, south, west };
     }
     getWallData(x, y, dir) {
-      const wallData = this.worldWalls.get(wallToTag({ x, y }, dir));
-      const dTag = (wallData == null ? void 0 : wallData.canSeeDoor) ? "d" : "";
-      const sTag = (wallData == null ? void 0 : wallData.isSolid) ? "s" : "";
-      const wTag = (wallData == null ? void 0 : wallData.canSeeWall) ? "w" : "";
-      return `${dTag}${sTag}${wTag}`;
+      return this.knownMap.getWallCondensed({ x, y }, dir);
     }
     turn(clockwise) {
       if (this.pickingTargets)
@@ -4835,6 +4928,48 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     }
     setObstacle(obstacle) {
       this.obstacle = obstacle ? move(this.position, rotate(this.facing, 2)) : void 0;
+    }
+    save() {
+      const {
+        facing,
+        inventory,
+        knownMap,
+        obstacle,
+        party,
+        pendingArenaEnemies,
+        pendingNormalEnemies,
+        position,
+        scripting
+      } = this;
+      return {
+        facing,
+        inventory: inventory.map((i) => i.name),
+        knownMap: knownMap.serialize(),
+        obstacle: obstacle ? xyToTag(obstacle) : void 0,
+        party: party.map((p) => p.serialize()),
+        pendingArenaEnemies,
+        pendingNormalEnemies,
+        position: xyToTag(position),
+        script: JSON.parse(
+          scripting.story.state.ToJson()
+        )
+      };
+    }
+    load(save) {
+      this.facing = save.facing;
+      this.inventory = save.inventory.map((name) => getItem(name)).filter(isDefined);
+      this.knownMap.load(save.knownMap);
+      if (this.world)
+        this.knownMap.enter(this.world.name);
+      this.obstacle = save.obstacle ? tagToXy(save.obstacle) : void 0;
+      this.party = save.party.map((data) => Player.load(this, data));
+      this.pendingArenaEnemies = save.pendingArenaEnemies;
+      this.pendingNormalEnemies = save.pendingNormalEnemies;
+      this.position = tagToXy(save.position);
+      this.scripting.story.state.LoadJsonObj(save.script);
+      this.log = [];
+      this.showLog = false;
+      this.draw();
     }
   };
 

@@ -21,6 +21,6 @@ const allItems = Object.fromEntries(
   )
 );
 
-export function getItem(s: string): Item | undefined {
-  return allItems[s];
+export function getItem(s?: string): Item | undefined {
+  return s ? allItems[s] : undefined;
 }

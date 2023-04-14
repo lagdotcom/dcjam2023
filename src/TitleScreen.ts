@@ -23,8 +23,7 @@ export default class TitleScreen implements GameScreen {
     g.pendingNormalEnemies = [];
     g.scripting = new EngineInkScripting(g);
     g.showLog = false;
-    g.visited.clear();
-    g.walls.clear();
+    g.knownMap.clear();
 
     this.index = 0;
     this.selected = new Set();
