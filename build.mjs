@@ -1,6 +1,7 @@
 /*eslint-env node*/
 
 import { build } from "esbuild";
+
 import config from "./buildConfig.mjs";
 
 const result = await build(config);

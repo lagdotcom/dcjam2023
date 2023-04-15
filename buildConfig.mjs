@@ -1,5 +1,7 @@
 /*eslint-env node*/
+
 import { config as loadDotEnvConfig } from "dotenv";
+
 import CDNModule from "./CDNModule.mjs";
 import InkModule from "./InkModule.mjs";
 
