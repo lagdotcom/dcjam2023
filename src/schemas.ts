@@ -78,6 +78,7 @@ const engineSchema: JSONSchemaType<SerializedEngine> = {
     "pendingNormalEnemies",
     "position",
     "script",
+    "worldLocation",
   ],
   properties: {
     facing: dirSchema,
@@ -89,6 +90,15 @@ const engineSchema: JSONSchemaType<SerializedEngine> = {
     pendingNormalEnemies: { type: "array", items: { type: "string" } },
     position: { type: "string" },
     script: { type: "object" },
+    worldLocation: {
+      type: "object",
+      required: ["floor", "region", "resourceID"],
+      properties: {
+        floor: { type: "number" },
+        region: { type: "number" },
+        resourceID: { type: "string" },
+      },
+    },
   },
 };
 export const validateEngine = ajv.compile(engineSchema);

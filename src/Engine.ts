@@ -1,7 +1,7 @@
 import clone from "nanoclone";
 
 import { endTurnAction } from "./actions";
-import { partyDied, startArea } from "./analytics";
+import { loadIntoArea, partyDied, saveGame, startArea } from "./analytics";
 import CombatManager from "./CombatManager";
 import CombatRenderer from "./CombatRenderer";
 import convertGridCartographerMap from "./convertGridCartographerMap";
@@ -16,6 +16,7 @@ import KnownMapData, { SerializedKnownMap, WallType } from "./KnownMapData";
 import LogRenderer from "./LogRenderer";
 import Player, { SerializedPlayer } from "./Player";
 import ResourceManager from "./ResourceManager";
+import { getResourceURL } from "./resources";
 import { validateEngine } from "./schemas";
 import DeathScreen from "./screens/DeathScreen";
 import DungeonScreen from "./screens/DungeonScreen";
@@ -57,6 +58,7 @@ import World from "./types/World";
 import XY from "./types/XY";
 
 export interface SerializedEngine {
+  worldLocation: WorldLocation;
   facing: Dir;
   inventory: string[];
   knownMap: SerializedKnownMap;
@@ -72,6 +74,12 @@ interface TargetPicking {
   pc: Player;
   action: CombatAction;
   possibilities: Combatant[];
+}
+
+interface WorldLocation {
+  resourceID: string;
+  region: number;
+  floor: number;
 }
 
 const calculateEventName = {
@@ -108,6 +116,7 @@ export default class Engine implements Game {
   sfx: Sounds;
   showLog: boolean;
   world?: World;
+  worldLocation?: WorldLocation;
   worldSize: XY;
   zoomRatio: number;
 
@@ -206,11 +215,14 @@ export default class Engine implements Game {
     }
   }
 
-  async loadWorld(w: World, position?: XY) {
+  async loadWorld(worldLocation: WorldLocation, w: World, position?: XY) {
+    const world = clone(w);
     this.screen = new LoadingScreen(this);
+    this.draw();
 
-    this.world = clone(w);
-    this.worldSize = xyi(this.world.cells[0].length, this.world.cells.length);
+    this.worldLocation = worldLocation;
+    this.world = world;
+    this.worldSize = xyi(world.cells[0].length, world.cells.length);
     this.position = position ?? w.start;
     this.facing = w.facing;
 
@@ -234,14 +246,23 @@ export default class Engine implements Game {
     this.knownMap.enter(w.name);
     this.markVisited();
 
+    if (position) loadIntoArea(w.name);
+    else startArea(w.name);
+
     this.screen = new DungeonScreen(this, { combat, dungeon, hud, log });
-    startArea(this.world.name);
     return this.draw();
   }
 
-  async loadGCMap(jsonUrl: string, region: number, floor: number) {
+  async loadGCMap(
+    resourceID: string,
+    region: number,
+    floor: number,
+    position?: XY
+  ) {
     this.screen = new LoadingScreen(this);
+    this.draw();
 
+    const jsonUrl = getResourceURL(resourceID);
     const map = await this.res.loadGCMap(jsonUrl);
     const { atlases, cells, scripts, start, facing, name } =
       convertGridCartographerMap(map, region, floor, EnemyObjects);
@@ -253,7 +274,11 @@ export default class Engine implements Game {
       this.scripting.parseAndRun(code);
     }
 
-    return this.loadWorld({ name, atlases, cells, start, facing });
+    return this.loadWorld(
+      { resourceID, region, floor },
+      { name, atlases, cells, start, facing },
+      position
+    );
   }
 
   isVisited(x: number, y: number) {
@@ -912,9 +937,13 @@ export default class Engine implements Game {
       pendingNormalEnemies,
       position,
       scripting,
+      worldLocation,
     } = this;
 
-    return {
+    if (!worldLocation) throw new Error(`Tried to save when not in a game.`);
+
+    const data = {
+      worldLocation,
       facing,
       inventory: inventory.map((i) => i.name),
       knownMap: knownMap.serialize(),
@@ -926,10 +955,13 @@ export default class Engine implements Game {
       script: JSON.parse(
         scripting.story.state.ToJson()
       ) as SerializedEngine["script"],
-    };
+    } satisfies SerializedEngine;
+
+    saveGame();
+    return data;
   }
 
-  load(save: any) {
+  async load(save: any) {
     if (!validateEngine(save)) {
       console.warn(validateEngine.errors);
       return;
@@ -940,17 +972,22 @@ export default class Engine implements Game {
       .map((name) => getItem(name))
       .filter(isDefined);
     this.knownMap.load(save.knownMap);
-    if (this.world) this.knownMap.enter(this.world.name);
     this.obstacle = save.obstacle ? tagToXy(save.obstacle) : undefined;
     this.party = save.party.map((data) => Player.load(this, data));
     this.pendingArenaEnemies = save.pendingArenaEnemies;
     this.pendingNormalEnemies = save.pendingNormalEnemies;
-    this.position = tagToXy(save.position);
     this.scripting.story.state.LoadJsonObj(save.script);
 
     // stuff that isn't saved
     this.log = [];
     this.showLog = false;
+
+    await this.loadGCMap(
+      save.worldLocation.resourceID,
+      save.worldLocation.region,
+      save.worldLocation.floor,
+      tagToXy(save.position)
+    );
 
     this.draw();
   }

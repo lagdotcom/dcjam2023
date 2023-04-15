@@ -9,9 +9,11 @@ import nettleSageImage from "../res/atlas/nettleSage.png";
 import sneedCrawlerJson from "../res/atlas/sneedCrawler.json";
 import sneedCrawlerImage from "../res/atlas/sneedCrawler.png";
 import mapInk from "../res/map.ink";
+import mapJson from "../res/map.json";
 
 const Resources: Record<string, string> = {
   "map.ink": mapInk,
+  "map.json": mapJson,
 
   "flats.png": flatsImage,
   "flats.json": flatsJson,

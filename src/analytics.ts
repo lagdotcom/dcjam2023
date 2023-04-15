@@ -74,3 +74,12 @@ export function winFight(pos: XY) {
     xyToTag(pos)
   );
 }
+
+export function loadIntoArea(name: string) {
+  currentArea = sanitise(name);
+  GA.addDesignEvent(`Game:Load:${currentArea}`);
+}
+
+export function saveGame() {
+  GA.addDesignEvent(`Game:Save:${currentArea}`);
+}

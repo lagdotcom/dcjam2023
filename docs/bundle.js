@@ -135,6 +135,13 @@
       xyToTag(pos)
     );
   }
+  function loadIntoArea(name) {
+    currentArea = sanitise(name);
+    GA.addDesignEvent(`Game:Load:${currentArea}`);
+  }
+  function saveGame() {
+    GA.addDesignEvent(`Game:Save:${currentArea}`);
+  }
 
   // node_modules/nanoclone/src/index.js
   function clone(src, seen = /* @__PURE__ */ new Map()) {
@@ -1032,9 +1039,13 @@
   // ink:D:\Code\dcjam2023\res\map.ink
   var map_default = "./map-BNQ2L6SR.ink";
 
+  // res/map.json
+  var map_default2 = "./map-HXD5COAC.json";
+
   // src/resources.ts
   var Resources = {
     "map.ink": map_default,
+    "map.json": map_default2,
     "flats.png": flats_default2,
     "flats.json": flats_default,
     "eveScout.png": eveScout_default2,
@@ -4053,7 +4064,8 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       "pendingArenaEnemies",
       "pendingNormalEnemies",
       "position",
-      "script"
+      "script",
+      "worldLocation"
     ],
     properties: {
       facing: dirSchema,
@@ -4064,13 +4076,19 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       pendingArenaEnemies: { type: "array", items: { type: "string" } },
       pendingNormalEnemies: { type: "array", items: { type: "string" } },
       position: { type: "string" },
-      script: { type: "object" }
+      script: { type: "object" },
+      worldLocation: {
+        type: "object",
+        required: ["floor", "region", "resourceID"],
+        properties: {
+          floor: { type: "number" },
+          region: { type: "number" },
+          resourceID: { type: "string" }
+        }
+      }
     }
   };
   var validateEngine = ajv.compile(engineSchema);
-
-  // res/map.json
-  var map_default2 = "./map-HXD5COAC.json";
 
   // src/screens/TitleScreen.ts
   var TitleScreen = class {
@@ -4122,7 +4140,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
             for (const cn of this.selected)
               this.g.party.push(new Player(this.g, cn));
             startGame(this.selected);
-            void this.g.loadGCMap(map_default2, 0, -1);
+            void this.g.loadGCMap("map.json", 0, -1);
           }
           break;
       }
@@ -4741,11 +4759,14 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
           return this.openStats();
       }
     }
-    loadWorld(w, position) {
+    loadWorld(worldLocation, w, position) {
       return __async(this, null, function* () {
+        const world = src_default(w);
         this.screen = new LoadingScreen(this);
-        this.world = src_default(w);
-        this.worldSize = xyi(this.world.cells[0].length, this.world.cells.length);
+        this.draw();
+        this.worldLocation = worldLocation;
+        this.world = world;
+        this.worldSize = xyi(world.cells[0].length, world.cells.length);
         this.position = position != null ? position : w.start;
         this.facing = w.facing;
         const combat = new CombatRenderer(this);
@@ -4764,14 +4785,19 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
         }
         this.knownMap.enter(w.name);
         this.markVisited();
+        if (position)
+          loadIntoArea(w.name);
+        else
+          startArea(w.name);
         this.screen = new DungeonScreen(this, { combat, dungeon, hud, log });
-        startArea(this.world.name);
         return this.draw();
       });
     }
-    loadGCMap(jsonUrl, region, floor) {
+    loadGCMap(resourceID, region, floor, position) {
       return __async(this, null, function* () {
         this.screen = new LoadingScreen(this);
+        this.draw();
+        const jsonUrl = getResourceURL(resourceID);
         const map = yield this.res.loadGCMap(jsonUrl);
         const { atlases, cells, scripts, start, facing, name } = convertGridCartographerMap(map, region, floor, EnemyObjects);
         if (!atlases.length)
@@ -4780,7 +4806,11 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
           const code = yield this.res.loadScript(url);
           this.scripting.parseAndRun(code);
         }
-        return this.loadWorld({ name, atlases, cells, start, facing });
+        return this.loadWorld(
+          { resourceID, region, floor },
+          { name, atlases, cells, start, facing },
+          position
+        );
       });
     }
     isVisited(x, y) {
@@ -5303,9 +5333,13 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
         pendingArenaEnemies,
         pendingNormalEnemies,
         position,
-        scripting
+        scripting,
+        worldLocation
       } = this;
-      return {
+      if (!worldLocation)
+        throw new Error(`Tried to save when not in a game.`);
+      const data = {
+        worldLocation,
         facing,
         inventory: inventory.map((i) => i.name),
         knownMap: knownMap.serialize(),
@@ -5318,26 +5352,33 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
           scripting.story.state.ToJson()
         )
       };
+      saveGame();
+      return data;
     }
     load(save) {
-      if (!validateEngine(save)) {
-        console.warn(validateEngine.errors);
-        return;
-      }
-      this.facing = save.facing;
-      this.inventory = save.inventory.map((name) => getItem(name)).filter(isDefined);
-      this.knownMap.load(save.knownMap);
-      if (this.world)
-        this.knownMap.enter(this.world.name);
-      this.obstacle = save.obstacle ? tagToXy(save.obstacle) : void 0;
-      this.party = save.party.map((data) => Player.load(this, data));
-      this.pendingArenaEnemies = save.pendingArenaEnemies;
-      this.pendingNormalEnemies = save.pendingNormalEnemies;
-      this.position = tagToXy(save.position);
-      this.scripting.story.state.LoadJsonObj(save.script);
-      this.log = [];
-      this.showLog = false;
-      this.draw();
+      return __async(this, null, function* () {
+        if (!validateEngine(save)) {
+          console.warn(validateEngine.errors);
+          return;
+        }
+        this.facing = save.facing;
+        this.inventory = save.inventory.map((name) => getItem(name)).filter(isDefined);
+        this.knownMap.load(save.knownMap);
+        this.obstacle = save.obstacle ? tagToXy(save.obstacle) : void 0;
+        this.party = save.party.map((data) => Player.load(this, data));
+        this.pendingArenaEnemies = save.pendingArenaEnemies;
+        this.pendingNormalEnemies = save.pendingNormalEnemies;
+        this.scripting.story.state.LoadJsonObj(save.script);
+        this.log = [];
+        this.showLog = false;
+        yield this.loadGCMap(
+          save.worldLocation.resourceID,
+          save.worldLocation.region,
+          save.worldLocation.floor,
+          tagToXy(save.position)
+        );
+        this.draw();
+      });
     }
     openStats() {
       this.screen = new StatsScreen(this);

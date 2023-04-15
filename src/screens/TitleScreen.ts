@@ -1,4 +1,3 @@
-import mapJson from "../../res/map.json";
 import { startGame } from "../analytics";
 import classes from "../classes";
 import { getItemColour } from "../Colours";
@@ -68,7 +67,7 @@ export default class TitleScreen implements GameScreen {
             this.g.party.push(new Player(this.g, cn));
 
           startGame(this.selected);
-          void this.g.loadGCMap(mapJson, 0, -1);
+          void this.g.loadGCMap("map.json", 0, -1);
         }
         break;
     }
