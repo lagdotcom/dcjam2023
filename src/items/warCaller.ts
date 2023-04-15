@@ -114,6 +114,7 @@ export const HairShirt: Item = {
     sp: 0,
     targets: onlyMe,
     act({ g, me }) {
+      g.addToLog(`${me.name} is ready to accept judgement.`);
       g.addEffect(() => ({
         name: "Kneel",
         duration: 2,

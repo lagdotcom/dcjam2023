@@ -2507,6 +2507,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       sp: 0,
       targets: onlyMe,
       act({ g, me }) {
+        g.addToLog(`${me.name} is ready to accept judgement.`);
         g.addEffect(() => ({
           name: "Kneel",
           duration: 2,
@@ -4331,8 +4332,10 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
           this.cursorColumn = this.cursorColumn === "equipment" ? "inventory" : "equipment";
           this.g.draw();
           return;
-        default:
-          console.log("key:", e.code);
+        case "Space":
+          e.preventDefault();
+          this.g.toggleLog();
+          return;
       }
     }
     turn(mod) {
