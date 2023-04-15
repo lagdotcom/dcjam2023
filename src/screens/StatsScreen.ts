@@ -110,9 +110,10 @@ export default class StatsScreen implements GameScreen, HasHotspots {
         this.g.draw();
         return;
 
-      default:
-        // TODO
-        console.log("key:", e.code);
+      case "Space":
+        e.preventDefault();
+        this.g.toggleLog();
+        return;
     }
   }
 
