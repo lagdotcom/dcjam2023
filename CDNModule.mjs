@@ -2,6 +2,7 @@
 
 /** @type Record<string, { pattern: string, fn?: () => string } */
 const externals = {
+  ajv: { pattern: "^ajv$", fn: () => `globalThis.ajv7` },
   inkjs: { pattern: "^inkjs" },
   gameanalytics: { pattern: "^gameanalytics$" },
 };
@@ -34,7 +35,7 @@ const module = {
 
       console.log("injected", args.path);
       return {
-        contents: `module.exports = ${exports}`,
+        contents: `module.exports = ${exports};`,
         loader: "js",
       };
     });

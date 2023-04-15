@@ -64,6 +64,13 @@
     }
   });
 
+  // cdn:ajv
+  var require_ajv = __commonJS({
+    "cdn:ajv"(exports, module) {
+      module.exports = globalThis.ajv7;
+    }
+  });
+
   // src/analytics.ts
   var import_gameanalytics = __toESM(require_gameanalytics());
 
@@ -3971,8 +3978,8 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     }
   };
 
-  // res/map.json
-  var map_default2 = "./map-HXD5COAC.json";
+  // src/schemas.ts
+  var import_ajv = __toESM(require_ajv());
 
   // src/types/ClassName.ts
   var ClassNames = [
@@ -3983,6 +3990,87 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     "Flag Singer",
     "Loam Seer"
   ];
+
+  // src/schemas.ts
+  var ajv = new import_ajv.default();
+  var xyTagSchema = {
+    type: "string",
+    pattern: "\\d+_\\d+"
+  };
+  var wallTagSchema = {
+    type: "string",
+    pattern: "\\d+,\\d+,[0123]"
+  };
+  var condensedWallTypeSchema = {
+    type: "string",
+    pattern: "d?s?w?"
+  };
+  var dirSchema = { type: "number", enum: [0, 1, 2, 3] };
+  var knownMapSchema = {
+    type: "object",
+    additionalProperties: false,
+    required: ["cells", "walls"],
+    properties: {
+      cells: {
+        type: "object",
+        required: [],
+        additionalProperties: { type: "array", items: xyTagSchema }
+      },
+      walls: {
+        type: "object",
+        required: [],
+        additionalProperties: {
+          type: "object",
+          patternProperties: { [wallTagSchema.pattern]: condensedWallTypeSchema },
+          additionalProperties: false
+        }
+      }
+    }
+  };
+  var playerSchema = {
+    type: "object",
+    additionalProperties: false,
+    required: ["name", "className", "hp", "sp"],
+    properties: {
+      name: { type: "string" },
+      className: { type: "string", enum: ClassNames },
+      hp: { type: "number" },
+      sp: { type: "number" },
+      LeftHand: { type: "string", nullable: true },
+      RightHand: { type: "string", nullable: true },
+      Body: { type: "string", nullable: true },
+      Special: { type: "string", nullable: true }
+    }
+  };
+  var engineSchema = {
+    type: "object",
+    additionalProperties: false,
+    required: [
+      "facing",
+      "inventory",
+      "knownMap",
+      "party",
+      "pendingArenaEnemies",
+      "pendingNormalEnemies",
+      "position",
+      "script"
+    ],
+    properties: {
+      facing: dirSchema,
+      inventory: { type: "array", items: { type: "string" } },
+      knownMap: knownMapSchema,
+      obstacle: { type: "string", nullable: true },
+      party: { type: "array", items: playerSchema },
+      pendingArenaEnemies: { type: "array", items: { type: "string" } },
+      pendingNormalEnemies: { type: "array", items: { type: "string" } },
+      position: { type: "string" },
+      script: { type: "object" }
+    }
+  };
+  var validateEngine = ajv.compile(engineSchema);
+
+  // res/map.json
+  var map_default2 = "./map-HXD5COAC.json";
 
   // src/screens/TitleScreen.ts
   var TitleScreen = class {
@@ -5232,6 +5320,10 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       };
     }
     load(save) {
+      if (!validateEngine(save)) {
+        console.warn(validateEngine.errors);
+        return;
+      }
       this.facing = save.facing;
       this.inventory = save.inventory.map((name) => getItem(name)).filter(isDefined);
       this.knownMap.load(save.knownMap);

@@ -16,6 +16,7 @@ import KnownMapData, { SerializedKnownMap, WallType } from "./KnownMapData";
 import LogRenderer from "./LogRenderer";
 import Player, { SerializedPlayer } from "./Player";
 import ResourceManager from "./ResourceManager";
+import { validateEngine } from "./schemas";
 import DeathScreen from "./screens/DeathScreen";
 import DungeonScreen from "./screens/DungeonScreen";
 import LoadingScreen from "./screens/LoadingScreen";
@@ -55,7 +56,7 @@ import { matchAll, Predicate } from "./types/logic";
 import World from "./types/World";
 import XY from "./types/XY";
 
-interface SerializedEngine {
+export interface SerializedEngine {
   facing: Dir;
   inventory: string[];
   knownMap: SerializedKnownMap;
@@ -928,7 +929,12 @@ export default class Engine implements Game {
     };
   }
 
-  load(save: SerializedEngine) {
+  load(save: any) {
+    if (!validateEngine(save)) {
+      console.warn(validateEngine.errors);
+      return;
+    }
+
     this.facing = save.facing;
     this.inventory = save.inventory
       .map((name) => getItem(name))
