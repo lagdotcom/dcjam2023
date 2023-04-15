@@ -5,23 +5,24 @@ import { partyDied, startArea } from "./analytics";
 import CombatManager from "./CombatManager";
 import CombatRenderer from "./CombatRenderer";
 import convertGridCartographerMap from "./convertGridCartographerMap";
-import DeathScreen from "./DeathScreen";
 import DefaultControls from "./DefaultControls";
 import DungeonRenderer from "./DungeonRenderer";
-import DungeonScreen from "./DungeonScreen";
 import { EnemyName, EnemyObjects } from "./enemies";
 import EngineInkScripting from "./EngineInkScripting";
 import HUDRenderer from "./HUDRenderer";
 import { getItem } from "./items";
 import Jukebox from "./Jukebox";
 import KnownMapData, { SerializedKnownMap, WallType } from "./KnownMapData";
-import LoadingScreen from "./LoadingScreen";
 import LogRenderer from "./LogRenderer";
 import Player, { SerializedPlayer } from "./Player";
 import ResourceManager from "./ResourceManager";
+import DeathScreen from "./screens/DeathScreen";
+import DungeonScreen from "./screens/DungeonScreen";
+import LoadingScreen from "./screens/LoadingScreen";
+import SplashScreen from "./screens/SplashScreen";
+import StatsScreen from "./screens/StatsScreen";
 import Soon from "./Soon";
 import Sounds from "./Sounds";
-import SplashScreen from "./SplashScreen";
 import { contains } from "./tools/aabb";
 import removeItem from "./tools/arrays";
 import {
@@ -49,7 +50,6 @@ import {
 import Game, { GameEffect } from "./types/Game";
 import GameInput from "./types/GameInput";
 import { GameScreen } from "./types/GameScreen";
-import HasHotspots from "./types/HasHotspots";
 import Item from "./types/Item";
 import { matchAll, Predicate } from "./types/logic";
 import World from "./types/World";
@@ -64,7 +64,7 @@ interface SerializedEngine {
   pendingArenaEnemies: EnemyName[];
   pendingNormalEnemies: EnemyName[];
   position: XYTag;
-  script: Record<string, any>;
+  script: Record<string, unknown>;
 }
 
 interface TargetPicking {
@@ -106,7 +106,6 @@ export default class Engine implements Game {
   scripting: EngineInkScripting;
   sfx: Sounds;
   showLog: boolean;
-  spotElements: HasHotspots[];
   world?: World;
   worldSize: XY;
   zoomRatio: number;
@@ -134,7 +133,6 @@ export default class Engine implements Game {
     this.inventory = [];
     this.pendingArenaEnemies = [];
     this.pendingNormalEnemies = [];
-    this.spotElements = [];
     this.party = [];
     this.jukebox = new Jukebox(this);
     this.sfx = new Sounds(this);
@@ -150,7 +148,7 @@ export default class Engine implements Game {
   }
 
   getSpot(pos: XY) {
-    for (const element of this.spotElements) {
+    for (const element of this.screen.spotElements) {
       const spot = element.spots.find((s) => contains(s, pos));
       if (spot) return { element, spot };
     }
@@ -202,6 +200,8 @@ export default class Engine implements Game {
         return this.partySwap(2);
       case "Cancel":
         return this.cancel();
+      case "OpenStats":
+        return this.openStats();
     }
   }
 
@@ -233,7 +233,6 @@ export default class Engine implements Game {
     this.knownMap.enter(w.name);
     this.markVisited();
 
-    this.spotElements = [hud.skills, hud.stats];
     this.screen = new DungeonScreen(this, { combat, dungeon, hud, log });
     startArea(this.world.name);
     return this.draw();
@@ -371,7 +370,7 @@ export default class Engine implements Game {
     return true;
   }
 
-  interact(index: number) {
+  interact(index: Dir) {
     if (!this.party[index].alive) return false;
     if (this.combat.inCombat) return false;
 
@@ -948,5 +947,10 @@ export default class Engine implements Game {
     this.showLog = false;
 
     this.draw();
+  }
+
+  openStats() {
+    this.screen = new StatsScreen(this);
+    return true;
   }
 }

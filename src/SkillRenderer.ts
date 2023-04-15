@@ -2,10 +2,13 @@ import Engine from "./Engine";
 import { xy } from "./tools/geometry";
 import Hotspot from "./tools/Hotspot";
 import withTextStyle from "./tools/withTextStyle";
+import Dir from "./types/Dir";
 import HasHotspots from "./types/HasHotspots";
 
+type Spot = Hotspot & { dir: Dir };
+
 export default class SkillRenderer implements HasHotspots {
-  public spots: Hotspot[];
+  public spots: Spot[];
 
   constructor(
     public g: Engine,
@@ -30,8 +33,8 @@ export default class SkillRenderer implements HasHotspots {
     const textX = position.x + offset.x;
     let textY = position.y + offset.y;
 
-    for (let id = 0; id < 4; id++) {
-      const pc = this.g.party[id];
+    for (let dir = 0; dir < 4; dir++) {
+      const pc = this.g.party[dir];
 
       if (pc.alive) {
         draw(pc.skill, textX, textY);
@@ -39,7 +42,7 @@ export default class SkillRenderer implements HasHotspots {
         const x = textX - 10;
         const y = textY - 8;
         this.spots.push({
-          id,
+          dir,
           x,
           y,
           ex: x + buttonSize.x,
@@ -52,7 +55,7 @@ export default class SkillRenderer implements HasHotspots {
     }
   }
 
-  spotClicked(spot: Hotspot): void {
-    this.g.interact(spot.id);
+  spotClicked(spot: Spot): void {
+    this.g.interact(spot.dir);
   }
 }

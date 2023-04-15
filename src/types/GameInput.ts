@@ -15,5 +15,6 @@ type GameInput =
   | "MenuUp"
   | "MenuDown"
   | "MenuChoose"
-  | "Cancel";
+  | "Cancel"
+  | "OpenStats";
 export default GameInput;

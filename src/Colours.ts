@@ -9,9 +9,19 @@ const Colours = {
   hp: "rgb(223,113,38)",
   sp: "rgb(99,155,255)",
 
-  currentChosenClass: "rgb(255,255,192)",
-  currentClass: "rgb(160,160,160)",
-  chosenClass: "rgb(192,192,64)",
-  otherClass: "rgb(96,96,96)",
+  itemActiveHighlighted: "rgb(255,255,192)",
+  itemHighlighted: "rgb(160,160,160)",
+  itemActive: "rgb(192,192,64)",
+  item: "rgb(96,96,96)",
 };
 export default Colours;
+
+export function getItemColour(active: boolean, highlighted: boolean) {
+  return highlighted
+    ? active
+      ? Colours.itemActiveHighlighted
+      : Colours.itemHighlighted
+    : active
+    ? Colours.itemActive
+    : Colours.item;
+}

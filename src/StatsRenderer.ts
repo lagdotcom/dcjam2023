@@ -61,8 +61,10 @@ class MarbleAnimator {
   };
 }
 
+type Spot = Hotspot & { dir: Dir };
+
 export default class StatsRenderer implements HasHotspots {
-  public spots: Hotspot[];
+  spots: Spot[];
   animator: MarbleAnimator;
   positions: XY[];
 
@@ -88,14 +90,14 @@ export default class StatsRenderer implements HasHotspots {
     }
   }
 
-  renderPC({ x, y }: XY, pc: Player, bg: HTMLImageElement, index: number) {
+  renderPC({ x, y }: XY, pc: Player, bg: HTMLImageElement, dir: Dir) {
     const { text, hp, sp } = this;
     const { ctx } = this.g;
 
     this.renderBar(x + hp.x, y + hp.y, pc.hp, pc.maxHP, Colours.hp);
     this.renderBar(x + sp.x, y + sp.y, pc.sp, pc.maxSP, Colours.sp);
 
-    ctx.globalAlpha = index === this.g.facing ? 1 : 0.7;
+    ctx.globalAlpha = dir === this.g.facing ? 1 : 0.7;
     ctx.drawImage(bg, x, y);
     ctx.globalAlpha = 1;
 
@@ -107,7 +109,7 @@ export default class StatsRenderer implements HasHotspots {
     draw(pc.name, x + bg.width / 2, y + text.y, barWidth);
 
     this.spots.push({
-      id: index,
+      dir,
       x,
       y,
       ex: x + bg.width,
@@ -116,8 +118,8 @@ export default class StatsRenderer implements HasHotspots {
     });
   }
 
-  spotClicked(spot: Hotspot) {
-    this.g.pcClicked(spot.id as Dir);
+  spotClicked(spot: Spot) {
+    this.g.pcClicked(spot.dir);
   }
 
   renderBar(

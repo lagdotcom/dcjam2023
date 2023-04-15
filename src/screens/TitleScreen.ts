@@ -1,19 +1,21 @@
-import mapJson from "../res/map.json";
-import { startGame } from "./analytics";
-import classes from "./classes";
-import Colours from "./Colours";
-import Engine from "./Engine";
-import EngineInkScripting from "./EngineInkScripting";
-import Player from "./Player";
-import { wrap } from "./tools/numbers";
-import textWrap from "./tools/textWrap";
-import withTextStyle from "./tools/withTextStyle";
-import { ClassName, ClassNames } from "./types/ClassName";
-import { GameScreen } from "./types/GameScreen";
+import mapJson from "../../res/map.json";
+import { startGame } from "../analytics";
+import classes from "../classes";
+import { getItemColour } from "../Colours";
+import Engine from "../Engine";
+import EngineInkScripting from "../EngineInkScripting";
+import Player from "../Player";
+import { wrap } from "../tools/numbers";
+import textWrap from "../tools/textWrap";
+import withTextStyle from "../tools/withTextStyle";
+import { ClassName, ClassNames } from "../types/ClassName";
+import { GameScreen } from "../types/GameScreen";
+import HasHotspots from "../types/HasHotspots";
 
 export default class TitleScreen implements GameScreen {
   index: number;
   selected: Set<ClassName>;
+  spotElements: HasHotspots[] = [];
 
   constructor(public g: Engine) {
     g.draw();
@@ -102,14 +104,7 @@ export default class TitleScreen implements GameScreen {
       let y = 60;
       for (let i = 0; i < ClassNames.length; i++) {
         const cn = ClassNames[i];
-        ctx.fillStyle =
-          i === index
-            ? selected.has(cn)
-              ? Colours.currentChosenClass
-              : Colours.currentClass
-            : selected.has(cn)
-            ? Colours.chosenClass
-            : Colours.otherClass;
+        ctx.fillStyle = getItemColour(i === index, selected.has(cn));
 
         draw(cn, 20, y);
         y += lineHeight * 2;

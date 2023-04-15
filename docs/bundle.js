@@ -82,7 +82,7 @@
   var GA = import_gameanalytics.GameAnalytics;
   var gameKey = "0cccc807c1bc3cf03c04c4484781b3e3";
   var secretKey = "e5c1f07cb81d0d2e8c97cfa96d0f068f216b482f";
-  var debugAnalytics = true;
+  var debugAnalytics = false;
   var disableKey = "disableAnalytics";
   var disableValue = "TRUE";
   function isAnalyticsDisabled() {
@@ -812,12 +812,15 @@
     mapVisited: "rgb(64,64,64)",
     hp: "rgb(223,113,38)",
     sp: "rgb(99,155,255)",
-    currentChosenClass: "rgb(255,255,192)",
-    currentClass: "rgb(160,160,160)",
-    chosenClass: "rgb(192,192,64)",
-    otherClass: "rgb(96,96,96)"
+    itemActiveHighlighted: "rgb(255,255,192)",
+    itemHighlighted: "rgb(160,160,160)",
+    itemActive: "rgb(192,192,64)",
+    item: "rgb(96,96,96)"
   };
   var Colours_default = Colours;
+  function getItemColour(active, highlighted) {
+    return highlighted ? active ? Colours.itemActiveHighlighted : Colours.itemHighlighted : active ? Colours.itemActive : Colours.item;
+  }
 
   // src/tools/geometry.ts
   var xy = (x, y) => ({ x, y });
@@ -1268,6 +1271,283 @@
     return converter.convert(j, region, floor);
   }
 
+  // src/DefaultControls.ts
+  var DefaultControls = [
+    ["ArrowUp", ["Forward", "MenuUp"]],
+    ["KeyW", ["Forward", "MenuUp"]],
+    ["ArrowRight", ["TurnRight"]],
+    ["KeyE", ["TurnRight"]],
+    ["ArrowDown", ["Back", "MenuDown"]],
+    ["KeyS", ["Back", "MenuDown"]],
+    ["ArrowLeft", ["TurnLeft"]],
+    ["KeyQ", ["TurnLeft"]],
+    ["Shift+ArrowRight", ["SlideRight"]],
+    ["KeyD", ["SlideRight"]],
+    ["Shift+ArrowLeft", ["SlideLeft"]],
+    ["KeyA", ["SlideLeft"]],
+    ["Ctrl+ArrowRight", ["RotateRight"]],
+    ["Ctrl+KeyD", ["RotateRight"]],
+    ["Ctrl+ArrowLeft", ["RotateLeft"]],
+    ["Ctrl+KeyA", ["RotateLeft"]],
+    ["Alt+ArrowRight", ["SwapRight"]],
+    ["Alt+KeyD", ["SwapRight"]],
+    ["Alt+ArrowDown", ["SwapBehind"]],
+    ["Alt+KeyS", ["SwapBehind"]],
+    ["Alt+ArrowLeft", ["SwapLeft"]],
+    ["Alt+KeyA", ["SwapLeft"]],
+    ["Space", ["ToggleLog"]],
+    ["Enter", ["Interact", "MenuChoose"]],
+    ["Return", ["Interact", "MenuChoose"]],
+    ["Escape", ["Cancel", "OpenStats"]]
+  ];
+  var DefaultControls_default = DefaultControls;
+
+  // src/fov.ts
+  var facingDisplacements = {
+    [Dir_default.E]: [0, 1, -1, 0],
+    [Dir_default.N]: [1, 0, 0, 1],
+    [Dir_default.S]: [-1, 0, 0, -1],
+    [Dir_default.W]: [0, -1, 1, 0]
+  };
+  function getDisplacement(from, to, facing) {
+    const dx = to.x - from.x;
+    const dy = to.y - from.y;
+    const [a, b, c, d] = facingDisplacements[facing];
+    const x = dx * a + dy * b;
+    const y = dx * c + dy * d;
+    return [x, y];
+  }
+  var FovCalculator = class {
+    constructor(g) {
+      this.g = g;
+      this.entries = /* @__PURE__ */ new Map();
+    }
+    calculate(width, depth) {
+      const position = this.g.position;
+      this.propagate(position, width, depth);
+      return [...this.entries.values()].sort((a, b) => {
+        const zd = a.dz - b.dz;
+        if (zd)
+          return zd;
+        const xd = Math.abs(a.dx) - Math.abs(b.dx);
+        return -xd;
+      });
+    }
+    displacement(position) {
+      return getDisplacement(this.g.position, position, this.g.facing);
+    }
+    propagate(position, width, depth) {
+      if (width <= 0 || depth <= 0)
+        return;
+      const { g } = this;
+      const { facing } = g;
+      const tag = xyToTag(position);
+      const old = this.entries.get(tag);
+      if (old) {
+        if (old.width >= width && old.depth >= depth)
+          return;
+      }
+      const { x, y } = position;
+      const cell = g.getCell(x, y);
+      if (!cell)
+        return;
+      const [dx, dz] = this.displacement(position);
+      const leftVisible = dx <= 0;
+      const rightVisible = dx >= 0;
+      this.entries.set(tag, {
+        x,
+        y,
+        dx,
+        dz,
+        width,
+        depth,
+        leftVisible,
+        rightVisible
+      });
+      if (leftVisible) {
+        const leftDir = rotate(facing, 3);
+        const leftWall = cell.sides[leftDir];
+        if (!(leftWall == null ? void 0 : leftWall.wall))
+          this.propagate(move(position, leftDir), width - 1, depth);
+      }
+      if (rightVisible) {
+        const rightDir = rotate(facing, 1);
+        const rightWall = cell.sides[rightDir];
+        if (!(rightWall == null ? void 0 : rightWall.wall))
+          this.propagate(move(position, rightDir), width - 1, depth);
+      }
+      const forwardWall = cell.sides[facing];
+      if (!(forwardWall == null ? void 0 : forwardWall.wall))
+        this.propagate(move(position, facing), width, depth - 1);
+    }
+  };
+  function getFieldOfView(g, width, depth) {
+    const calc = new FovCalculator(g);
+    return calc.calculate(width, depth);
+  }
+
+  // src/tools/getCanvasContext.ts
+  function getCanvasContext(canvas, type, options) {
+    const ctx = canvas.getContext(type, options);
+    if (!ctx)
+      throw new Error(`canvas.getContext(${type})`);
+    return ctx;
+  }
+
+  // src/DungeonRenderer.ts
+  var tileTag = (id, type, tile) => `${type}${id}:${tile.x},${tile.z}`;
+  var DungeonRenderer = class {
+    constructor(g, dungeon, atlasImage, offset = xy(91, 21)) {
+      this.g = g;
+      this.dungeon = dungeon;
+      this.atlasImage = atlasImage;
+      this.offset = offset;
+      this.imageData = /* @__PURE__ */ new Map();
+    }
+    addAtlas(layers, image) {
+      const atlasCanvas = document.createElement("canvas");
+      atlasCanvas.width = image.width;
+      atlasCanvas.height = image.height;
+      const atlasCtx = getCanvasContext(atlasCanvas, "2d", {
+        willReadFrequently: true
+      });
+      atlasCtx.drawImage(image, 0, 0);
+      const promises = [];
+      for (const layer of layers) {
+        for (const entry of layer.tiles) {
+          const imageData = atlasCtx.getImageData(
+            entry.coords.x,
+            entry.coords.y,
+            entry.coords.w,
+            entry.coords.h
+          );
+          const tmpCanvas = document.createElement("canvas");
+          tmpCanvas.width = entry.coords.w;
+          tmpCanvas.height = entry.coords.h;
+          const tmpCtx = getCanvasContext(tmpCanvas, "2d");
+          if (entry.flipped) {
+            const data = this.flipImage(
+              entry.coords.w,
+              entry.coords.h,
+              imageData.data
+            );
+            imageData.data.set(data);
+          }
+          tmpCtx.putImageData(imageData, 0, 0);
+          this.imageData.set(tileTag(layer.id, entry.type, entry.tile), entry);
+          promises.push(
+            createImageBitmap(imageData).then((bmp) => {
+              entry.image = bmp;
+              return entry;
+            })
+          );
+        }
+      }
+      return Promise.all(promises);
+    }
+    getImage(id, type, x, z) {
+      const tag = tileTag(id, type, { x, z });
+      return this.imageData.get(tag);
+    }
+    flipImage(w, h, data) {
+      const flippedData = new Uint8Array(w * h * 4);
+      for (let col = 0; col < w; col++) {
+        for (let row = 0; row < h; row++) {
+          const index = (w - 1 - col) * 4 + row * w * 4;
+          const index2 = col * 4 + row * w * 4;
+          flippedData[index2] = data[index];
+          flippedData[index2 + 1] = data[index + 1];
+          flippedData[index2 + 2] = data[index + 2];
+          flippedData[index2 + 3] = data[index + 3];
+        }
+      }
+      return flippedData;
+    }
+    getLayersOfType(type) {
+      return this.dungeon.layers.filter((layer) => layer.type === type);
+    }
+    project(x, z) {
+      const { facing, position } = this.g;
+      switch (facing) {
+        case Dir_default.N:
+          return [position.x + x, position.y + z];
+        case Dir_default.E:
+          return [position.x - z, position.y + x];
+        case Dir_default.S:
+          return [position.x - x, position.y - z];
+        case Dir_default.W:
+          return [position.x + z, position.y - x];
+      }
+    }
+    draw(result) {
+      const dx = result.screen.x - (result.flipped ? result.coords.w : 0);
+      const dy = result.screen.y;
+      this.g.ctx.drawImage(result.image, dx + this.offset.x, dy + this.offset.y);
+    }
+    drawFront(result, x) {
+      const dx = result.screen.x + x * result.coords.fullWidth;
+      const dy = result.screen.y;
+      this.g.ctx.drawImage(result.image, dx + this.offset.x, dy + this.offset.y);
+    }
+    drawImage(id, type, x, z) {
+      const result = this.getImage(id, type, x, z);
+      if (result)
+        this.draw(result);
+    }
+    drawFrontImage(id, type, x, z) {
+      const result = this.getImage(id, type, 0, z);
+      if (result)
+        this.drawFront(result, x);
+    }
+    render() {
+      const rightSide = rotate(this.g.facing, 1);
+      const leftSide = rotate(this.g.facing, 3);
+      const tiles = getFieldOfView(
+        this.g,
+        this.dungeon.width,
+        this.dungeon.depth
+      );
+      for (const pos of tiles) {
+        const cell = this.g.getCell(pos.x, pos.y);
+        if (!cell)
+          continue;
+        if (cell.ceiling)
+          this.drawImage(cell.ceiling, "ceiling", pos.dx, pos.dz);
+        if (cell.floor)
+          this.drawImage(cell.floor, "floor", pos.dx, pos.dz);
+      }
+      for (const pos of tiles) {
+        const cell = this.g.getCell(pos.x, pos.y);
+        if (!cell)
+          continue;
+        if (pos.leftVisible) {
+          const left = cell.sides[leftSide];
+          if (left == null ? void 0 : left.wall)
+            this.drawImage(left.wall, "side", pos.dx - 1, pos.dz);
+          if (left == null ? void 0 : left.decal)
+            this.drawImage(left.decal, "side", pos.dx - 1, pos.dz);
+        }
+        if (pos.rightVisible) {
+          const right = cell.sides[rightSide];
+          if (right == null ? void 0 : right.wall)
+            this.drawImage(right.wall, "side", pos.dx + 1, pos.dz);
+          if (right == null ? void 0 : right.decal)
+            this.drawImage(right.decal, "side", pos.dx + 1, pos.dz);
+        }
+        const front = cell.sides[this.g.facing];
+        if (front == null ? void 0 : front.wall)
+          this.drawFrontImage(front.wall, "front", pos.dx, pos.dz - 1);
+        if (front == null ? void 0 : front.decal)
+          this.drawFrontImage(front.decal, "front", pos.dx, pos.dz - 1);
+        if (cell.object)
+          this.drawFrontImage(cell.object, "object", pos.dx, pos.dz);
+      }
+    }
+  };
+
+  // src/EngineInkScripting.ts
+  var import_Story = __toESM(require_inkjs());
+
   // src/items/cleavesman.ts
   var cleavesman_exports = {};
   __export(cleavesman_exports, {
@@ -1376,6 +1656,104 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
   Jaegerstock.lore = `Able to stab in a forward and back motion, then a back to forward motion, and once again in a forward and back motion. Wielders often put one foot forward to brace themselves, and those with transcendental minds? They also stab in a forward and back motion.`;
   Varganglia.lore = `Armour that's slithered forth from Telnoth's scars after the Long War ended. Varganglia carcasses have become a common attire for cleavesmen, their pelts covered with thick and venomous barbs that erupt from the carcass when struck, making the wearer difficult to strike.`;
   Gambesar.lore = `"Enchanted by Cherraphy's highest order of sages, gambesars are awarded only to cleavesman that return from battle after sustaining tremendous injury. It's said that wearing one allows the user to shift the environment around them, appearing multiple steps from where they first started in just an instant.`;
+
+  // src/items/consumable.ts
+  var consumable_exports = {};
+  __export(consumable_exports, {
+    HolyDew: () => HolyDew,
+    LifeDew: () => LifeDew,
+    Liquor: () => Liquor,
+    ManaDew: () => ManaDew,
+    Ration: () => Ration
+  });
+  var LifeDew = {
+    name: "Life Dew",
+    type: "Consumable",
+    bonus: {},
+    action: {
+      name: "Scatter",
+      tags: ["heal"],
+      sp: 1,
+      targets: ally(1),
+      targetFilter: (c) => c.hp < c.maxHP,
+      act({ g, me, targets }) {
+        g.heal(me, targets, 3);
+      }
+    }
+  };
+  var ManaDew = {
+    name: "Mana Dew",
+    type: "Consumable",
+    bonus: {},
+    action: {
+      name: "Scatter",
+      tags: ["heal"],
+      sp: 1,
+      targets: ally(1),
+      targetFilter: (c) => c.sp < c.maxSP,
+      act({ g, targets }) {
+        for (const target of targets) {
+          const newSP = Math.min(target.maxSP, target.sp + 3);
+          const gain = newSP - target.maxSP;
+          if (gain) {
+            target.sp += gain;
+            g.addToLog(`${target.name} feels recharged.`);
+          }
+        }
+      }
+    }
+  };
+  var Liquor = {
+    name: "Liquor",
+    type: "Consumable",
+    bonus: {},
+    action: {
+      name: "Drink",
+      tags: ["heal"],
+      sp: 1,
+      targets: ally(1),
+      act({ g, targets }) {
+        for (const target of targets) {
+          target.camaraderie++;
+          g.addToLog(`${target.name} feels a little more convivial.`);
+        }
+      }
+    }
+  };
+  var Ration = {
+    name: "Ration",
+    type: "Consumable",
+    bonus: {},
+    action: {
+      name: "Eat",
+      tags: ["heal"],
+      sp: 1,
+      targets: ally(1),
+      act({ g, targets }) {
+        for (const target of targets) {
+          target.determination++;
+          g.addToLog(`${target.name} feels a little more determined.`);
+        }
+      }
+    }
+  };
+  var HolyDew = {
+    name: "Holy Dew",
+    type: "Consumable",
+    bonus: {},
+    action: {
+      name: "Scatter",
+      tags: ["heal"],
+      sp: 1,
+      targets: ally(1),
+      act({ g, targets }) {
+        for (const target of targets) {
+          target.spirit++;
+          g.addToLog(`${target.name} feels their hopes lift.`);
+        }
+      }
+    }
+  };
 
   // src/items/farScout.ts
   var farScout_exports = {};
@@ -2241,187 +2619,6 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
   CherClaspeGauntlet.lore = `A pair of iron gauntlets ensorcelled with a modest enchantment; upon the command of a priest, these matching metal gloves each lock into the shape of a fist and cannot be undone by the bearer; a stricture that War Callers willingly bear, that it may sustain their resolve and dismiss their idle habits.`;
   SaintGong.lore = `A brass percussive disc mounted on a seven foot banner-pole and hung from hinge-chains, letting it swing freely enough that its shuddering surface rings clean. Most effective when tuned to the frequency of a chosen knight's bellows, allowing it to crash loudly in accompaniment with each war cry.`;
 
-  // src/classes.ts
-  var classes = {
-    Martialist: {
-      name: "Kirkwin",
-      lore: `From birth, Kirkwin trained his body as a weapon, studying under the most brutal martialist sects that were allowed in Haringlee, and some that weren't. So it was to great surprise when Cherraphy appointed Kirkwin as the leader of Haringlee's guard; protector of the weak, defender of the pathetic as he saw it. Zealotry never suited Kirkwin, and rather than play his role as a coward soldier sitting idle, he abandons his post to join the assault on Nightjar, and in doing so vows to Cherraphy and Mullanginan both that they too will someday bleed and bow low.`,
-      deathQuote: `Kirkwin's body sagged in the face of extreme odds, and he knew that his discipline had finally failed. His greatest fear was that his lifelong practises had served only to transform his youth into a carved body, a merciless expression and little else besides. Robbed of his strength, he found it easy to part with the remainder of his spirit.`,
-      hp: 21,
-      sp: 7,
-      determination: 6,
-      camaraderie: 2,
-      spirit: 3,
-      items: [Penduchaimmer, HaringleeKasaya],
-      skill: "Smash"
-    },
-    Cleavesman: {
-      name: "Mogrigg",
-      lore: `The village's headsman, a role instigated by Cherraphy and chosen at random. Considered a luckless man, not blamed for the three lives he's taken at his god's behest. Was previously a loyal soldier and pikeman at a time when his lord was just and interested in protecting the border villages, before the man's personality crumbled into rote righteousness. Mogrigg still has the scars, but none of the respect he earned. Of course he volunteered to brave the Nightjar! His hand was the first to rise!`,
-      deathQuote: `Somewhere behind the whirlwind of resentment and a deafening rush of blood hid Mogrigg's thoughts. Ever had they been on the topic of death, even when his party mates had made him cackle with laughter or introduced to him new ways of thinking. The death wish was just too much. He rushed gleefully towards his doom, as he had in every previous battle. This time, he met it.`,
-      hp: 25,
-      sp: 6,
-      determination: 4,
-      camaraderie: 4,
-      spirit: 3,
-      items: [GorgothilSword, Haringplate],
-      skill: "Cut"
-    },
-    "Far Scout": {
-      name: "Tam",
-      lore: `The surest bow in Haringlee. Favouring high cliffs above the treetops, she is a very fine huntress who's found that her place in the village of her birth has become slowly less secure. Tam worships only as far as socially necessary, excusing herself more and more from the mania overtaking the populace. Still, that does leave more time to practise her woodscraft, her acrobacy and her deadly aim. Sensing the opportunity for change in the expedition to the Nightjar, she signs up, explaining that she already knows the best route over the river.`,
-      deathQuote: `Tam knew she'd made a terrible error as she watched her comrades be dashed to the ground, fearing that her body was soon to join theirs. Yet it hadn't been a tactical mistake; she hadn't simply been tricked by Mullanginan's men. Instead, it had been an elementary failure from the onset: leaving the high ground? Voluntarily straying into the beast's lair? A huntress who ignored her instincts was a doomed one indeed.`,
-      hp: 18,
-      sp: 7,
-      determination: 3,
-      camaraderie: 3,
-      spirit: 5,
-      items: [BoltSlinger, AdaloaxPelt],
-      skill: "Tamper"
-    },
-    "War Caller": {
-      name: "Silas",
-      lore: `Silas considers himself duty-bound to the goddess Cherraphy and exults her name without second thoughts. Blessed with unique conviction, his charmed surety in combat has increased even since his pit-fighting days; he now sees fit to call himself Knight-Enforcer and claim the ancient War Calling title from the old times... from before the wars made sense! Suspecting mischief and irreverence in the party that ventures to the Nightjar, he stubbornly joins, vowing to hold high the goddess's name. Yes, he's a nasty piece of work, but his arrogance serves to draw your enemy's ire away from your friends.`,
-      deathQuote: `Silas stared at his hands, both of them stained with his life's blood, and found it all too much to believe. He had dedicated himself to the service of Cherraphy and had ultimately been spurned, receiving no divine intervention that might justify his devotion. No god appeared to witness Silas's final moments. The only reward granted to the man was a fool's death.`,
-      hp: 30,
-      sp: 5,
-      determination: 5,
-      camaraderie: 2,
-      spirit: 4,
-      items: [OwlSkull, IronFullcase],
-      skill: "Prayer"
-    },
-    "Flag Singer": {
-      name: "Belsome",
-      lore: `A travelling auteur, stranded in Haringlee, their stagecoach impounded under the most arbitrary of Cherraphic laws. Before that, a bard, and before that, a wanted street thief. Now reformed as an entertainer, their reflexes remain true. Belsome has the instinct and the presence of mind needed to size up a dangerous situation, the savvy required to navigate it without incident and the compassion that also steers those around them to safety. Belsome doesn't know how vital their skills of performance, of misdirection and of psychic intuition will be inside the Fortress Nightjar, but this isn't exactly the first time they've performed without rehearsal.`,
-      deathQuote: `Belsome dropped to their knees, knowing they'd been dealt a killing blow. Fitting enough; such a commanding performance should always end with a convincing death. Projecting all their passion and spite into one last speech, Belsome howled: "Curse the gods!" and keeled over into oblivion, their epitaph still resounding in the air.`,
-      hp: 21,
-      sp: 6,
-      determination: 2,
-      camaraderie: 6,
-      spirit: 3,
-      items: [CarvingKnife, SignedCasque],
-      skill: "Sing"
-    },
-    "Loam Seer": {
-      name: "Chiteri",
-      lore: `Chiteri is a beetle-like humanoid who observes human activity from safety, where the river meets the wood. Sad at the many recent upheavals in Haringlee culture, Chiteri reveals her existence to the dumbfounded villagers and, furthermore, offers her magical assistance in their trip to the Nightjar, secretly planning to defame the goddess Cherraphy, thereby salvaging the lives of the people. Able to call on the magic dwelling deep within the earth, Chiteri is a canny healer and is also able to bestow curious magickal toughness to her quick new friends, even if she doesn't share their cause.`,
-      deathQuote: `Her carapace smashed to pieces, Chiteri found herself slipping into a place of inward calm. It had been an ordeal to maintain her friendships with her human companions; now, she was glad for it to be over. Chiteri dispassionately transmitted her final verdicts to her many hive sisters, gladdened by glimpses of the Nightjar's primitive insects that quickly surrounded her body as she expired.`,
-      hp: 18,
-      sp: 5,
-      determination: 2,
-      camaraderie: 5,
-      spirit: 4,
-      items: [Cornucopia, JacketAndRucksack],
-      skill: "Shift"
-    }
-  };
-  var classes_default = classes;
-
-  // res/map.json
-  var map_default2 = "./map-HXD5COAC.json";
-
-  // src/EngineInkScripting.ts
-  var import_Story = __toESM(require_inkjs());
-
-  // src/items/consumable.ts
-  var consumable_exports = {};
-  __export(consumable_exports, {
-    HolyDew: () => HolyDew,
-    LifeDew: () => LifeDew,
-    Liquor: () => Liquor,
-    ManaDew: () => ManaDew,
-    Ration: () => Ration
-  });
-  var LifeDew = {
-    name: "Life Dew",
-    type: "Consumable",
-    bonus: {},
-    action: {
-      name: "Scatter",
-      tags: ["heal"],
-      sp: 1,
-      targets: ally(1),
-      targetFilter: (c) => c.hp < c.maxHP,
-      act({ g, me, targets }) {
-        g.heal(me, targets, 3);
-      }
-    }
-  };
-  var ManaDew = {
-    name: "Mana Dew",
-    type: "Consumable",
-    bonus: {},
-    action: {
-      name: "Scatter",
-      tags: ["heal"],
-      sp: 1,
-      targets: ally(1),
-      targetFilter: (c) => c.sp < c.maxSP,
-      act({ g, targets }) {
-        for (const target of targets) {
-          const newSP = Math.min(target.maxSP, target.sp + 3);
-          const gain = newSP - target.maxSP;
-          if (gain) {
-            target.sp += gain;
-            g.addToLog(`${target.name} feels recharged.`);
-          }
-        }
-      }
-    }
-  };
-  var Liquor = {
-    name: "Liquor",
-    type: "Consumable",
-    bonus: {},
-    action: {
-      name: "Drink",
-      tags: ["heal"],
-      sp: 1,
-      targets: ally(1),
-      act({ g, targets }) {
-        for (const target of targets) {
-          target.camaraderie++;
-          g.addToLog(`${target.name} feels a little more convivial.`);
-        }
-      }
-    }
-  };
-  var Ration = {
-    name: "Ration",
-    type: "Consumable",
-    bonus: {},
-    action: {
-      name: "Eat",
-      tags: ["heal"],
-      sp: 1,
-      targets: ally(1),
-      act({ g, targets }) {
-        for (const target of targets) {
-          target.determination++;
-          g.addToLog(`${target.name} feels a little more determined.`);
-        }
-      }
-    }
-  };
-  var HolyDew = {
-    name: "Holy Dew",
-    type: "Consumable",
-    bonus: {},
-    action: {
-      name: "Scatter",
-      tags: ["heal"],
-      sp: 1,
-      targets: ally(1),
-      act({ g, targets }) {
-        for (const target of targets) {
-          target.spirit++;
-          g.addToLog(`${target.name} feels their hopes lift.`);
-        }
-      }
-    }
-  };
-
   // src/items/index.ts
   var allItems = Object.fromEntries(
     [
@@ -2760,665 +2957,6 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     }
   };
 
-  // src/Player.ts
-  function getBaseStat(className, stat, bonusStat, bonusIfTrue = 1) {
-    return classes_default[className][stat] + (bonusStat === stat ? bonusIfTrue : 0);
-  }
-  var Player = class {
-    constructor(g, className, bonus, items = classes_default[className].items) {
-      this.g = g;
-      this.className = className;
-      this.name = classes_default[className].name;
-      this.isPC = true;
-      this.attacksInARow = 0;
-      this.usedThisTurn = /* @__PURE__ */ new Set();
-      this.skill = classes_default[className].skill;
-      for (const item of items) {
-        if (item.slot)
-          this.equip(item);
-        else
-          g.inventory.push(item);
-      }
-      this.baseMaxHP = getBaseStat(className, "hp", bonus, 5);
-      this.baseMaxSP = getBaseStat(className, "sp", bonus);
-      this.baseCamaraderie = getBaseStat(className, "camaraderie", bonus);
-      this.baseDetermination = getBaseStat(className, "determination", bonus);
-      this.baseSpirit = getBaseStat(className, "spirit", bonus);
-      this.hp = this.maxHP;
-      this.sp = Math.min(this.baseMaxSP, this.spirit);
-    }
-    get alive() {
-      return this.hp > 0;
-    }
-    get equipment() {
-      return [this.LeftHand, this.RightHand, this.Body, this.Special].filter(
-        isDefined
-      );
-    }
-    static load(g, data) {
-      const p = new Player(g, data.className);
-      p.name = data.name;
-      p.hp = data.hp;
-      p.sp = data.sp;
-      p.LeftHand = getItem(data.LeftHand);
-      p.RightHand = getItem(data.RightHand);
-      p.Body = getItem(data.Body);
-      p.Special = getItem(data.Special);
-      return p;
-    }
-    serialize() {
-      const { name, className, hp, sp, LeftHand, RightHand, Body, Special } = this;
-      return {
-        name,
-        className,
-        hp,
-        sp,
-        LeftHand: LeftHand == null ? void 0 : LeftHand.name,
-        RightHand: RightHand == null ? void 0 : RightHand.name,
-        Body: Body == null ? void 0 : Body.name,
-        Special: Special == null ? void 0 : Special.name
-      };
-    }
-    getStat(stat, base = 0) {
-      var _a;
-      let value = base;
-      for (const item of this.equipment) {
-        value += (_a = item == null ? void 0 : item.bonus[stat]) != null ? _a : 0;
-      }
-      return this.g.applyStatModifiers(this, stat, value);
-    }
-    get maxHP() {
-      return this.getStat("maxHP", this.baseMaxHP);
-    }
-    get maxSP() {
-      return this.getStat("maxHP", this.baseMaxSP);
-    }
-    get dr() {
-      return this.getStat("dr", 0);
-    }
-    get camaraderie() {
-      return this.getStat("camaraderie", this.baseCamaraderie);
-    }
-    get determination() {
-      return this.getStat("determination", this.baseDetermination);
-    }
-    get spirit() {
-      return this.getStat("spirit", this.baseSpirit);
-    }
-    get actions() {
-      return Array.from(this.equipment.values()).map((i) => i.action).concat(generateAttack(), endTurnAction);
-    }
-    get canMove() {
-      return !this.alive || this.sp > 0;
-    }
-    move() {
-      if (this.alive)
-        this.sp--;
-    }
-    equip(item) {
-      if (!item.slot)
-        return;
-      if (item.slot === "Hand") {
-        if (this.LeftHand && this.RightHand) {
-          this.g.inventory.push(this.LeftHand);
-          this.LeftHand = this.RightHand;
-          this.RightHand = item;
-          return;
-        }
-        if (this.LeftHand)
-          this.RightHand = item;
-        else
-          this.LeftHand = item;
-      } else {
-        const old = this[item.slot];
-        if (old)
-          this.g.inventory.push(old);
-        this[item.slot] = item;
-      }
-    }
-  };
-
-  // src/tools/textWrap.ts
-  function splitWords(s) {
-    const words = [];
-    let current = "";
-    for (const c of s) {
-      if (c === " " || c === "\n") {
-        words.push(current);
-        if (c === "\n")
-          words.push("\n");
-        current = "";
-        continue;
-      }
-      current += c;
-    }
-    if (current)
-      words.push(current);
-    return words;
-  }
-  function textWrap(source, width, measure) {
-    const measurement = measure(source);
-    if (measurement.width < width)
-      return { lines: source.split("\n"), measurement };
-    const words = splitWords(source);
-    const lines = [];
-    let constructed = "";
-    for (const w of words) {
-      if (w === "\n") {
-        lines.push(constructed);
-        constructed = "";
-        continue;
-      }
-      if (!constructed) {
-        constructed += w;
-        continue;
-      }
-      const temp = constructed + " " + w;
-      const size = measure(temp);
-      if (size.width > width) {
-        lines.push(constructed);
-        constructed = w;
-      } else
-        constructed += " " + w;
-    }
-    if (constructed)
-      lines.push(constructed);
-    return { lines, measurement: measure(source) };
-  }
-
-  // src/types/ClassName.ts
-  var ClassNames = [
-    "Martialist",
-    "Cleavesman",
-    "Far Scout",
-    "War Caller",
-    "Flag Singer",
-    "Loam Seer"
-  ];
-
-  // src/TitleScreen.ts
-  var TitleScreen = class {
-    constructor(g) {
-      this.g = g;
-      g.draw();
-      void g.jukebox.play("title");
-      g.log = [];
-      g.pendingArenaEnemies = [];
-      g.pendingNormalEnemies = [];
-      g.scripting = new EngineInkScripting(g);
-      g.showLog = false;
-      g.knownMap.clear();
-      this.index = 0;
-      this.selected = /* @__PURE__ */ new Set();
-    }
-    onKey(e) {
-      this.g.jukebox.tryPlay();
-      switch (e.code) {
-        case "ArrowUp":
-        case "KeyW":
-          e.preventDefault();
-          this.g.draw();
-          this.index = wrap(this.index - 1, ClassNames.length);
-          break;
-        case "ArrowDown":
-        case "KeyS":
-          e.preventDefault();
-          this.g.draw();
-          this.index = wrap(this.index + 1, ClassNames.length);
-          break;
-        case "Enter":
-        case "Return": {
-          e.preventDefault();
-          this.g.draw();
-          const cn = ClassNames[this.index];
-          if (this.selected.has(cn))
-            this.selected.delete(cn);
-          else if (this.selected.size < 4)
-            this.selected.add(cn);
-          break;
-        }
-        case "Space":
-          e.preventDefault();
-          if (this.selected.size === 4) {
-            this.g.inventory = [];
-            this.g.party = [];
-            for (const cn of this.selected)
-              this.g.party.push(new Player(this.g, cn));
-            startGame(this.selected);
-            void this.g.loadGCMap(map_default2, 0, -1);
-          }
-          break;
-      }
-    }
-    render() {
-      const { index, selected } = this;
-      const { canvas, ctx } = this.g;
-      {
-        const { draw } = withTextStyle(ctx, {
-          textAlign: "center",
-          textBaseline: "middle",
-          fillStyle: "white",
-          fontSize: 20
-        });
-        draw("Poisoned Daggers", canvas.width / 2, 20);
-        draw(
-          selected.size === 4 ? "Press Space to begin" : "Pick 4 with Enter",
-          canvas.width / 2,
-          canvas.height - 20
-        );
-      }
-      {
-        const { draw, lineHeight, measure } = withTextStyle(ctx, {
-          textAlign: "left",
-          textBaseline: "middle",
-          fillStyle: "white"
-        });
-        let y = 60;
-        for (let i = 0; i < ClassNames.length; i++) {
-          const cn2 = ClassNames[i];
-          ctx.fillStyle = i === index ? selected.has(cn2) ? Colours_default.currentChosenClass : Colours_default.currentClass : selected.has(cn2) ? Colours_default.chosenClass : Colours_default.otherClass;
-          draw(cn2, 20, y);
-          y += lineHeight * 2;
-        }
-        const cn = ClassNames[this.index];
-        const cl = classes_default[cn];
-        ctx.fillStyle = "white";
-        draw(cl.name, 100, 60);
-        y = 60 + lineHeight * 2;
-        for (const line of textWrap(cl.lore, canvas.width - 120, measure).lines) {
-          draw(line, 100, y);
-          y += lineHeight;
-        }
-      }
-    }
-  };
-
-  // src/DeathScreen.ts
-  var DeathScreen = class {
-    constructor(g, lastToDie) {
-      this.g = g;
-      this.lastToDie = lastToDie;
-      this.render = () => {
-        const { width, height } = this.g.canvas;
-        const { ctx } = this.g;
-        if (this.alpha < 1) {
-          this.oldScreen.render();
-          ctx.globalAlpha = this.alpha;
-          ctx.fillStyle = "black";
-          ctx.fillRect(0, 0, width, height);
-          this.alpha += 0.1;
-          if (this.alpha >= 1) {
-            clearInterval(this.interval);
-            this.doNotClear = false;
-          }
-        }
-        const { draw, lineHeight, measure } = withTextStyle(ctx, {
-          textAlign: "center",
-          textBaseline: "middle",
-          fillStyle: "white"
-        });
-        const { lines } = textWrap(
-          classes_default[this.lastToDie.className].deathQuote,
-          width - 200,
-          measure
-        );
-        const textHeight = lines.length * lineHeight;
-        let y = height / 2 - textHeight / 2;
-        for (const line of lines) {
-          draw(line, width / 2, y);
-          y += lineHeight;
-        }
-        ctx.globalAlpha = 1;
-      };
-      g.draw();
-      g.spotElements = [];
-      this.alpha = 0.1;
-      this.doNotClear = true;
-      this.interval = setInterval(this.render, 400);
-      this.oldScreen = g.screen;
-    }
-    onKey(e) {
-      if (e.code === "Escape" || this.alpha >= 1) {
-        e.preventDefault();
-        this.g.screen = new TitleScreen(this.g);
-        if (this.interval)
-          clearInterval(this.interval);
-      }
-    }
-  };
-
-  // src/DefaultControls.ts
-  var DefaultControls = [
-    ["ArrowUp", ["Forward", "MenuUp"]],
-    ["KeyW", ["Forward", "MenuUp"]],
-    ["ArrowRight", ["TurnRight"]],
-    ["KeyE", ["TurnRight"]],
-    ["ArrowDown", ["Back", "MenuDown"]],
-    ["KeyS", ["Back", "MenuDown"]],
-    ["ArrowLeft", ["TurnLeft"]],
-    ["KeyQ", ["TurnLeft"]],
-    ["Shift+ArrowRight", ["SlideRight"]],
-    ["KeyD", ["SlideRight"]],
-    ["Shift+ArrowLeft", ["SlideLeft"]],
-    ["KeyA", ["SlideLeft"]],
-    ["Ctrl+ArrowRight", ["RotateRight"]],
-    ["Ctrl+KeyD", ["RotateRight"]],
-    ["Ctrl+ArrowLeft", ["RotateLeft"]],
-    ["Ctrl+KeyA", ["RotateLeft"]],
-    ["Alt+ArrowRight", ["SwapRight"]],
-    ["Alt+KeyD", ["SwapRight"]],
-    ["Alt+ArrowDown", ["SwapBehind"]],
-    ["Alt+KeyS", ["SwapBehind"]],
-    ["Alt+ArrowLeft", ["SwapLeft"]],
-    ["Alt+KeyA", ["SwapLeft"]],
-    ["Space", ["ToggleLog"]],
-    ["Enter", ["Interact", "MenuChoose"]],
-    ["Return", ["Interact", "MenuChoose"]],
-    ["Escape", ["Cancel"]]
-  ];
-  var DefaultControls_default = DefaultControls;
-
-  // src/fov.ts
-  var facingDisplacements = {
-    [Dir_default.E]: [0, 1, -1, 0],
-    [Dir_default.N]: [1, 0, 0, 1],
-    [Dir_default.S]: [-1, 0, 0, -1],
-    [Dir_default.W]: [0, -1, 1, 0]
-  };
-  function getDisplacement(from, to, facing) {
-    const dx = to.x - from.x;
-    const dy = to.y - from.y;
-    const [a, b, c, d] = facingDisplacements[facing];
-    const x = dx * a + dy * b;
-    const y = dx * c + dy * d;
-    return [x, y];
-  }
-  var FovCalculator = class {
-    constructor(g) {
-      this.g = g;
-      this.entries = /* @__PURE__ */ new Map();
-    }
-    calculate(width, depth) {
-      const position = this.g.position;
-      this.propagate(position, width, depth);
-      return [...this.entries.values()].sort((a, b) => {
-        const zd = a.dz - b.dz;
-        if (zd)
-          return zd;
-        const xd = Math.abs(a.dx) - Math.abs(b.dx);
-        return -xd;
-      });
-    }
-    displacement(position) {
-      return getDisplacement(this.g.position, position, this.g.facing);
-    }
-    propagate(position, width, depth) {
-      if (width <= 0 || depth <= 0)
-        return;
-      const { g } = this;
-      const { facing } = g;
-      const tag = xyToTag(position);
-      const old = this.entries.get(tag);
-      if (old) {
-        if (old.width >= width && old.depth >= depth)
-          return;
-      }
-      const { x, y } = position;
-      const cell = g.getCell(x, y);
-      if (!cell)
-        return;
-      const [dx, dz] = this.displacement(position);
-      const leftVisible = dx <= 0;
-      const rightVisible = dx >= 0;
-      this.entries.set(tag, {
-        x,
-        y,
-        dx,
-        dz,
-        width,
-        depth,
-        leftVisible,
-        rightVisible
-      });
-      if (leftVisible) {
-        const leftDir = rotate(facing, 3);
-        const leftWall = cell.sides[leftDir];
-        if (!(leftWall == null ? void 0 : leftWall.wall))
-          this.propagate(move(position, leftDir), width - 1, depth);
-      }
-      if (rightVisible) {
-        const rightDir = rotate(facing, 1);
-        const rightWall = cell.sides[rightDir];
-        if (!(rightWall == null ? void 0 : rightWall.wall))
-          this.propagate(move(position, rightDir), width - 1, depth);
-      }
-      const forwardWall = cell.sides[facing];
-      if (!(forwardWall == null ? void 0 : forwardWall.wall))
-        this.propagate(move(position, facing), width, depth - 1);
-    }
-  };
-  function getFieldOfView(g, width, depth) {
-    const calc = new FovCalculator(g);
-    return calc.calculate(width, depth);
-  }
-
-  // src/tools/getCanvasContext.ts
-  function getCanvasContext(canvas, type, options) {
-    const ctx = canvas.getContext(type, options);
-    if (!ctx)
-      throw new Error(`canvas.getContext(${type})`);
-    return ctx;
-  }
-
-  // src/DungeonRenderer.ts
-  var tileTag = (id, type, tile) => `${type}${id}:${tile.x},${tile.z}`;
-  var DungeonRenderer = class {
-    constructor(g, dungeon, atlasImage, offset = xy(91, 21)) {
-      this.g = g;
-      this.dungeon = dungeon;
-      this.atlasImage = atlasImage;
-      this.offset = offset;
-      this.imageData = /* @__PURE__ */ new Map();
-    }
-    addAtlas(layers, image) {
-      const atlasCanvas = document.createElement("canvas");
-      atlasCanvas.width = image.width;
-      atlasCanvas.height = image.height;
-      const atlasCtx = getCanvasContext(atlasCanvas, "2d", {
-        willReadFrequently: true
-      });
-      atlasCtx.drawImage(image, 0, 0);
-      const promises = [];
-      for (const layer of layers) {
-        for (const entry of layer.tiles) {
-          const imageData = atlasCtx.getImageData(
-            entry.coords.x,
-            entry.coords.y,
-            entry.coords.w,
-            entry.coords.h
-          );
-          const tmpCanvas = document.createElement("canvas");
-          tmpCanvas.width = entry.coords.w;
-          tmpCanvas.height = entry.coords.h;
-          const tmpCtx = getCanvasContext(tmpCanvas, "2d");
-          if (entry.flipped) {
-            const data = this.flipImage(
-              entry.coords.w,
-              entry.coords.h,
-              imageData.data
-            );
-            imageData.data.set(data);
-          }
-          tmpCtx.putImageData(imageData, 0, 0);
-          this.imageData.set(tileTag(layer.id, entry.type, entry.tile), entry);
-          promises.push(
-            createImageBitmap(imageData).then((bmp) => {
-              entry.image = bmp;
-              return entry;
-            })
-          );
-        }
-      }
-      return Promise.all(promises);
-    }
-    getImage(id, type, x, z) {
-      const tag = tileTag(id, type, { x, z });
-      return this.imageData.get(tag);
-    }
-    flipImage(w, h, data) {
-      const flippedData = new Uint8Array(w * h * 4);
-      for (let col = 0; col < w; col++) {
-        for (let row = 0; row < h; row++) {
-          const index = (w - 1 - col) * 4 + row * w * 4;
-          const index2 = col * 4 + row * w * 4;
-          flippedData[index2] = data[index];
-          flippedData[index2 + 1] = data[index + 1];
-          flippedData[index2 + 2] = data[index + 2];
-          flippedData[index2 + 3] = data[index + 3];
-        }
-      }
-      return flippedData;
-    }
-    getLayersOfType(type) {
-      return this.dungeon.layers.filter((layer) => layer.type === type);
-    }
-    project(x, z) {
-      const { facing, position } = this.g;
-      switch (facing) {
-        case Dir_default.N:
-          return [position.x + x, position.y + z];
-        case Dir_default.E:
-          return [position.x - z, position.y + x];
-        case Dir_default.S:
-          return [position.x - x, position.y - z];
-        case Dir_default.W:
-          return [position.x + z, position.y - x];
-      }
-    }
-    draw(result) {
-      const dx = result.screen.x - (result.flipped ? result.coords.w : 0);
-      const dy = result.screen.y;
-      this.g.ctx.drawImage(result.image, dx + this.offset.x, dy + this.offset.y);
-    }
-    drawFront(result, x) {
-      const dx = result.screen.x + x * result.coords.fullWidth;
-      const dy = result.screen.y;
-      this.g.ctx.drawImage(result.image, dx + this.offset.x, dy + this.offset.y);
-    }
-    drawImage(id, type, x, z) {
-      const result = this.getImage(id, type, x, z);
-      if (result)
-        this.draw(result);
-    }
-    drawFrontImage(id, type, x, z) {
-      const result = this.getImage(id, type, 0, z);
-      if (result)
-        this.drawFront(result, x);
-    }
-    render() {
-      const rightSide = rotate(this.g.facing, 1);
-      const leftSide = rotate(this.g.facing, 3);
-      const tiles = getFieldOfView(
-        this.g,
-        this.dungeon.width,
-        this.dungeon.depth
-      );
-      for (const pos of tiles) {
-        const cell = this.g.getCell(pos.x, pos.y);
-        if (!cell)
-          continue;
-        if (cell.ceiling)
-          this.drawImage(cell.ceiling, "ceiling", pos.dx, pos.dz);
-        if (cell.floor)
-          this.drawImage(cell.floor, "floor", pos.dx, pos.dz);
-      }
-      for (const pos of tiles) {
-        const cell = this.g.getCell(pos.x, pos.y);
-        if (!cell)
-          continue;
-        if (pos.leftVisible) {
-          const left = cell.sides[leftSide];
-          if (left == null ? void 0 : left.wall)
-            this.drawImage(left.wall, "side", pos.dx - 1, pos.dz);
-          if (left == null ? void 0 : left.decal)
-            this.drawImage(left.decal, "side", pos.dx - 1, pos.dz);
-        }
-        if (pos.rightVisible) {
-          const right = cell.sides[rightSide];
-          if (right == null ? void 0 : right.wall)
-            this.drawImage(right.wall, "side", pos.dx + 1, pos.dz);
-          if (right == null ? void 0 : right.decal)
-            this.drawImage(right.decal, "side", pos.dx + 1, pos.dz);
-        }
-        const front = cell.sides[this.g.facing];
-        if (front == null ? void 0 : front.wall)
-          this.drawFrontImage(front.wall, "front", pos.dx, pos.dz - 1);
-        if (front == null ? void 0 : front.decal)
-          this.drawFrontImage(front.decal, "front", pos.dx, pos.dz - 1);
-        if (cell.object)
-          this.drawFrontImage(cell.object, "object", pos.dx, pos.dz);
-      }
-    }
-  };
-
-  // src/tools/getKeyNames.ts
-  function getKeyNames(key, shift, alt, ctrl) {
-    const names = [key];
-    if (shift)
-      names.unshift("Shift+" + key);
-    if (alt)
-      names.unshift("Alt+" + key);
-    if (ctrl)
-      names.unshift("Ctrl+" + key);
-    return names;
-  }
-
-  // src/DungeonScreen.ts
-  var DungeonScreen = class {
-    constructor(g, renderSetup) {
-      this.g = g;
-      this.renderSetup = renderSetup;
-      void g.jukebox.play("explore");
-    }
-    onKey(e) {
-      const keys = getKeyNames(e.code, e.shiftKey, e.altKey, e.ctrlKey);
-      for (const key of keys) {
-        const input = this.g.controls.get(key);
-        if (input) {
-          e.preventDefault();
-          for (const check of input) {
-            if (this.g.processInput(check))
-              return;
-          }
-        }
-      }
-    }
-    render() {
-      const { renderSetup } = this;
-      const { canvas, ctx, res } = this.g;
-      if (!renderSetup) {
-        const { draw } = withTextStyle(ctx, {
-          textAlign: "center",
-          textBaseline: "middle",
-          fillStyle: "white"
-        });
-        draw(
-          `Loading: ${res.loaded}/${res.loading}`,
-          canvas.width / 2,
-          canvas.height / 2
-        );
-        this.g.draw();
-        return;
-      }
-      renderSetup.dungeon.render();
-      renderSetup.hud.render();
-      if (this.g.showLog)
-        renderSetup.log.render();
-      if (this.g.combat.inCombat)
-        renderSetup.combat.render();
-    }
-  };
-
   // res/hud/base.png
   var base_default = "./base-CLJU2TVL.png";
 
@@ -3534,14 +3072,14 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       });
       const textX = position.x + offset.x;
       let textY = position.y + offset.y;
-      for (let id = 0; id < 4; id++) {
-        const pc = this.g.party[id];
+      for (let dir = 0; dir < 4; dir++) {
+        const pc = this.g.party[dir];
         if (pc.alive) {
           draw(pc.skill, textX, textY);
           const x = textX - 10;
           const y = textY - 8;
           this.spots.push({
-            id,
+            dir,
             x,
             y,
             ex: x + buttonSize.x,
@@ -3553,7 +3091,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       }
     }
     spotClicked(spot) {
-      this.g.interact(spot.id);
+      this.g.interact(spot.dir);
     }
   };
 
@@ -3616,12 +3154,12 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
         this.renderPC(xy2, pc, bg, i);
       }
     }
-    renderPC({ x, y }, pc, bg, index) {
+    renderPC({ x, y }, pc, bg, dir) {
       const { text, hp, sp } = this;
       const { ctx } = this.g;
       this.renderBar(x + hp.x, y + hp.y, pc.hp, pc.maxHP, Colours_default.hp);
       this.renderBar(x + sp.x, y + sp.y, pc.sp, pc.maxSP, Colours_default.sp);
-      ctx.globalAlpha = index === this.g.facing ? 1 : 0.7;
+      ctx.globalAlpha = dir === this.g.facing ? 1 : 0.7;
       ctx.drawImage(bg, x, y);
       ctx.globalAlpha = 1;
       const { draw } = withTextStyle(ctx, {
@@ -3631,7 +3169,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       });
       draw(pc.name, x + bg.width / 2, y + text.y, barWidth);
       this.spots.push({
-        id: index,
+        dir,
         x,
         y,
         ex: x + bg.width,
@@ -3640,7 +3178,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       });
     }
     spotClicked(spot) {
-      this.g.pcClicked(spot.id);
+      this.g.pcClicked(spot.dir);
     }
     renderBar(x, y, current, max, colour) {
       const width = Math.floor(
@@ -4031,30 +3569,53 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     }
   };
 
-  // src/LoadingScreen.ts
-  var LoadingScreen = class {
-    constructor(g) {
-      this.g = g;
-      g.draw();
+  // src/tools/textWrap.ts
+  function splitWords(s) {
+    const words = [];
+    let current = "";
+    for (const c of s) {
+      if (c === " " || c === "\n") {
+        words.push(current);
+        if (c === "\n")
+          words.push("\n");
+        current = "";
+        continue;
+      }
+      current += c;
     }
-    // eslint-disable-next-line @typescript-eslint/no-empty-function
-    onKey() {
+    if (current)
+      words.push(current);
+    return words;
+  }
+  function textWrap(source, width, measure) {
+    const measurement = measure(source);
+    if (measurement.width < width)
+      return { lines: source.split("\n"), measurement };
+    const words = splitWords(source);
+    const lines = [];
+    let constructed = "";
+    for (const w of words) {
+      if (w === "\n") {
+        lines.push(constructed);
+        constructed = "";
+        continue;
+      }
+      if (!constructed) {
+        constructed += w;
+        continue;
+      }
+      const temp = constructed + " " + w;
+      const size = measure(temp);
+      if (size.width > width) {
+        lines.push(constructed);
+        constructed = w;
+      } else
+        constructed += " " + w;
     }
-    render() {
-      const { canvas, ctx, res } = this.g;
-      const { draw } = withTextStyle(ctx, {
-        textAlign: "center",
-        textBaseline: "middle",
-        fillStyle: "white"
-      });
-      draw(
-        `Loading: ${res.loaded}/${res.loading}`,
-        canvas.width / 2,
-        canvas.height / 2
-      );
-      this.g.draw();
-    }
-  };
+    if (constructed)
+      lines.push(constructed);
+    return { lines, measurement: measure(source) };
+  }
 
   // src/LogRenderer.ts
   var LogRenderer = class {
@@ -4085,6 +3646,232 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
           if (textY < position.y)
             return;
         }
+      }
+    }
+  };
+
+  // src/classes.ts
+  var classes = {
+    Martialist: {
+      name: "Kirkwin",
+      lore: `From birth, Kirkwin trained his body as a weapon, studying under the most brutal martialist sects that were allowed in Haringlee, and some that weren't. So it was to great surprise when Cherraphy appointed Kirkwin as the leader of Haringlee's guard; protector of the weak, defender of the pathetic as he saw it. Zealotry never suited Kirkwin, and rather than play his role as a coward soldier sitting idle, he abandons his post to join the assault on Nightjar, and in doing so vows to Cherraphy and Mullanginan both that they too will someday bleed and bow low.`,
+      deathQuote: `Kirkwin's body sagged in the face of extreme odds, and he knew that his discipline had finally failed. His greatest fear was that his lifelong practises had served only to transform his youth into a carved body, a merciless expression and little else besides. Robbed of his strength, he found it easy to part with the remainder of his spirit.`,
+      hp: 21,
+      sp: 7,
+      determination: 6,
+      camaraderie: 2,
+      spirit: 3,
+      items: [Penduchaimmer, HaringleeKasaya],
+      skill: "Smash"
+    },
+    Cleavesman: {
+      name: "Mogrigg",
+      lore: `The village's headsman, a role instigated by Cherraphy and chosen at random. Considered a luckless man, not blamed for the three lives he's taken at his god's behest. Was previously a loyal soldier and pikeman at a time when his lord was just and interested in protecting the border villages, before the man's personality crumbled into rote righteousness. Mogrigg still has the scars, but none of the respect he earned. Of course he volunteered to brave the Nightjar! His hand was the first to rise!`,
+      deathQuote: `Somewhere behind the whirlwind of resentment and a deafening rush of blood hid Mogrigg's thoughts. Ever had they been on the topic of death, even when his party mates had made him cackle with laughter or introduced to him new ways of thinking. The death wish was just too much. He rushed gleefully towards his doom, as he had in every previous battle. This time, he met it.`,
+      hp: 25,
+      sp: 6,
+      determination: 4,
+      camaraderie: 4,
+      spirit: 3,
+      items: [GorgothilSword, Haringplate],
+      skill: "Cut"
+    },
+    "Far Scout": {
+      name: "Tam",
+      lore: `The surest bow in Haringlee. Favouring high cliffs above the treetops, she is a very fine huntress who's found that her place in the village of her birth has become slowly less secure. Tam worships only as far as socially necessary, excusing herself more and more from the mania overtaking the populace. Still, that does leave more time to practise her woodscraft, her acrobacy and her deadly aim. Sensing the opportunity for change in the expedition to the Nightjar, she signs up, explaining that she already knows the best route over the river.`,
+      deathQuote: `Tam knew she'd made a terrible error as she watched her comrades be dashed to the ground, fearing that her body was soon to join theirs. Yet it hadn't been a tactical mistake; she hadn't simply been tricked by Mullanginan's men. Instead, it had been an elementary failure from the onset: leaving the high ground? Voluntarily straying into the beast's lair? A huntress who ignored her instincts was a doomed one indeed.`,
+      hp: 18,
+      sp: 7,
+      determination: 3,
+      camaraderie: 3,
+      spirit: 5,
+      items: [BoltSlinger, AdaloaxPelt],
+      skill: "Tamper"
+    },
+    "War Caller": {
+      name: "Silas",
+      lore: `Silas considers himself duty-bound to the goddess Cherraphy and exults her name without second thoughts. Blessed with unique conviction, his charmed surety in combat has increased even since his pit-fighting days; he now sees fit to call himself Knight-Enforcer and claim the ancient War Calling title from the old times... from before the wars made sense! Suspecting mischief and irreverence in the party that ventures to the Nightjar, he stubbornly joins, vowing to hold high the goddess's name. Yes, he's a nasty piece of work, but his arrogance serves to draw your enemy's ire away from your friends.`,
+      deathQuote: `Silas stared at his hands, both of them stained with his life's blood, and found it all too much to believe. He had dedicated himself to the service of Cherraphy and had ultimately been spurned, receiving no divine intervention that might justify his devotion. No god appeared to witness Silas's final moments. The only reward granted to the man was a fool's death.`,
+      hp: 30,
+      sp: 5,
+      determination: 5,
+      camaraderie: 2,
+      spirit: 4,
+      items: [OwlSkull, IronFullcase],
+      skill: "Prayer"
+    },
+    "Flag Singer": {
+      name: "Belsome",
+      lore: `A travelling auteur, stranded in Haringlee, their stagecoach impounded under the most arbitrary of Cherraphic laws. Before that, a bard, and before that, a wanted street thief. Now reformed as an entertainer, their reflexes remain true. Belsome has the instinct and the presence of mind needed to size up a dangerous situation, the savvy required to navigate it without incident and the compassion that also steers those around them to safety. Belsome doesn't know how vital their skills of performance, of misdirection and of psychic intuition will be inside the Fortress Nightjar, but this isn't exactly the first time they've performed without rehearsal.`,
+      deathQuote: `Belsome dropped to their knees, knowing they'd been dealt a killing blow. Fitting enough; such a commanding performance should always end with a convincing death. Projecting all their passion and spite into one last speech, Belsome howled: "Curse the gods!" and keeled over into oblivion, their epitaph still resounding in the air.`,
+      hp: 21,
+      sp: 6,
+      determination: 2,
+      camaraderie: 6,
+      spirit: 3,
+      items: [CarvingKnife, SignedCasque],
+      skill: "Sing"
+    },
+    "Loam Seer": {
+      name: "Chiteri",
+      lore: `Chiteri is a beetle-like humanoid who observes human activity from safety, where the river meets the wood. Sad at the many recent upheavals in Haringlee culture, Chiteri reveals her existence to the dumbfounded villagers and, furthermore, offers her magical assistance in their trip to the Nightjar, secretly planning to defame the goddess Cherraphy, thereby salvaging the lives of the people. Able to call on the magic dwelling deep within the earth, Chiteri is a canny healer and is also able to bestow curious magickal toughness to her quick new friends, even if she doesn't share their cause.`,
+      deathQuote: `Her carapace smashed to pieces, Chiteri found herself slipping into a place of inward calm. It had been an ordeal to maintain her friendships with her human companions; now, she was glad for it to be over. Chiteri dispassionately transmitted her final verdicts to her many hive sisters, gladdened by glimpses of the Nightjar's primitive insects that quickly surrounded her body as she expired.`,
+      hp: 18,
+      sp: 5,
+      determination: 2,
+      camaraderie: 5,
+      spirit: 4,
+      items: [Cornucopia, JacketAndRucksack],
+      skill: "Shift"
+    }
+  };
+  var classes_default = classes;
+
+  // src/Player.ts
+  function getBaseStat(className, stat, bonusStat, bonusIfTrue = 1) {
+    return classes_default[className][stat] + (bonusStat === stat ? bonusIfTrue : 0);
+  }
+  var Player = class {
+    constructor(g, className, bonus, items = classes_default[className].items) {
+      this.g = g;
+      this.className = className;
+      this.name = classes_default[className].name;
+      this.isPC = true;
+      this.attacksInARow = 0;
+      this.usedThisTurn = /* @__PURE__ */ new Set();
+      this.skill = classes_default[className].skill;
+      for (const item of items) {
+        if (item.slot)
+          this.equip(item);
+        else
+          g.inventory.push(item);
+      }
+      this.baseMaxHP = getBaseStat(className, "hp", bonus, 5);
+      this.baseMaxSP = getBaseStat(className, "sp", bonus);
+      this.baseCamaraderie = getBaseStat(className, "camaraderie", bonus);
+      this.baseDetermination = getBaseStat(className, "determination", bonus);
+      this.baseSpirit = getBaseStat(className, "spirit", bonus);
+      this.hp = this.maxHP;
+      this.sp = Math.min(this.baseMaxSP, this.spirit);
+    }
+    get alive() {
+      return this.hp > 0;
+    }
+    get equipment() {
+      return [this.LeftHand, this.RightHand, this.Body, this.Special].filter(
+        isDefined
+      );
+    }
+    static load(g, data) {
+      const p = new Player(g, data.className);
+      p.name = data.name;
+      p.hp = data.hp;
+      p.sp = data.sp;
+      p.LeftHand = getItem(data.LeftHand);
+      p.RightHand = getItem(data.RightHand);
+      p.Body = getItem(data.Body);
+      p.Special = getItem(data.Special);
+      return p;
+    }
+    serialize() {
+      const { name, className, hp, sp, LeftHand, RightHand, Body, Special } = this;
+      return {
+        name,
+        className,
+        hp,
+        sp,
+        LeftHand: LeftHand == null ? void 0 : LeftHand.name,
+        RightHand: RightHand == null ? void 0 : RightHand.name,
+        Body: Body == null ? void 0 : Body.name,
+        Special: Special == null ? void 0 : Special.name
+      };
+    }
+    getStat(stat, base = 0) {
+      var _a;
+      let value = base;
+      for (const item of this.equipment) {
+        value += (_a = item == null ? void 0 : item.bonus[stat]) != null ? _a : 0;
+      }
+      return this.g.applyStatModifiers(this, stat, value);
+    }
+    getBaseStat(stat) {
+      switch (stat) {
+        case "dr":
+          return 0;
+        case "maxHP":
+          return this.baseMaxHP;
+        case "maxSP":
+          return this.baseMaxSP;
+        case "camaraderie":
+          return this.baseCamaraderie;
+        case "determination":
+          return this.baseDetermination;
+        case "spirit":
+          return this.baseSpirit;
+      }
+    }
+    get maxHP() {
+      return this.getStat("maxHP", this.baseMaxHP);
+    }
+    get maxSP() {
+      return this.getStat("maxHP", this.baseMaxSP);
+    }
+    get dr() {
+      return this.getStat("dr", 0);
+    }
+    get camaraderie() {
+      return this.getStat("camaraderie", this.baseCamaraderie);
+    }
+    get determination() {
+      return this.getStat("determination", this.baseDetermination);
+    }
+    get spirit() {
+      return this.getStat("spirit", this.baseSpirit);
+    }
+    get actions() {
+      return Array.from(this.equipment.values()).map((i) => i.action).concat(generateAttack(), endTurnAction);
+    }
+    get canMove() {
+      return !this.alive || this.sp > 0;
+    }
+    move() {
+      if (this.alive)
+        this.sp--;
+    }
+    canEquip(item) {
+      if (!item.slot)
+        return false;
+      if (item.restrict && !item.restrict.includes(this.className))
+        return false;
+      return true;
+    }
+    equip(item) {
+      if (!this.canEquip(item))
+        return;
+      removeItem(this.g.inventory, item);
+      if (item.slot === "Hand") {
+        if (this.LeftHand && this.RightHand) {
+          this.g.inventory.push(this.LeftHand);
+          this.LeftHand = this.RightHand;
+          this.RightHand = item;
+          return;
+        }
+        if (this.LeftHand)
+          this.RightHand = item;
+        else
+          this.LeftHand = item;
+      } else {
+        const old = this[item.slot];
+        if (old)
+          this.g.inventory.push(old);
+        this[item.slot] = item;
+      }
+    }
+    remove(slot) {
+      const item = this[slot];
+      if (item) {
+        this.g.inventory.push(item);
+        this[slot] = void 0;
       }
     }
   };
@@ -4183,28 +3970,264 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     }
   };
 
-  // src/Soon.ts
-  var Soon = class {
-    constructor(callback) {
-      this.callback = callback;
-      this.call = () => {
-        this.timeout = void 0;
-        this.callback();
-      };
+  // res/map.json
+  var map_default2 = "./map-HXD5COAC.json";
+
+  // src/types/ClassName.ts
+  var ClassNames = [
+    "Martialist",
+    "Cleavesman",
+    "Far Scout",
+    "War Caller",
+    "Flag Singer",
+    "Loam Seer"
+  ];
+
+  // src/screens/TitleScreen.ts
+  var TitleScreen = class {
+    constructor(g) {
+      this.g = g;
+      this.spotElements = [];
+      g.draw();
+      void g.jukebox.play("title");
+      g.log = [];
+      g.pendingArenaEnemies = [];
+      g.pendingNormalEnemies = [];
+      g.scripting = new EngineInkScripting(g);
+      g.showLog = false;
+      g.knownMap.clear();
+      this.index = 0;
+      this.selected = /* @__PURE__ */ new Set();
     }
-    schedule() {
-      if (!this.timeout)
-        this.timeout = requestAnimationFrame(this.call);
+    onKey(e) {
+      this.g.jukebox.tryPlay();
+      switch (e.code) {
+        case "ArrowUp":
+        case "KeyW":
+          e.preventDefault();
+          this.g.draw();
+          this.index = wrap(this.index - 1, ClassNames.length);
+          break;
+        case "ArrowDown":
+        case "KeyS":
+          e.preventDefault();
+          this.g.draw();
+          this.index = wrap(this.index + 1, ClassNames.length);
+          break;
+        case "Enter":
+        case "Return": {
+          e.preventDefault();
+          this.g.draw();
+          const cn = ClassNames[this.index];
+          if (this.selected.has(cn))
+            this.selected.delete(cn);
+          else if (this.selected.size < 4)
+            this.selected.add(cn);
+          break;
+        }
+        case "Space":
+          e.preventDefault();
+          if (this.selected.size === 4) {
+            this.g.inventory = [];
+            this.g.party = [];
+            for (const cn of this.selected)
+              this.g.party.push(new Player(this.g, cn));
+            startGame(this.selected);
+            void this.g.loadGCMap(map_default2, 0, -1);
+          }
+          break;
+      }
+    }
+    render() {
+      const { index, selected } = this;
+      const { canvas, ctx } = this.g;
+      {
+        const { draw } = withTextStyle(ctx, {
+          textAlign: "center",
+          textBaseline: "middle",
+          fillStyle: "white",
+          fontSize: 20
+        });
+        draw("Poisoned Daggers", canvas.width / 2, 20);
+        draw(
+          selected.size === 4 ? "Press Space to begin" : "Pick 4 with Enter",
+          canvas.width / 2,
+          canvas.height - 20
+        );
+      }
+      {
+        const { draw, lineHeight, measure } = withTextStyle(ctx, {
+          textAlign: "left",
+          textBaseline: "middle",
+          fillStyle: "white"
+        });
+        let y = 60;
+        for (let i = 0; i < ClassNames.length; i++) {
+          const cn2 = ClassNames[i];
+          ctx.fillStyle = getItemColour(i === index, selected.has(cn2));
+          draw(cn2, 20, y);
+          y += lineHeight * 2;
+        }
+        const cn = ClassNames[this.index];
+        const cl = classes_default[cn];
+        ctx.fillStyle = "white";
+        draw(cl.name, 100, 60);
+        y = 60 + lineHeight * 2;
+        for (const line of textWrap(cl.lore, canvas.width - 120, measure).lines) {
+          draw(line, 100, y);
+          y += lineHeight;
+        }
+      }
+    }
+  };
+
+  // src/screens/DeathScreen.ts
+  var DeathScreen = class {
+    constructor(g, lastToDie) {
+      this.g = g;
+      this.lastToDie = lastToDie;
+      this.spotElements = [];
+      this.render = () => {
+        const { width, height } = this.g.canvas;
+        const { ctx } = this.g;
+        if (this.alpha < 1) {
+          this.oldScreen.render();
+          ctx.globalAlpha = this.alpha;
+          ctx.fillStyle = "black";
+          ctx.fillRect(0, 0, width, height);
+          this.alpha += 0.1;
+          if (this.alpha >= 1) {
+            clearInterval(this.interval);
+            this.doNotClear = false;
+          }
+        }
+        const { draw, lineHeight, measure } = withTextStyle(ctx, {
+          textAlign: "center",
+          textBaseline: "middle",
+          fillStyle: "white"
+        });
+        const { lines } = textWrap(
+          classes_default[this.lastToDie.className].deathQuote,
+          width - 200,
+          measure
+        );
+        const textHeight = lines.length * lineHeight;
+        let y = height / 2 - textHeight / 2;
+        for (const line of lines) {
+          draw(line, width / 2, y);
+          y += lineHeight;
+        }
+        ctx.globalAlpha = 1;
+      };
+      g.draw();
+      this.alpha = 0.1;
+      this.doNotClear = true;
+      this.interval = setInterval(this.render, 400);
+      this.oldScreen = g.screen;
+    }
+    onKey(e) {
+      if (e.code === "Escape" || this.alpha >= 1) {
+        e.preventDefault();
+        this.g.screen = new TitleScreen(this.g);
+        if (this.interval)
+          clearInterval(this.interval);
+      }
+    }
+  };
+
+  // src/tools/getKeyNames.ts
+  function getKeyNames(key, shift, alt, ctrl) {
+    const names = [key];
+    if (shift)
+      names.unshift("Shift+" + key);
+    if (alt)
+      names.unshift("Alt+" + key);
+    if (ctrl)
+      names.unshift("Ctrl+" + key);
+    return names;
+  }
+
+  // src/screens/DungeonScreen.ts
+  var DungeonScreen = class {
+    constructor(g, renderSetup) {
+      this.g = g;
+      this.renderSetup = renderSetup;
+      void g.jukebox.play("explore");
+      this.spotElements = [renderSetup.hud.skills, renderSetup.hud.stats];
+    }
+    onKey(e) {
+      const keys = getKeyNames(e.code, e.shiftKey, e.altKey, e.ctrlKey);
+      for (const key of keys) {
+        const input = this.g.controls.get(key);
+        if (input) {
+          e.preventDefault();
+          for (const check of input) {
+            if (this.g.processInput(check))
+              return;
+          }
+        }
+      }
+    }
+    render() {
+      const { renderSetup } = this;
+      const { canvas, ctx, res } = this.g;
+      if (!renderSetup) {
+        const { draw } = withTextStyle(ctx, {
+          textAlign: "center",
+          textBaseline: "middle",
+          fillStyle: "white"
+        });
+        draw(
+          `Loading: ${res.loaded}/${res.loading}`,
+          canvas.width / 2,
+          canvas.height / 2
+        );
+        this.g.draw();
+        return;
+      }
+      renderSetup.dungeon.render();
+      renderSetup.hud.render();
+      if (this.g.showLog)
+        renderSetup.log.render();
+      if (this.g.combat.inCombat)
+        renderSetup.combat.render();
+    }
+  };
+
+  // src/screens/LoadingScreen.ts
+  var LoadingScreen = class {
+    constructor(g) {
+      this.g = g;
+      this.spotElements = [];
+      g.draw();
+    }
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
+    onKey() {
+    }
+    render() {
+      const { canvas, ctx, res } = this.g;
+      const { draw } = withTextStyle(ctx, {
+        textAlign: "center",
+        textBaseline: "middle",
+        fillStyle: "white"
+      });
+      draw(
+        `Loading: ${res.loaded}/${res.loading}`,
+        canvas.width / 2,
+        canvas.height / 2
+      );
+      this.g.draw();
     }
   };
 
   // res/sad-folks.png
   var sad_folks_default = "./sad-folks-WT2RUZAU.png";
 
-  // src/SplashScreen.ts
+  // src/screens/SplashScreen.ts
   var SplashScreen = class {
     constructor(g) {
       this.g = g;
+      this.spotElements = [];
       this.next = () => {
         clearTimeout(this.timeout);
         this.g.screen = new TitleScreen(this.g);
@@ -4231,6 +4254,256 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
         return;
       }
       this.g.ctx.drawImage(this.image, this.position.x, this.position.y);
+    }
+  };
+
+  // src/screens/StatsScreen.ts
+  var displayStatName = {
+    dr: "DR",
+    maxHP: "HP",
+    maxSP: "SP",
+    camaraderie: "CAM",
+    determination: "DTM",
+    spirit: "SPR"
+  };
+  var displaySlotName = {
+    LeftHand: "Left Hand",
+    RightHand: "Right Hand",
+    Body: "Body",
+    Special: "Special"
+  };
+  var displaySlots = [
+    "LeftHand",
+    "RightHand",
+    "Body",
+    "Special"
+  ];
+  var StatOffset = 30;
+  var EquipmentOffset = 80;
+  var InventoryOffset = 160;
+  var ItemsPerPage = 8;
+  var StatsScreen = class {
+    constructor(g, position = xy(91, 21), size = xy(296, 118), padding = xy(2, 2)) {
+      this.g = g;
+      this.position = position;
+      this.size = size;
+      this.padding = padding;
+      g.draw();
+      this.background = g.screen;
+      this.cursorColumn = "inventory";
+      this.dir = g.facing;
+      this.index = 0;
+      this.spotElements = [this];
+      this.spots = [];
+    }
+    onKey(e) {
+      switch (e.code) {
+        case "Escape":
+          e.preventDefault();
+          this.g.screen = this.background;
+          this.g.draw();
+          return;
+        case "ArrowLeft":
+          e.preventDefault();
+          this.turn(-1);
+          return;
+        case "ArrowRight":
+          e.preventDefault();
+          this.turn(1);
+          return;
+        case "ArrowUp":
+          e.preventDefault();
+          this.move(-1);
+          return;
+        case "ArrowDown":
+          e.preventDefault();
+          this.move(1);
+          return;
+        case "Enter":
+        case "Return":
+          e.preventDefault();
+          this.toggle();
+          return;
+        case "Tab":
+        case "ShiftLeft":
+        case "ShiftRight":
+          e.preventDefault();
+          this.cursorColumn = this.cursorColumn === "equipment" ? "inventory" : "equipment";
+          this.g.draw();
+          return;
+        default:
+          console.log("key:", e.code);
+      }
+    }
+    turn(mod) {
+      this.g.turn(mod);
+      this.dir = this.g.facing;
+    }
+    move(mod) {
+      const max = this.cursorColumn === "equipment" ? displaySlots.length : this.g.inventory.length;
+      this.index = wrap(this.index + mod, max);
+      this.g.draw();
+    }
+    toggle() {
+      const pc = this.g.party[this.dir];
+      if (this.cursorColumn === "equipment") {
+        const slot = displaySlots[this.index];
+        pc.remove(slot);
+      } else {
+        const item = this.g.inventory[this.index];
+        if (!item)
+          return;
+        pc.equip(item);
+      }
+      this.g.draw();
+    }
+    spotClicked(spot) {
+      const pc = this.g.party[this.dir];
+      if (spot.type === "equipment") {
+        pc.remove(spot.slot);
+        this.g.draw();
+      } else {
+        pc.equip(spot.item);
+        this.g.draw();
+      }
+    }
+    render() {
+      this.background.render();
+      const { dir, padding, position, size } = this;
+      const { ctx, inventory, party } = this.g;
+      ctx.fillStyle = Colours_default.logShadow;
+      ctx.fillRect(position.x, position.y, size.x, size.y);
+      const pc = party[dir];
+      const sx = position.x + padding.x;
+      const sy = position.y + padding.y;
+      const { draw, lineHeight: lh } = withTextStyle(ctx, {
+        textAlign: "left",
+        textBaseline: "top",
+        fillStyle: "white"
+      });
+      draw(pc.name, sx, sy);
+      draw(pc.className, sx, sy + lh);
+      this.renderStatWithMax(pc, "hp", sx, sy + lh * 2);
+      this.renderStatWithMax(pc, "sp", sx, sy + lh * 3);
+      this.renderStat(pc, "dr", sx, sy + lh * 4);
+      this.renderStat(pc, "camaraderie", sx, sy + lh * 5);
+      this.renderStat(pc, "determination", sx, sy + lh * 6);
+      this.renderStat(pc, "spirit", sx, sy + lh * 7);
+      this.spots = [];
+      this.renderEquipment(pc, "LeftHand", sx + EquipmentOffset, sy);
+      this.renderEquipment(pc, "RightHand", sx + EquipmentOffset, sy + lh * 2);
+      this.renderEquipment(pc, "Body", sx + EquipmentOffset, sy + lh * 4);
+      this.renderEquipment(pc, "Special", sx + EquipmentOffset, sy + lh * 6);
+      if (!inventory.length)
+        return;
+      const { offset, index } = this.resolveInventoryIndex();
+      let y = sy;
+      for (let i = 0; i < ItemsPerPage; i++) {
+        const item = inventory[offset + i];
+        if (!item)
+          return;
+        this.renderInventory(pc, item, sx + InventoryOffset, y, i === index);
+        y += lh;
+      }
+    }
+    resolveInventoryIndex() {
+      if (this.cursorColumn === "equipment")
+        return { offset: 0, index: NaN };
+      const length = this.g.inventory.length;
+      if (isNaN(this.index))
+        this.index = 0;
+      if (this.index >= length)
+        this.index = length - 1;
+      const index = this.index % ItemsPerPage;
+      const offset = Math.floor(this.index / ItemsPerPage);
+      return { offset, index };
+    }
+    renderStat(pc, name, x, y) {
+      const stat = pc[name];
+      const base = pc.getBaseStat(name);
+      const { draw } = withTextStyle(this.g.ctx, {
+        textAlign: "left",
+        textBaseline: "top",
+        fillStyle: "white"
+      });
+      draw(`${displayStatName[name]}:`, x, y);
+      this.g.ctx.fillStyle = stat === base ? "white" : stat > base ? "green" : "red";
+      draw(`${stat}`, x + StatOffset, y);
+    }
+    renderStatWithMax(pc, name, x, y) {
+      const current = pc[name];
+      const maxName = name === "hp" ? "maxHP" : "maxSP";
+      const max = pc[maxName];
+      const baseMax = pc.getBaseStat(maxName);
+      const { draw, measure } = withTextStyle(this.g.ctx, {
+        textAlign: "left",
+        textBaseline: "top",
+        fillStyle: "white"
+      });
+      draw(`${displayStatName[maxName]}:`, x, y);
+      const currentStr = `${current}/`;
+      const currentSize = measure(currentStr);
+      draw(currentStr, x + StatOffset, y);
+      this.g.ctx.fillStyle = max === baseMax ? "white" : max > baseMax ? "green" : "red";
+      draw(`${max}`, x + StatOffset + currentSize.width, y);
+    }
+    renderEquipment(pc, slot, x, y) {
+      const active = this.cursorColumn === "equipment" && this.index === displaySlots.indexOf(slot);
+      const { draw, lineHeight, measure } = withTextStyle(this.g.ctx, {
+        textAlign: "left",
+        textBaseline: "top",
+        fillStyle: getItemColour(active, false)
+      });
+      draw(displaySlotName[slot], x, y);
+      const item = pc[slot];
+      if (item) {
+        this.g.ctx.fillStyle = getItemColour(active, true);
+        draw(item.name, x, y + lineHeight);
+        const size = measure(item.name);
+        this.spots.push({
+          type: "equipment",
+          slot,
+          cursor: "pointer",
+          x,
+          y,
+          ex: x + size.width,
+          ey: y + lineHeight * 2
+        });
+      }
+    }
+    renderInventory(pc, item, x, y, selected) {
+      const canEquip = pc.canEquip(item);
+      const { draw, lineHeight, measure } = withTextStyle(this.g.ctx, {
+        textAlign: "left",
+        textBaseline: "top",
+        fillStyle: getItemColour(selected, canEquip)
+      });
+      draw(item.name, x, y);
+      const size = measure(item.name);
+      this.spots.push({
+        type: "inventory",
+        item,
+        cursor: "pointer",
+        x,
+        y,
+        ex: x + size.width,
+        ey: y + lineHeight
+      });
+    }
+  };
+
+  // src/Soon.ts
+  var Soon = class {
+    constructor(callback) {
+      this.callback = callback;
+      this.call = () => {
+        this.timeout = void 0;
+        this.callback();
+      };
+    }
+    schedule() {
+      if (!this.timeout)
+        this.timeout = requestAnimationFrame(this.call);
     }
   };
 
@@ -4311,7 +4584,6 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       this.inventory = [];
       this.pendingArenaEnemies = [];
       this.pendingNormalEnemies = [];
-      this.spotElements = [];
       this.party = [];
       this.jukebox = new Jukebox(this);
       this.sfx = new Sounds(this);
@@ -4322,7 +4594,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       canvas.addEventListener("click", (e) => this.onClick(transform(e)));
     }
     getSpot(pos) {
-      for (const element of this.spotElements) {
+      for (const element of this.screen.spotElements) {
         const spot = element.spots.find((s) => contains(s, pos));
         if (spot)
           return { element, spot };
@@ -4374,6 +4646,8 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
           return this.partySwap(2);
         case "Cancel":
           return this.cancel();
+        case "OpenStats":
+          return this.openStats();
       }
     }
     loadWorld(w, position) {
@@ -4399,7 +4673,6 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
         }
         this.knownMap.enter(w.name);
         this.markVisited();
-        this.spotElements = [hud.skills, hud.stats];
         this.screen = new DungeonScreen(this, { combat, dungeon, hud, log });
         startArea(this.world.name);
         return this.draw();
@@ -4970,6 +5243,10 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       this.log = [];
       this.showLog = false;
       this.draw();
+    }
+    openStats() {
+      this.screen = new StatsScreen(this);
+      return true;
     }
   };
 

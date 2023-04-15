@@ -2,6 +2,7 @@ import { endTurnAction, generateAttack } from "./actions";
 import classes from "./classes";
 import Engine from "./Engine";
 import { getItem } from "./items";
+import removeItem from "./tools/arrays";
 import isDefined from "./tools/isDefined";
 import { ClassName } from "./types/ClassName";
 import Combatant, { AttackableStat, BoostableStat } from "./types/Combatant";
@@ -15,6 +16,8 @@ function getBaseStat(
 ) {
   return classes[className][stat] + (bonusStat === stat ? bonusIfTrue : 0);
 }
+
+export type PlayerEquipmentSlot = "LeftHand" | "RightHand" | "Body" | "Special";
 
 export interface SerializedPlayer {
   name: string;
@@ -120,6 +123,23 @@ export default class Player implements Combatant {
     return this.g.applyStatModifiers(this, stat, value);
   }
 
+  getBaseStat(stat: BoostableStat): number {
+    switch (stat) {
+      case "dr":
+        return 0;
+      case "maxHP":
+        return this.baseMaxHP;
+      case "maxSP":
+        return this.baseMaxSP;
+      case "camaraderie":
+        return this.baseCamaraderie;
+      case "determination":
+        return this.baseDetermination;
+      case "spirit":
+        return this.baseSpirit;
+    }
+  }
+
   get maxHP() {
     return this.getStat("maxHP", this.baseMaxHP);
   }
@@ -155,8 +175,16 @@ export default class Player implements Combatant {
     if (this.alive) this.sp--;
   }
 
+  canEquip(item: Item) {
+    if (!item.slot) return false;
+    if (item.restrict && !item.restrict.includes(this.className)) return false;
+
+    return true;
+  }
+
   equip(item: Item) {
-    if (!item.slot) return;
+    if (!this.canEquip(item)) return;
+    removeItem(this.g.inventory, item);
 
     if (item.slot === "Hand") {
       if (this.LeftHand && this.RightHand) {
@@ -169,9 +197,20 @@ export default class Player implements Combatant {
       if (this.LeftHand) this.RightHand = item;
       else this.LeftHand = item;
     } else {
-      const old = this[item.slot];
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      const old = this[item.slot!];
       if (old) this.g.inventory.push(old);
-      this[item.slot] = item;
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      this[item.slot!] = item;
+    }
+  }
+
+  remove(slot: PlayerEquipmentSlot) {
+    const item = this[slot];
+
+    if (item) {
+      this.g.inventory.push(item);
+      this[slot] = undefined;
     }
   }
 }

@@ -1,11 +1,12 @@
-import CombatRenderer from "./CombatRenderer";
-import DungeonRenderer from "./DungeonRenderer";
-import Engine from "./Engine";
-import HUDRenderer from "./HUDRenderer";
-import LogRenderer from "./LogRenderer";
-import getKeyNames from "./tools/getKeyNames";
-import withTextStyle from "./tools/withTextStyle";
-import { GameScreen } from "./types/GameScreen";
+import CombatRenderer from "../CombatRenderer";
+import DungeonRenderer from "../DungeonRenderer";
+import Engine from "../Engine";
+import HUDRenderer from "../HUDRenderer";
+import LogRenderer from "../LogRenderer";
+import getKeyNames from "../tools/getKeyNames";
+import withTextStyle from "../tools/withTextStyle";
+import { GameScreen } from "../types/GameScreen";
+import HasHotspots from "../types/HasHotspots";
 
 interface RenderSetup {
   dungeon: DungeonRenderer;
@@ -15,8 +16,11 @@ interface RenderSetup {
 }
 
 export default class DungeonScreen implements GameScreen {
+  spotElements: HasHotspots[];
+
   constructor(public g: Engine, public renderSetup: RenderSetup) {
     void g.jukebox.play("explore");
+    this.spotElements = [renderSetup.hud.skills, renderSetup.hud.stats];
   }
 
   onKey(e: KeyboardEvent) {

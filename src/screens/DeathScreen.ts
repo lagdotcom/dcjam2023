@@ -1,20 +1,21 @@
-import classes from "./classes";
-import Engine from "./Engine";
-import Player from "./Player";
+import classes from "../classes";
+import Engine from "../Engine";
+import Player from "../Player";
+import textWrap from "../tools/textWrap";
+import withTextStyle from "../tools/withTextStyle";
+import { GameScreen } from "../types/GameScreen";
+import HasHotspots from "../types/HasHotspots";
 import TitleScreen from "./TitleScreen";
-import textWrap from "./tools/textWrap";
-import withTextStyle from "./tools/withTextStyle";
-import { GameScreen } from "./types/GameScreen";
 
 export default class DeathScreen implements GameScreen {
   alpha: number;
   doNotClear: boolean;
   interval: ReturnType<typeof setInterval>;
   oldScreen: GameScreen;
+  spotElements: HasHotspots[] = [];
 
   constructor(public g: Engine, public lastToDie: Player) {
     g.draw();
-    g.spotElements = [];
 
     this.alpha = 0.1;
     this.doNotClear = true;

@@ -37,6 +37,6 @@ const DefaultControls: [string, GameInput[]][] = [
   ["Space", ["ToggleLog"]],
   ["Enter", ["Interact", "MenuChoose"]],
   ["Return", ["Interact", "MenuChoose"]],
-  ["Escape", ["Cancel"]],
+  ["Escape", ["Cancel", "OpenStats"]],
 ];
 export default DefaultControls;

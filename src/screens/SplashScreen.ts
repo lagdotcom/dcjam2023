@@ -1,12 +1,15 @@
-import sadFolksPng from "../res/sad-folks.png";
-import Engine from "./Engine";
+import sadFolksPng from "../../res/sad-folks.png";
+import Engine from "../Engine";
+import { xyi } from "../tools/geometry";
+import { GameScreen } from "../types/GameScreen";
+import HasHotspots from "../types/HasHotspots";
+import XY from "../types/XY";
 import TitleScreen from "./TitleScreen";
-import { xyi } from "./tools/geometry";
-import XY from "./types/XY";
 
-export default class SplashScreen {
+export default class SplashScreen implements GameScreen {
   image?: HTMLImageElement;
   position: XY;
+  spotElements: HasHotspots[] = [];
   timeout: ReturnType<typeof setTimeout>;
 
   constructor(public g: Engine) {
