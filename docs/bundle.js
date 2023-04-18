@@ -90,6 +90,7 @@
   var gameKey = "0cccc807c1bc3cf03c04c4484781b3e3";
   var secretKey = "e5c1f07cb81d0d2e8c97cfa96d0f068f216b482f";
   var debugAnalytics = false;
+  var buildVersion = "1.0.1";
   var disableKey = "disableAnalytics";
   var disableValue = "TRUE";
   function isAnalyticsDisabled() {
@@ -98,7 +99,7 @@
   function startAnalytics() {
     GA.setEnabledInfoLog(debugAnalytics);
     GA.setEnabledVerboseLog(debugAnalytics);
-    GA.configureBuild("1.0.0");
+    GA.configureBuild(buildVersion);
     GA.initialize(gameKey, secretKey);
     GA.setEnabledEventSubmission(!isAnalyticsDisabled());
   }

@@ -9,6 +9,7 @@ const GA = GameAnalytics;
 const gameKey = process.env.APP_ANALYTICS_GAME_KEY ?? "";
 const secretKey = process.env.APP_ANALYTICS_SECRET_KEY ?? "";
 const debugAnalytics = process.env.APP_ANALYTICS_DEBUG === "TRUE";
+const buildVersion = process.env.APP_BUILD_VERSION ?? "unknown";
 
 const disableKey = "disableAnalytics";
 const disableValue = "TRUE";
@@ -27,7 +28,7 @@ export function startAnalytics() {
   GA.setEnabledInfoLog(debugAnalytics);
   GA.setEnabledVerboseLog(debugAnalytics);
 
-  GA.configureBuild("1.0.0");
+  GA.configureBuild(buildVersion);
   GA.initialize(gameKey, secretKey);
   GA.setEnabledEventSubmission(!isAnalyticsDisabled());
 }

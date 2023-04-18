@@ -6,7 +6,11 @@ import CDNModule from "./CDNModule.mjs";
 import InkModule from "./InkModule.mjs";
 
 const envConfig = loadDotEnvConfig();
-const define = {};
+const define = {
+  [`process.env.APP_BUILD_VERSION`]: JSON.stringify(
+    process.env.npm_package_version
+  ),
+};
 
 if (envConfig.parsed) {
   for (const k in envConfig.parsed)
