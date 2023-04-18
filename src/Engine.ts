@@ -8,12 +8,12 @@ import convertGridCartographerMap from "./convertGridCartographerMap";
 import DefaultControls from "./DefaultControls";
 import DungeonRenderer from "./DungeonRenderer";
 import { EnemyName, EnemyObjects } from "./enemies";
-import EngineInkScripting from "./EngineInkScripting";
+import EngineInkScripting, { ScriptData } from "./EngineInkScripting";
 import HUDRenderer from "./HUDRenderer";
 import { getItem } from "./items";
 import Jukebox from "./Jukebox";
-import KnownMapData, { SerializedKnownMap, WallType } from "./KnownMapData";
 import LogRenderer from "./LogRenderer";
+import MapDataManager from "./MapDataManager";
 import Player, { SerializedPlayer } from "./Player";
 import ResourceManager from "./ResourceManager";
 import { getResourceURL } from "./resources";
@@ -39,6 +39,7 @@ import getCanvasContext from "./tools/getCanvasContext";
 import isDefined from "./tools/isDefined";
 import { wrap } from "./tools/numbers";
 import { pickN, random } from "./tools/rng";
+import { WallTag } from "./tools/wallTags";
 import { tagToXy, XYTag, xyToTag } from "./tools/xyTags";
 import CombatAction from "./types/CombatAction";
 import Combatant, { AttackableStat, BoostableStat } from "./types/Combatant";
@@ -54,20 +55,26 @@ import GameInput from "./types/GameInput";
 import { GameScreen } from "./types/GameScreen";
 import Item from "./types/Item";
 import { matchAll, Predicate } from "./types/logic";
-import World from "./types/World";
+import World, { WorldCell } from "./types/World";
 import XY from "./types/XY";
 
 export interface SerializedEngine {
-  worldLocation: WorldLocation;
   facing: Dir;
   inventory: string[];
-  knownMap: SerializedKnownMap;
+  maps: Record<string, MapData>;
   obstacle?: XYTag;
   party: SerializedPlayer[];
   pendingArenaEnemies: EnemyName[];
   pendingNormalEnemies: EnemyName[];
   position: XYTag;
-  script: Record<string, unknown>;
+  worldLocation: WorldLocation;
+}
+
+export interface MapData {
+  cells: XYTag[];
+  overlays: Record<XYTag, WorldCell>;
+  script: ScriptData;
+  walls: Record<WallTag, WallTypeCondensed>;
 }
 
 interface TargetPicking {
@@ -81,6 +88,14 @@ interface WorldLocation {
   region: number;
   floor: number;
 }
+
+export interface WallType {
+  canSeeDoor: boolean;
+  isSolid: boolean;
+  canSeeWall: boolean;
+}
+
+export type WallTypeCondensed = `${"d" | ""}${"s" | ""}${"w" | ""}`;
 
 const calculateEventName = {
   dr: "onCalculateDR",
@@ -102,8 +117,8 @@ export default class Engine implements Game {
   facing: Dir;
   inventory: Item[];
   jukebox: Jukebox;
-  knownMap: KnownMapData;
   log: string[];
+  map: MapDataManager;
   obstacle?: XY;
   party: Player[];
   pendingArenaEnemies: EnemyName[];
@@ -139,7 +154,7 @@ export default class Engine implements Game {
     this.log = [];
     this.showLog = false;
     this.combat = new CombatManager(this);
-    this.knownMap = new KnownMapData();
+    this.map = new MapDataManager(this);
     this.inventory = [];
     this.pendingArenaEnemies = [];
     this.pendingNormalEnemies = [];
@@ -215,7 +230,12 @@ export default class Engine implements Game {
     }
   }
 
-  async loadWorld(worldLocation: WorldLocation, w: World, position?: XY) {
+  async loadWorld(
+    worldLocation: WorldLocation,
+    w: World,
+    position?: XY,
+    dir?: Dir
+  ) {
     const world = clone(w);
     this.screen = new LoadingScreen(this);
     this.draw();
@@ -224,7 +244,7 @@ export default class Engine implements Game {
     this.world = world;
     this.worldSize = xyi(world.cells[0].length, world.cells.length);
     this.position = position ?? w.start;
-    this.facing = w.facing;
+    this.facing = dir ?? w.facing;
 
     const combat = new CombatRenderer(this);
     const hud = new HUDRenderer(this);
@@ -243,11 +263,13 @@ export default class Engine implements Game {
       if (i > 1) dungeon.dungeon.layers.push(...atlases[i].layers);
     }
 
-    this.knownMap.enter(w.name);
-    this.markVisited();
+    this.map.enter(w.name);
 
     if (position) loadIntoArea(w.name);
-    else startArea(w.name);
+    else {
+      this.markVisited();
+      startArea(w.name);
+    }
 
     this.screen = new DungeonScreen(this, { combat, dungeon, hud, log });
     return this.draw();
@@ -257,7 +279,8 @@ export default class Engine implements Game {
     resourceID: string,
     region: number,
     floor: number,
-    position?: XY
+    loadPosition?: XY,
+    loadFacing?: Dir
   ) {
     this.screen = new LoadingScreen(this);
     this.draw();
@@ -277,12 +300,13 @@ export default class Engine implements Game {
     return this.loadWorld(
       { resourceID, region, floor },
       { name, atlases, cells, start, facing },
-      position
+      loadPosition,
+      loadFacing
     );
   }
 
   isVisited(x: number, y: number) {
-    return this.knownMap.isVisited({ x, y });
+    return this.map.isVisited({ x, y });
   }
 
   getCell(x: number, y: number) {
@@ -407,8 +431,8 @@ export default class Engine implements Game {
     const pos = this.position;
     const cell = this.getCell(pos.x, pos.y);
 
-    if (!this.knownMap.isVisited(pos) && cell) {
-      this.knownMap.visit(pos);
+    if (!this.map.isVisited(pos) && cell) {
+      this.map.visit(pos);
 
       for (let dir = 0; dir <= 3; dir++) {
         const wall = cell.sides[dir as Dir];
@@ -421,18 +445,18 @@ export default class Engine implements Game {
           canSeeWall: hasTexture,
         };
 
-        this.knownMap.setWall(pos, dir, data);
+        this.map.setWall(pos, dir, data);
       }
     }
   }
 
   markNavigable(pos: XY, dir: Dir) {
-    const data = this.knownMap.getWall(pos, dir);
+    const data = this.map.getWall(pos, dir);
     if (data.isSolid) data.isSolid = false;
   }
 
   markUnnavigable(pos: XY, dir: Dir) {
-    const data = this.knownMap.getWall(pos, dir);
+    const data = this.map.getWall(pos, dir);
 
     if (!data.isSolid) {
       data.isSolid = true;
@@ -452,7 +476,7 @@ export default class Engine implements Game {
   }
 
   getWallData(x: number, y: number, dir: Dir) {
-    return this.knownMap.getWallCondensed({ x, y }, dir);
+    return this.map.getWallCondensed({ x, y }, dir);
   }
 
   turn(clockwise: number) {
@@ -930,38 +954,34 @@ export default class Engine implements Game {
     const {
       facing,
       inventory,
-      knownMap,
+      map,
       obstacle,
       party,
       pendingArenaEnemies,
       pendingNormalEnemies,
       position,
-      scripting,
       worldLocation,
     } = this;
 
     if (!worldLocation) throw new Error(`Tried to save when not in a game.`);
 
     const data = {
-      worldLocation,
       facing,
       inventory: inventory.map((i) => i.name),
-      knownMap: knownMap.serialize(),
+      maps: map.serialize(),
       obstacle: obstacle ? xyToTag(obstacle) : undefined,
       party: party.map((p) => p.serialize()),
       pendingArenaEnemies,
       pendingNormalEnemies,
       position: xyToTag(position),
-      script: JSON.parse(
-        scripting.story.state.ToJson()
-      ) as SerializedEngine["script"],
-    } satisfies SerializedEngine;
+      worldLocation,
+    };
 
     saveGame();
     return data;
   }
 
-  async load(save: any) {
+  async load(save: unknown) {
     if (!validateEngine(save)) {
       console.warn(validateEngine.errors);
       return;
@@ -971,12 +991,11 @@ export default class Engine implements Game {
     this.inventory = save.inventory
       .map((name) => getItem(name))
       .filter(isDefined);
-    this.knownMap.load(save.knownMap);
+    this.map.load(save.maps);
     this.obstacle = save.obstacle ? tagToXy(save.obstacle) : undefined;
     this.party = save.party.map((data) => Player.load(this, data));
     this.pendingArenaEnemies = save.pendingArenaEnemies;
     this.pendingNormalEnemies = save.pendingNormalEnemies;
-    this.scripting.story.state.LoadJsonObj(save.script);
 
     // stuff that isn't saved
     this.log = [];
@@ -986,7 +1005,8 @@ export default class Engine implements Game {
       save.worldLocation.resourceID,
       save.worldLocation.region,
       save.worldLocation.floor,
-      tagToXy(save.position)
+      tagToXy(save.position),
+      save.facing
     );
 
     this.draw();

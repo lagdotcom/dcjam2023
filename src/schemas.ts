@@ -1,20 +1,19 @@
 import Ajv, { JSONSchemaType } from "ajv";
 
-import { SerializedEngine } from "./Engine";
-import { SerializedKnownMap } from "./KnownMapData";
-import { WallTypeCondensed } from "./KnownMapData";
+import { MapData, SerializedEngine, WallTypeCondensed } from "./Engine";
 import { SerializedPlayer } from "./Player";
 import { WallTag } from "./tools/wallTags";
 import { XYTag } from "./tools/xyTags";
 import { ClassNames } from "./types/ClassName";
 import Dir from "./types/Dir";
+import { WallDecalTypes, WorldCell } from "./types/World";
 
 const ajv = new Ajv();
 
-const xyTagSchema: JSONSchemaType<XYTag> = {
+const xyTagSchema = {
   type: "string",
   pattern: "\\d+_\\d+",
-};
+} satisfies JSONSchemaType<XYTag>;
 
 const wallTagSchema = {
   type: "string",
@@ -28,24 +27,46 @@ const condensedWallTypeSchema: JSONSchemaType<WallTypeCondensed> = {
 
 const dirSchema: JSONSchemaType<Dir> = { type: "number", enum: [0, 1, 2, 3] };
 
-const knownMapSchema: JSONSchemaType<SerializedKnownMap> = {
+const worldCellSchema: JSONSchemaType<WorldCell> = {
   type: "object",
   additionalProperties: false,
-  required: ["cells", "walls"],
+  required: ["numbers", "sides", "strings", "tags"],
   properties: {
-    cells: {
+    ceiling: { type: "number", nullable: true },
+    floor: { type: "number", nullable: true },
+    numbers: { type: "object", additionalProperties: { type: "number" } },
+    object: { type: "number", nullable: true },
+    sides: {
       type: "object",
-      required: [],
-      additionalProperties: { type: "array", items: xyTagSchema },
-    },
-    walls: {
-      type: "object",
-      required: [],
       additionalProperties: {
         type: "object",
-        patternProperties: { [wallTagSchema.pattern]: condensedWallTypeSchema },
-        additionalProperties: false,
+        properties: {
+          decal: { type: "number" },
+          decalType: { type: "string", enum: WallDecalTypes },
+        },
       },
+    },
+    strings: { type: "object", additionalProperties: { type: "string" } },
+    tags: { type: "array", items: { type: "string" } },
+  },
+};
+
+const mapDataSchema: JSONSchemaType<MapData> = {
+  type: "object",
+  additionalProperties: false,
+  required: ["cells", "overlays", "script", "walls"],
+  properties: {
+    cells: { type: "array", items: xyTagSchema },
+    overlays: {
+      type: "object",
+      patternProperties: { [xyTagSchema.pattern]: worldCellSchema },
+      additionalProperties: false,
+    },
+    script: { type: "object" },
+    walls: {
+      type: "object",
+      patternProperties: { [wallTagSchema.pattern]: condensedWallTypeSchema },
+      additionalProperties: false,
     },
   },
 };
@@ -72,24 +93,22 @@ const engineSchema: JSONSchemaType<SerializedEngine> = {
   required: [
     "facing",
     "inventory",
-    "knownMap",
+    "maps",
     "party",
     "pendingArenaEnemies",
     "pendingNormalEnemies",
     "position",
-    "script",
     "worldLocation",
   ],
   properties: {
     facing: dirSchema,
     inventory: { type: "array", items: { type: "string" } },
-    knownMap: knownMapSchema,
+    maps: { type: "object", required: [], additionalProperties: mapDataSchema },
     obstacle: { type: "string", nullable: true },
     party: { type: "array", items: playerSchema },
     pendingArenaEnemies: { type: "array", items: { type: "string" } },
     pendingNormalEnemies: { type: "array", items: { type: "string" } },
     position: { type: "string" },
-    script: { type: "object" },
     worldLocation: {
       type: "object",
       required: ["floor", "region", "resourceID"],

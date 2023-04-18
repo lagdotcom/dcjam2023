@@ -18,6 +18,8 @@ interface KnotEntry {
   once?: boolean;
 }
 
+export type ScriptData = Record<string, unknown>;
+
 export default class EngineInkScripting {
   onTagEnter: Map<string, KnotEntry>;
   onTagInteract: Map<string, KnotEntry>;
@@ -35,6 +37,14 @@ export default class EngineInkScripting {
   parseAndRun(source: string) {
     const program = new Story(source);
     this.run(program);
+  }
+
+  saveState(): ScriptData {
+    return JSON.parse(this.story.state.toJson()) as ScriptData;
+  }
+
+  loadState(data: ScriptData) {
+    this.story.state.LoadJsonObj(data);
   }
 
   run(program: Story) {
@@ -90,6 +100,7 @@ export default class EngineInkScripting {
     program.BindExternalFunction("addTag", (xy: XYTag, tag: string) => {
       const cell = getCell(xy);
       cell.tags.push(tag);
+      this.g.map.update(xy, cell);
     });
     program.BindExternalFunction(
       "damagePC",
@@ -156,6 +167,7 @@ export default class EngineInkScripting {
     program.BindExternalFunction("removeObject", (xy: XYTag) => {
       const cell = getCell(xy);
       cell.object = undefined;
+      this.g.map.update(xy, cell);
     });
     program.BindExternalFunction("removeTag", (xy: XYTag, tag: string) => {
       const cell = getCell(xy);
@@ -163,6 +175,8 @@ export default class EngineInkScripting {
         console.warn(
           `script tried to remove tag ${tag} at ${xy} -- not present`
         );
+
+      this.g.map.update(xy, cell);
     });
     program.BindExternalFunction(
       "rotate",
@@ -174,6 +188,7 @@ export default class EngineInkScripting {
       (xy: XYTag, dir: Dir, decal: number) => {
         const side = getSide(xy, dir);
         side.decal = decal;
+        this.g.map.update(xy, getCell(xy));
       }
     );
     program.BindExternalFunction("setObstacle", (blocked: boolean) =>
@@ -184,6 +199,7 @@ export default class EngineInkScripting {
       (xy: XYTag, dir: Dir, solid: boolean) => {
         const side = getSide(xy, dir);
         side.solid = solid;
+        this.g.map.update(xy, getCell(xy));
       }
     );
     program.BindExternalFunction("skill", () => this.skill, true);
@@ -228,7 +244,10 @@ export default class EngineInkScripting {
       const entry = this.onTagEnter.get(tag);
       if (entry) {
         this.story.ChoosePathString(entry.name);
-        if (entry.once) removeItem(cell.tags, tag);
+        if (entry.once) {
+          removeItem(cell.tags, tag);
+          this.g.map.update(xyToTag(pos), cell);
+        }
 
         const result = this.story.ContinueMaximally();
         if (result) this.g.addToLog(result);
@@ -247,7 +266,10 @@ export default class EngineInkScripting {
       const entry = this.onTagInteract.get(tag);
       if (entry) {
         this.story.ChoosePathString(entry.name);
-        if (entry.once) removeItem(cell.tags, tag);
+        if (entry.once) {
+          removeItem(cell.tags, tag);
+          this.g.map.update(xyToTag(this.g.position), cell);
+        }
         interacted = true;
 
         const result = this.story.ContinueMaximally();

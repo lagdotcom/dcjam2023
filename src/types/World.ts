@@ -1,13 +1,15 @@
 import Dir from "./Dir";
 import XY from "./XY";
 
-export type WallDecalType =
-  | "Door"
-  | "Gate"
-  | "OpenGate"
-  | "Lever"
-  | "PulledLever"
-  | "Sign";
+export const WallDecalTypes = [
+  "Door",
+  "Gate",
+  "OpenGate",
+  "Lever",
+  "PulledLever",
+  "Sign",
+] as const;
+export type WallDecalType = (typeof WallDecalTypes)[number];
 
 export interface WorldSide {
   solid?: boolean;
