@@ -4,19 +4,16 @@ import Player from "../Player";
 import textWrap from "../tools/textWrap";
 import withTextStyle from "../tools/withTextStyle";
 import { GameScreen } from "../types/GameScreen";
-import HasHotspots from "../types/HasHotspots";
-import TitleScreen from "./TitleScreen";
+import NewGameScreen from "./NewGameScreen";
 
 export default class DeathScreen implements GameScreen {
   alpha: number;
   doNotClear: boolean;
   interval: ReturnType<typeof setInterval>;
   oldScreen: GameScreen;
-  spotElements: HasHotspots[] = [];
+  spotElements = [];
 
   constructor(public g: Engine, public lastToDie: Player) {
-    g.draw();
-
     this.alpha = 0.1;
     this.doNotClear = true;
     this.interval = setInterval(this.render, 400);
@@ -26,7 +23,7 @@ export default class DeathScreen implements GameScreen {
   onKey(e: KeyboardEvent) {
     if (e.code === "Escape" || this.alpha >= 1) {
       e.preventDefault();
-      this.g.screen = new TitleScreen(this.g);
+      this.g.useScreen(new NewGameScreen(this.g));
       if (this.interval) clearInterval(this.interval);
     }
   }

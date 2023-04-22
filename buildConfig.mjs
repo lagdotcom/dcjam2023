@@ -18,7 +18,7 @@ if (envConfig.parsed) {
   console.log(`[env] loaded ${Object.keys(define).length} values`);
 } else
   console.warn(
-    `[env] failed to load, ` + envConfig.error.message ?? "unknown error"
+    `[env] failed to load, ${envConfig.error?.message ?? "unknown error"}`
   );
 
 /** @type {import('esbuild').BuildOptions} */

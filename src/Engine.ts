@@ -59,6 +59,7 @@ import World, { WorldCell } from "./types/World";
 import XY from "./types/XY";
 
 export interface SerializedEngine {
+  name: string;
   facing: Dir;
   inventory: string[];
   maps: Record<string, MapData>;
@@ -126,7 +127,7 @@ export default class Engine implements Game {
   position: XY;
   pickingTargets?: TargetPicking;
   res: ResourceManager;
-  screen: GameScreen;
+  screen!: GameScreen;
   scripting: EngineInkScripting;
   sfx: Sounds;
   showLog: boolean;
@@ -161,7 +162,7 @@ export default class Engine implements Game {
     this.party = [];
     this.jukebox = new Jukebox(this);
     this.sfx = new Sounds(this);
-    this.screen = new SplashScreen(this);
+    this.useScreen(new SplashScreen(this));
 
     canvas.addEventListener("keyup", (e) => this.screen.onKey(e));
 
@@ -170,6 +171,11 @@ export default class Engine implements Game {
 
     canvas.addEventListener("mousemove", (e) => this.onMouseMove(transform(e)));
     canvas.addEventListener("click", (e) => this.onClick(transform(e)));
+  }
+
+  useScreen(screen: GameScreen) {
+    this.screen = screen;
+    this.draw();
   }
 
   getSpot(pos: XY) {
@@ -237,8 +243,7 @@ export default class Engine implements Game {
     dir?: Dir
   ) {
     const world = clone(w);
-    this.screen = new LoadingScreen(this);
-    this.draw();
+    this.useScreen(new LoadingScreen(this));
 
     this.worldLocation = worldLocation;
     this.world = world;
@@ -271,8 +276,7 @@ export default class Engine implements Game {
       startArea(w.name);
     }
 
-    this.screen = new DungeonScreen(this, { combat, dungeon, hud, log });
-    return this.draw();
+    this.useScreen(new DungeonScreen(this, { combat, dungeon, hud, log }));
   }
 
   async loadGCMap(
@@ -282,8 +286,7 @@ export default class Engine implements Game {
     loadPosition?: XY,
     loadFacing?: Dir
   ) {
-    this.screen = new LoadingScreen(this);
-    this.draw();
+    this.useScreen(new LoadingScreen(this));
 
     const jsonUrl = getResourceURL(resourceID);
     const map = await this.res.loadGCMap(jsonUrl);
@@ -940,7 +943,7 @@ export default class Engine implements Game {
   }
 
   partyIsDead(lastToDie: number) {
-    this.screen = new DeathScreen(this, this.party[lastToDie]);
+    this.useScreen(new DeathScreen(this, this.party[lastToDie]));
     partyDied();
   }
 
@@ -950,7 +953,7 @@ export default class Engine implements Game {
       : undefined;
   }
 
-  save(): SerializedEngine {
+  save(name: string): SerializedEngine {
     const {
       facing,
       inventory,
@@ -966,6 +969,7 @@ export default class Engine implements Game {
     if (!worldLocation) throw new Error(`Tried to save when not in a game.`);
 
     const data = {
+      name,
       facing,
       inventory: inventory.map((i) => i.name),
       maps: map.serialize(),
@@ -1013,7 +1017,7 @@ export default class Engine implements Game {
   }
 
   openStats() {
-    this.screen = new StatsScreen(this);
+    this.useScreen(new StatsScreen(this));
     return true;
   }
 }

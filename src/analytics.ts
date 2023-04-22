@@ -22,6 +22,8 @@ export function isAnalyticsDisabled() {
 export function setAnalyticsDisabled(disabled: boolean) {
   if (disabled) localStorage.setItem(disableKey, disableValue);
   else localStorage.removeItem(disableKey);
+
+  GA.setEnabledEventSubmission(!disabled);
 }
 
 export function startAnalytics() {

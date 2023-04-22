@@ -144,7 +144,7 @@ export default class Player implements Combatant {
     return this.getStat("maxHP", this.baseMaxHP);
   }
   get maxSP() {
-    return this.getStat("maxHP", this.baseMaxSP);
+    return this.getStat("maxSP", this.baseMaxSP);
   }
 
   get dr() {
@@ -191,10 +191,7 @@ export default class Player implements Combatant {
         this.g.inventory.push(this.LeftHand);
         this.LeftHand = this.RightHand;
         this.RightHand = item;
-        return;
-      }
-
-      if (this.LeftHand) this.RightHand = item;
+      } else if (this.LeftHand) this.RightHand = item;
       else this.LeftHand = item;
     } else {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -203,6 +200,8 @@ export default class Player implements Combatant {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       this[item.slot!] = item;
     }
+
+    this.checkMaxOverflow();
   }
 
   remove(slot: PlayerEquipmentSlot) {
@@ -211,6 +210,12 @@ export default class Player implements Combatant {
     if (item) {
       this.g.inventory.push(item);
       this[slot] = undefined;
+      this.checkMaxOverflow();
     }
+  }
+
+  checkMaxOverflow() {
+    this.hp = Math.min(this.hp, this.maxHP);
+    this.sp = Math.min(this.sp, this.maxSP);
   }
 }

@@ -58,7 +58,6 @@ export default class StatsScreen implements GameScreen, HasHotspots {
     public size = xy(296, 118),
     public padding = xy(2, 2)
   ) {
-    g.draw();
     this.background = g.screen;
     this.cursorColumn = "inventory";
     this.dir = g.facing;
@@ -71,8 +70,7 @@ export default class StatsScreen implements GameScreen, HasHotspots {
     switch (e.code) {
       case "Escape":
         e.preventDefault();
-        this.g.screen = this.background;
-        this.g.draw();
+        this.g.useScreen(this.background);
         return;
 
       case "ArrowLeft":
@@ -107,6 +105,7 @@ export default class StatsScreen implements GameScreen, HasHotspots {
         e.preventDefault();
         this.cursorColumn =
           this.cursorColumn === "equipment" ? "inventory" : "equipment";
+        this.index = 0;
         this.g.draw();
         return;
 
@@ -193,7 +192,16 @@ export default class StatsScreen implements GameScreen, HasHotspots {
     this.renderEquipment(pc, "Body", sx + EquipmentOffset, sy + lh * 4);
     this.renderEquipment(pc, "Special", sx + EquipmentOffset, sy + lh * 6);
 
-    if (!inventory.length) return;
+    if (!inventory.length) {
+      const { draw } = withTextStyle(this.g.ctx, {
+        textAlign: "left",
+        textBaseline: "top",
+        fillStyle: getItemColour(this.cursorColumn === "inventory", false),
+      });
+      draw("(no items)", sx + InventoryOffset, sy);
+      return;
+    }
+
     const { offset, index } = this.resolveInventoryIndex();
     let y = sy;
     for (let i = 0; i < ItemsPerPage; i++) {

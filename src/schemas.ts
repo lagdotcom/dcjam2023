@@ -91,6 +91,7 @@ const engineSchema: JSONSchemaType<SerializedEngine> = {
   type: "object",
   additionalProperties: false,
   required: [
+    "name",
     "facing",
     "inventory",
     "maps",
@@ -101,6 +102,7 @@ const engineSchema: JSONSchemaType<SerializedEngine> = {
     "worldLocation",
   ],
   properties: {
+    name: { type: "string" },
     facing: dirSchema,
     inventory: { type: "array", items: { type: "string" } },
     maps: { type: "object", required: [], additionalProperties: mapDataSchema },

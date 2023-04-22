@@ -3890,7 +3890,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       return this.getStat("maxHP", this.baseMaxHP);
     }
     get maxSP() {
-      return this.getStat("maxHP", this.baseMaxSP);
+      return this.getStat("maxSP", this.baseMaxSP);
     }
     get dr() {
       return this.getStat("dr", 0);
@@ -3930,9 +3930,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
           this.g.inventory.push(this.LeftHand);
           this.LeftHand = this.RightHand;
           this.RightHand = item;
-          return;
-        }
-        if (this.LeftHand)
+        } else if (this.LeftHand)
           this.RightHand = item;
         else
           this.LeftHand = item;
@@ -3942,13 +3940,19 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
           this.g.inventory.push(old);
         this[item.slot] = item;
       }
+      this.checkMaxOverflow();
     }
     remove(slot) {
       const item = this[slot];
       if (item) {
         this.g.inventory.push(item);
         this[slot] = void 0;
+        this.checkMaxOverflow();
       }
+    }
+    checkMaxOverflow() {
+      this.hp = Math.min(this.hp, this.maxHP);
+      this.sp = Math.min(this.sp, this.maxSP);
     }
   };
 
@@ -4145,6 +4149,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     type: "object",
     additionalProperties: false,
     required: [
+      "name",
       "facing",
       "inventory",
       "maps",
@@ -4155,6 +4160,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       "worldLocation"
     ],
     properties: {
+      name: { type: "string" },
       facing: dirSchema,
       inventory: { type: "array", items: { type: "string" } },
       maps: { type: "object", required: [], additionalProperties: mapDataSchema },
@@ -4176,12 +4182,141 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
   };
   var validateEngine = ajv.compile(engineSchema);
 
+  // src/saves.ts
+  var SaveSlots = ["save1", "save2", "save3"];
+  function getSavedGame(slot) {
+    const data = localStorage.getItem(slot);
+    if (data !== null)
+      return JSON.parse(data);
+  }
+  function getSavedGames() {
+    return SaveSlots.map(getSavedGame);
+  }
+  function anySavedGamesExist() {
+    for (const slot of SaveSlots) {
+      const game = getSavedGame(slot);
+      if (game)
+        return true;
+    }
+    return false;
+  }
+
+  // src/screens/LoadGameScreen.ts
+  var SaveHeight = 60;
+  var LoadGameScreen = class {
+    constructor(g, games = getSavedGames(), index = 0, position = xyi(60, 60)) {
+      this.g = g;
+      this.games = games;
+      this.index = index;
+      this.position = position;
+      this.spotElements = [];
+      void g.jukebox.play("title");
+    }
+    onKey(e) {
+      switch (e.code) {
+        case "Escape":
+          this.g.useScreen(new TitleScreen(this.g));
+          return;
+        case "ArrowUp":
+        case "KeyW":
+          this.index = wrap(this.index - 1, this.games.length);
+          return this.g.draw();
+        case "ArrowDown":
+        case "KeyS":
+          this.index = wrap(this.index + 1, this.games.length);
+          return this.g.draw();
+        case "Enter":
+        case "Return":
+          return this.tryLoad(this.index);
+        case "Digit1":
+        case "Numpad1":
+          return this.tryLoad(0);
+        case "Digit2":
+        case "Numpad2":
+          return this.tryLoad(1);
+        case "Digit3":
+        case "Numpad3":
+          return this.tryLoad(2);
+        default:
+          console.log(e.code);
+      }
+    }
+    tryLoad(index) {
+      const game = this.games[index];
+      if (game)
+        void this.g.load(game);
+    }
+    render() {
+      const { games, index, position } = this;
+      const { canvas, ctx } = this.g;
+      {
+        const { draw: draw2 } = withTextStyle(ctx, {
+          textAlign: "center",
+          textBaseline: "middle",
+          fillStyle: "white",
+          fontSize: 20
+        });
+        draw2("Poisoned Daggers", canvas.width / 2, 20);
+      }
+      const { draw, lineHeight } = withTextStyle(ctx, {
+        textAlign: "left",
+        textBaseline: "middle",
+        fillStyle: "white"
+      });
+      const x = position.x;
+      let y = position.y;
+      for (let i = 0; i < games.length; i++) {
+        const highlighted = i === index;
+        const game = games[i];
+        if (!game) {
+          ctx.fillStyle = getItemColour(false, highlighted);
+          draw(`${i + 1}. -`, x, y);
+        } else {
+          ctx.fillStyle = getItemColour(true, highlighted);
+          draw(`${i + 1}. ${game.name}`, x, y);
+          ctx.fillStyle = "white";
+          draw(game.party.map((p) => p.name).join(", "), x, y + lineHeight);
+        }
+        y += SaveHeight;
+      }
+    }
+  };
+
   // src/screens/TitleScreen.ts
   var TitleScreen = class {
     constructor(g) {
       this.g = g;
       this.spotElements = [];
-      g.draw();
+      void g.jukebox.play("title");
+    }
+    onKey(e) {
+      if (e.code === "KeyL")
+        this.g.useScreen(new LoadGameScreen(this.g));
+      if (e.code === "KeyN")
+        this.g.useScreen(new NewGameScreen(this.g));
+    }
+    render() {
+      const { canvas, ctx } = this.g;
+      {
+        const middle = canvas.width / 2;
+        const { draw, lineHeight } = withTextStyle(ctx, {
+          textAlign: "center",
+          textBaseline: "middle",
+          fillStyle: "white",
+          fontSize: 20
+        });
+        draw("Poisoned Daggers", middle, 20);
+        draw("(N)ew Game", middle, 80);
+        draw("(L)oad Game", middle, 80 + lineHeight);
+      }
+    }
+  };
+
+  // src/screens/NewGameScreen.ts
+  var NewGameScreen = class {
+    constructor(g) {
+      this.g = g;
+      this.spotElements = [];
       void g.jukebox.play("title");
       g.log = [];
       g.pendingArenaEnemies = [];
@@ -4228,6 +4363,10 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
             startGame(this.selected);
             void this.g.loadGCMap("map.json", 0, -1);
           }
+          break;
+        case "Escape":
+          if (anySavedGamesExist())
+            this.g.useScreen(new TitleScreen(this.g));
           break;
       }
     }
@@ -4312,7 +4451,6 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
         }
         ctx.globalAlpha = 1;
       };
-      g.draw();
       this.alpha = 0.1;
       this.doNotClear = true;
       this.interval = setInterval(this.render, 400);
@@ -4321,7 +4459,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     onKey(e) {
       if (e.code === "Escape" || this.alpha >= 1) {
         e.preventDefault();
-        this.g.screen = new TitleScreen(this.g);
+        this.g.useScreen(new NewGameScreen(this.g));
         if (this.interval)
           clearInterval(this.interval);
       }
@@ -4392,7 +4530,6 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     constructor(g) {
       this.g = g;
       this.spotElements = [];
-      g.draw();
     }
     // eslint-disable-next-line @typescript-eslint/no-empty-function
     onKey() {
@@ -4423,9 +4560,10 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       this.spotElements = [];
       this.next = () => {
         clearTimeout(this.timeout);
-        this.g.screen = new TitleScreen(this.g);
+        this.g.useScreen(
+          anySavedGamesExist() ? new TitleScreen(this.g) : new NewGameScreen(this.g)
+        );
       };
-      g.draw();
       this.position = xyi(g.canvas.width / 2, g.canvas.height / 2);
       this.timeout = setTimeout(this.next, 4e3);
       void g.res.loadImage(sad_folks_default).then((img) => {
@@ -4481,7 +4619,6 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       this.position = position;
       this.size = size;
       this.padding = padding;
-      g.draw();
       this.background = g.screen;
       this.cursorColumn = "inventory";
       this.dir = g.facing;
@@ -4493,8 +4630,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       switch (e.code) {
         case "Escape":
           e.preventDefault();
-          this.g.screen = this.background;
-          this.g.draw();
+          this.g.useScreen(this.background);
           return;
         case "ArrowLeft":
           e.preventDefault();
@@ -4522,6 +4658,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
         case "ShiftRight":
           e.preventDefault();
           this.cursorColumn = this.cursorColumn === "equipment" ? "inventory" : "equipment";
+          this.index = 0;
           this.g.draw();
           return;
         case "Space":
@@ -4589,8 +4726,15 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       this.renderEquipment(pc, "RightHand", sx + EquipmentOffset, sy + lh * 2);
       this.renderEquipment(pc, "Body", sx + EquipmentOffset, sy + lh * 4);
       this.renderEquipment(pc, "Special", sx + EquipmentOffset, sy + lh * 6);
-      if (!inventory.length)
+      if (!inventory.length) {
+        const { draw: draw2 } = withTextStyle(this.g.ctx, {
+          textAlign: "left",
+          textBaseline: "top",
+          fillStyle: getItemColour(this.cursorColumn === "inventory", false)
+        });
+        draw2("(no items)", sx + InventoryOffset, sy);
         return;
+      }
       const { offset, index } = this.resolveInventoryIndex();
       let y = sy;
       for (let i = 0; i < ItemsPerPage; i++) {
@@ -4782,11 +4926,15 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       this.party = [];
       this.jukebox = new Jukebox(this);
       this.sfx = new Sounds(this);
-      this.screen = new SplashScreen(this);
+      this.useScreen(new SplashScreen(this));
       canvas.addEventListener("keyup", (e) => this.screen.onKey(e));
       const transform = (e) => xyi(e.offsetX / this.zoomRatio, e.offsetY / this.zoomRatio);
       canvas.addEventListener("mousemove", (e) => this.onMouseMove(transform(e)));
       canvas.addEventListener("click", (e) => this.onClick(transform(e)));
+    }
+    useScreen(screen) {
+      this.screen = screen;
+      this.draw();
     }
     getSpot(pos) {
       for (const element of this.screen.spotElements) {
@@ -4848,8 +4996,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     loadWorld(worldLocation, w, position, dir) {
       return __async(this, null, function* () {
         const world = src_default(w);
-        this.screen = new LoadingScreen(this);
-        this.draw();
+        this.useScreen(new LoadingScreen(this));
         this.worldLocation = worldLocation;
         this.world = world;
         this.worldSize = xyi(world.cells[0].length, world.cells.length);
@@ -4876,14 +5023,12 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
           this.markVisited();
           startArea(w.name);
         }
-        this.screen = new DungeonScreen(this, { combat, dungeon, hud, log });
-        return this.draw();
+        this.useScreen(new DungeonScreen(this, { combat, dungeon, hud, log }));
       });
     }
     loadGCMap(resourceID, region, floor, loadPosition, loadFacing) {
       return __async(this, null, function* () {
-        this.screen = new LoadingScreen(this);
-        this.draw();
+        this.useScreen(new LoadingScreen(this));
         const jsonUrl = getResourceURL(resourceID);
         const map = yield this.res.loadGCMap(jsonUrl);
         const { atlases, cells, scripts, start, facing, name } = convertGridCartographerMap(map, region, floor, EnemyObjects);
@@ -5405,13 +5550,13 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       return false;
     }
     partyIsDead(lastToDie) {
-      this.screen = new DeathScreen(this, this.party[lastToDie]);
+      this.useScreen(new DeathScreen(this, this.party[lastToDie]));
       partyDied();
     }
     setObstacle(obstacle) {
       this.obstacle = obstacle ? move(this.position, rotate(this.facing, 2)) : void 0;
     }
-    save() {
+    save(name) {
       const {
         facing,
         inventory,
@@ -5426,6 +5571,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       if (!worldLocation)
         throw new Error(`Tried to save when not in a game.`);
       const data = {
+        name,
         facing,
         inventory: inventory.map((i) => i.name),
         maps: map.serialize(),
@@ -5465,7 +5611,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       });
     }
     openStats() {
-      this.screen = new StatsScreen(this);
+      this.useScreen(new StatsScreen(this));
       return true;
     }
   };

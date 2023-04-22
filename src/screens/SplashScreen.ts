@@ -1,20 +1,19 @@
 import sadFolksPng from "../../res/sad-folks.png";
 import Engine from "../Engine";
+import { anySavedGamesExist } from "../saves";
 import { xyi } from "../tools/geometry";
 import { GameScreen } from "../types/GameScreen";
-import HasHotspots from "../types/HasHotspots";
 import XY from "../types/XY";
+import NewGameScreen from "./NewGameScreen";
 import TitleScreen from "./TitleScreen";
 
 export default class SplashScreen implements GameScreen {
   image?: HTMLImageElement;
   position: XY;
-  spotElements: HasHotspots[] = [];
+  spotElements = [];
   timeout: ReturnType<typeof setTimeout>;
 
   constructor(public g: Engine) {
-    g.draw();
-
     this.position = xyi(g.canvas.width / 2, g.canvas.height / 2);
     this.timeout = setTimeout(this.next, 4000);
 
@@ -53,6 +52,8 @@ export default class SplashScreen implements GameScreen {
   next = () => {
     clearTimeout(this.timeout);
 
-    this.g.screen = new TitleScreen(this.g);
+    this.g.useScreen(
+      anySavedGamesExist() ? new TitleScreen(this.g) : new NewGameScreen(this.g)
+    );
   };
 }

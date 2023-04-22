@@ -1,14 +1,11 @@
 import Engine from "../Engine";
 import withTextStyle from "../tools/withTextStyle";
 import { GameScreen } from "../types/GameScreen";
-import HasHotspots from "../types/HasHotspots";
 
 export default class LoadingScreen implements GameScreen {
-  spotElements: HasHotspots[] = [];
+  spotElements = [];
 
-  constructor(public g: Engine) {
-    g.draw();
-  }
+  constructor(public g: Engine) {}
 
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   onKey() {}
