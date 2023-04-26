@@ -26,19 +26,25 @@ INCLUDE daggers.ink
     } -> DONE
 
 === treasure ===
-# once
 # interact: Treasure
-    ~ temp item = getString("item")
-    ~ removeObject(here())
-    ~ giveItem(item)
-    The box contains a {item}. -> DONE
+    Before you is a treasure chest.
+    + [Open it]
+        ~ temp item = getString("item")
+        // TODO change to OpenChest graphic
+        ~ removeTag(here(), "Treasure")
+        ~ giveItem(item)
+        The chest contains a {item}. -> DONE
+    + [Leave it alone] -> DONE
 
 === empty_chest ===
-# once
 # interact: EmptyChest
-    ~ removeObject(here())
-    ~ damagePC(active(), "camaraderie", 1)
-    The sight of the empty chest causes {name(active())} to lose heart. -> DONE
+    Before you is a treasure chest.
+    + [Open it]
+        // TODO change to OpenChest graphic
+        ~ removeTag(here(), "EmptyChest")
+        ~ damagePC(active(), "camaraderie", 1)
+        The sight of the empty chest causes {name(active())} to lose heart. -> DONE
+    + [Leave it alone] -> DONE
 
 === function double_sided(pos, dir, -> fn) ===
     ~ fn(pos, dir)

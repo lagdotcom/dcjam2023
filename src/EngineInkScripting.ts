@@ -4,6 +4,7 @@ import { Story } from "inkjs/engine/Story";
 import { EnemyName, isEnemyName } from "./enemies";
 import Engine from "./Engine";
 import { getItem } from "./items";
+import DialogChoiceScreen from "./screens/DialogChoiceScreen";
 import { isSoundName } from "./Sounds";
 import removeItem from "./tools/arrays";
 import isStat from "./tools/combatants";
@@ -11,6 +12,7 @@ import { move, rotate } from "./tools/geometry";
 import { tagToXy, XYTag, xyToTag } from "./tools/xyTags";
 import { AttackableStat } from "./types/Combatant";
 import Dir from "./types/Dir";
+import { WorldCell } from "./types/World";
 import XY from "./types/XY";
 
 interface KnotEntry {
@@ -24,6 +26,7 @@ export default class EngineInkScripting {
   onTagEnter: Map<string, KnotEntry>;
   onTagInteract: Map<string, KnotEntry>;
   active: Dir;
+  running: boolean;
   skill: string;
   story!: Story;
 
@@ -31,6 +34,7 @@ export default class EngineInkScripting {
     this.onTagEnter = new Map();
     this.onTagInteract = new Map();
     this.active = 0;
+    this.running = false;
     this.skill = "NONE";
   }
 
@@ -235,48 +239,78 @@ export default class EngineInkScripting {
     }
   }
 
-  onEnter(pos: XY) {
+  async onEnter(pos: XY) {
     const cell = this.g.getCell(pos.x, pos.y);
     if (!cell) return;
 
     this.active = this.g.facing;
     for (const tag of cell.tags) {
       const entry = this.onTagEnter.get(tag);
-      if (entry) {
-        this.story.ChoosePathString(entry.name);
-        if (entry.once) {
-          removeItem(cell.tags, tag);
-          this.g.map.update(xyToTag(pos), cell);
-        }
-
-        const result = this.story.ContinueMaximally();
-        if (result) this.g.addToLog(result);
-      }
+      if (entry) await this.executePath(cell, tag, entry);
     }
   }
 
-  onInteract(pcIndex: number) {
+  hasInteraction() {
     const cell = this.g.currentCell;
     if (!cell) return false;
 
-    let interacted = false;
+    for (const tag of cell.tags) {
+      const entry = this.onTagInteract.get(tag);
+      if (entry) return true;
+    }
+
+    return false;
+  }
+
+  async onInteract(pcIndex: number) {
+    const cell = this.g.currentCell;
+    if (!cell) return;
+
     this.active = pcIndex;
     this.skill = this.g.party[pcIndex].skill;
     for (const tag of cell.tags) {
       const entry = this.onTagInteract.get(tag);
-      if (entry) {
-        this.story.ChoosePathString(entry.name);
-        if (entry.once) {
-          removeItem(cell.tags, tag);
-          this.g.map.update(xyToTag(this.g.position), cell);
-        }
-        interacted = true;
+      if (entry) await this.executePath(cell, tag, entry);
+    }
+  }
 
-        const result = this.story.ContinueMaximally();
-        if (result) this.g.addToLog(result);
-      }
+  private async executePath(cell: WorldCell, tag: string, entry: KnotEntry) {
+    this.story.ChoosePathString(entry.name);
+    if (entry.once) {
+      removeItem(cell.tags, tag);
+      this.g.map.update(xyToTag(this.g.position), cell);
     }
 
-    return interacted;
+    return new Promise<void>((resolve) => {
+      void this.runUntilDone().then(resolve);
+    });
+  }
+
+  private async runUntilDone() {
+    this.running = true;
+    while (this.story.canContinue) {
+      const result = this.story.Continue();
+
+      // TODO could use tags etc.
+
+      if (this.story.currentChoices.length) {
+        const screen = new DialogChoiceScreen(
+          this.g,
+          result || "",
+          // TODO could use tags etc.
+          this.story.currentChoices
+        );
+        this.g.useScreen(screen);
+
+        // TODO default choice on timeout
+
+        const choice = await screen.run();
+        this.story.ChooseChoiceIndex(choice.index);
+      }
+
+      if (result) this.g.addToLog(result);
+    }
+
+    this.running = false;
   }
 }

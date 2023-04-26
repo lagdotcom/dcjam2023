@@ -16,12 +16,12 @@ const Colours = {
 };
 export default Colours;
 
-export function getItemColour(active: boolean, highlighted: boolean) {
-  return highlighted
-    ? active
+export function getItemColour(yellow: boolean, bright: boolean) {
+  return bright
+    ? yellow
       ? Colours.itemActiveHighlighted
       : Colours.itemHighlighted
-    : active
+    : yellow
     ? Colours.itemActive
     : Colours.item;
 }

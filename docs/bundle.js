@@ -833,8 +833,8 @@
     item: "rgb(96,96,96)"
   };
   var Colours_default = Colours;
-  function getItemColour(active, highlighted) {
-    return highlighted ? active ? Colours.itemActiveHighlighted : Colours.itemHighlighted : active ? Colours.itemActive : Colours.item;
+  function getItemColour(yellow, bright) {
+    return bright ? yellow ? Colours.itemActiveHighlighted : Colours.itemHighlighted : yellow ? Colours.itemActive : Colours.item;
   }
 
   // src/tools/geometry.ts
@@ -1038,7 +1038,7 @@
   var sneedCrawler_default2 = "./sneedCrawler-B5CE42IQ.png";
 
   // ink:D:\Code\dcjam2023\res\map.ink
-  var map_default = "./map-BNQ2L6SR.ink";
+  var map_default = "./map-YRYQPRIR.ink";
 
   // res/map.json
   var map_default2 = "./map-HXD5COAC.json";
@@ -2657,6 +2657,121 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     return s ? allItems[s] : void 0;
   }
 
+  // src/tools/textWrap.ts
+  function splitWords(s) {
+    const words = [];
+    let current = "";
+    for (const c of s) {
+      if (c === " " || c === "\n") {
+        words.push(current);
+        if (c === "\n")
+          words.push("\n");
+        current = "";
+        continue;
+      }
+      current += c;
+    }
+    if (current)
+      words.push(current);
+    return words;
+  }
+  function textWrap(source, width, measure) {
+    const measurement = measure(source);
+    if (measurement.width < width)
+      return { lines: source.split("\n"), measurement };
+    const words = splitWords(source);
+    const lines = [];
+    let constructed = "";
+    for (const w of words) {
+      if (w === "\n") {
+        lines.push(constructed);
+        constructed = "";
+        continue;
+      }
+      if (!constructed) {
+        constructed += w;
+        continue;
+      }
+      const temp = constructed + " " + w;
+      const size = measure(temp);
+      if (size.width > width) {
+        lines.push(constructed);
+        constructed = w;
+      } else
+        constructed += " " + w;
+    }
+    if (constructed)
+      lines.push(constructed);
+    return { lines, measurement: measure(source) };
+  }
+
+  // src/screens/DialogChoiceScreen.ts
+  var DialogChoiceScreen = class {
+    constructor(g, prompt, choices, position = xy(91, 21), size = xy(296, 118), padding = xy(20, 20)) {
+      this.g = g;
+      this.prompt = prompt;
+      this.choices = choices;
+      this.position = position;
+      this.size = size;
+      this.padding = padding;
+      this.spotElements = [];
+      this.index = 0;
+      this.background = g.screen;
+    }
+    onKey(e) {
+      var _a;
+      switch (e.code) {
+        case "ArrowUp":
+        case "KeyW":
+          this.index = wrap(this.index - 1, this.choices.length);
+          return this.g.draw();
+        case "ArrowDown":
+        case "KeyS":
+          this.index = wrap(this.index + 1, this.choices.length);
+          return this.g.draw();
+        case "Enter":
+        case "Return":
+          (_a = this.resolve) == null ? void 0 : _a.call(this, this.choices[this.index]);
+          return this.g.useScreen(this.background);
+      }
+    }
+    render() {
+      this.background.render();
+      const { choices, index, padding, position, prompt, size } = this;
+      const { ctx } = this.g;
+      ctx.fillStyle = Colours_default.logShadow;
+      ctx.fillRect(position.x, position.y, size.x, size.y);
+      const { draw, measure, lineHeight } = withTextStyle(ctx, {
+        textAlign: "left",
+        textBaseline: "middle",
+        fillStyle: "white"
+      });
+      const width = size.x - padding.x * 2;
+      const x = position.x + padding.x;
+      let y = position.y + padding.y;
+      const title = textWrap(prompt, width, measure);
+      for (const line of title.lines) {
+        draw(line, x, y);
+        y += lineHeight;
+      }
+      for (let i = 0; i < choices.length; i++) {
+        const choice = textWrap(choices[i].text, width, measure);
+        ctx.fillStyle = getItemColour(i === index, true);
+        for (const line of choice.lines) {
+          draw(line, x, y);
+          y += lineHeight;
+        }
+      }
+    }
+    run() {
+      return __async(this, null, function* () {
+        return new Promise((resolve) => {
+          this.resolve = resolve;
+        });
+      });
+    }
+  };
+
   // res/sfx/buff1.ogg
   var buff1_default = "./buff1-X33WXBHF.ogg";
 
@@ -2732,6 +2847,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       this.onTagEnter = /* @__PURE__ */ new Map();
       this.onTagInteract = /* @__PURE__ */ new Map();
       this.active = 0;
+      this.running = false;
       this.skill = "NONE";
     }
     parseAndRun(source) {
@@ -2949,46 +3065,76 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       }
     }
     onEnter(pos) {
-      const cell = this.g.getCell(pos.x, pos.y);
-      if (!cell)
-        return;
-      this.active = this.g.facing;
-      for (const tag of cell.tags) {
-        const entry = this.onTagEnter.get(tag);
-        if (entry) {
-          this.story.ChoosePathString(entry.name);
-          if (entry.once) {
-            removeItem(cell.tags, tag);
-            this.g.map.update(xyToTag(pos), cell);
-          }
-          const result = this.story.ContinueMaximally();
-          if (result)
-            this.g.addToLog(result);
+      return __async(this, null, function* () {
+        const cell = this.g.getCell(pos.x, pos.y);
+        if (!cell)
+          return;
+        this.active = this.g.facing;
+        for (const tag of cell.tags) {
+          const entry = this.onTagEnter.get(tag);
+          if (entry)
+            yield this.executePath(cell, tag, entry);
         }
-      }
+      });
     }
-    onInteract(pcIndex) {
+    hasInteraction() {
       const cell = this.g.currentCell;
       if (!cell)
         return false;
-      let interacted = false;
-      this.active = pcIndex;
-      this.skill = this.g.party[pcIndex].skill;
       for (const tag of cell.tags) {
         const entry = this.onTagInteract.get(tag);
-        if (entry) {
-          this.story.ChoosePathString(entry.name);
-          if (entry.once) {
-            removeItem(cell.tags, tag);
-            this.g.map.update(xyToTag(this.g.position), cell);
+        if (entry)
+          return true;
+      }
+      return false;
+    }
+    onInteract(pcIndex) {
+      return __async(this, null, function* () {
+        const cell = this.g.currentCell;
+        if (!cell)
+          return;
+        this.active = pcIndex;
+        this.skill = this.g.party[pcIndex].skill;
+        for (const tag of cell.tags) {
+          const entry = this.onTagInteract.get(tag);
+          if (entry)
+            yield this.executePath(cell, tag, entry);
+        }
+      });
+    }
+    executePath(cell, tag, entry) {
+      return __async(this, null, function* () {
+        this.story.ChoosePathString(entry.name);
+        if (entry.once) {
+          removeItem(cell.tags, tag);
+          this.g.map.update(xyToTag(this.g.position), cell);
+        }
+        return new Promise((resolve) => {
+          void this.runUntilDone().then(resolve);
+        });
+      });
+    }
+    runUntilDone() {
+      return __async(this, null, function* () {
+        this.running = true;
+        while (this.story.canContinue) {
+          const result = this.story.Continue();
+          if (this.story.currentChoices.length) {
+            const screen = new DialogChoiceScreen(
+              this.g,
+              result || "",
+              // TODO could use tags etc.
+              this.story.currentChoices
+            );
+            this.g.useScreen(screen);
+            const choice = yield screen.run();
+            this.story.ChooseChoiceIndex(choice.index);
           }
-          interacted = true;
-          const result = this.story.ContinueMaximally();
           if (result)
             this.g.addToLog(result);
         }
-      }
-      return interacted;
+        this.running = false;
+      });
     }
   };
 
@@ -3491,54 +3637,6 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       }
     }
   };
-
-  // src/tools/textWrap.ts
-  function splitWords(s) {
-    const words = [];
-    let current = "";
-    for (const c of s) {
-      if (c === " " || c === "\n") {
-        words.push(current);
-        if (c === "\n")
-          words.push("\n");
-        current = "";
-        continue;
-      }
-      current += c;
-    }
-    if (current)
-      words.push(current);
-    return words;
-  }
-  function textWrap(source, width, measure) {
-    const measurement = measure(source);
-    if (measurement.width < width)
-      return { lines: source.split("\n"), measurement };
-    const words = splitWords(source);
-    const lines = [];
-    let constructed = "";
-    for (const w of words) {
-      if (w === "\n") {
-        lines.push(constructed);
-        constructed = "";
-        continue;
-      }
-      if (!constructed) {
-        constructed += w;
-        continue;
-      }
-      const temp = constructed + " " + w;
-      const size = measure(temp);
-      if (size.width > width) {
-        lines.push(constructed);
-        constructed = w;
-      } else
-        constructed += " " + w;
-    }
-    if (constructed)
-      lines.push(constructed);
-    return { lines, measurement: measure(source) };
-  }
 
   // src/LogRenderer.ts
   var LogRenderer = class {
@@ -5122,7 +5220,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
         this.draw();
         this.setObstacle(false);
         this.fire("onPartyMove", { from: old, to: this.position });
-        this.scripting.onEnter(this.position);
+        void this.scripting.onEnter(this.position);
         return true;
       }
       this.markUnnavigable(this.position, dir);
@@ -5138,7 +5236,10 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
         return false;
       if (this.combat.inCombat)
         return false;
-      return this.scripting.onInteract(index);
+      if (!this.scripting.hasInteraction())
+        return false;
+      void this.scripting.onInteract(index);
+      return true;
     }
     markVisited() {
       const pos = this.position;

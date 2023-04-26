@@ -409,7 +409,7 @@ export default class Engine implements Game {
 
       this.setObstacle(false);
       this.fire("onPartyMove", { from: old, to: this.position });
-      this.scripting.onEnter(this.position);
+      void this.scripting.onEnter(this.position);
       return true;
     }
 
@@ -427,7 +427,9 @@ export default class Engine implements Game {
     if (!this.party[index].alive) return false;
     if (this.combat.inCombat) return false;
 
-    return this.scripting.onInteract(index);
+    if (!this.scripting.hasInteraction()) return false;
+    void this.scripting.onInteract(index);
+    return true;
   }
 
   markVisited() {
