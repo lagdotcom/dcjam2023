@@ -1,0 +1,283 @@
+{
+	"export": {
+		"from": "2022.5.1",
+		"date": "2023-11-18",
+		"time": "15:22:26"
+	},
+	"regions": [
+		{
+			"floor_count": 1,
+			"lowest_floor": -1,
+			"grid_shape": "square",
+			"name": "Region 1",
+			"setup": {
+				"origin": "tl"
+			},
+			"floors": [
+				{
+					"index": -1,
+					"tiles": {
+						"bounds": {
+							"x0": 0,
+							"y0": 0,
+							"width": 6,
+							"height": 10
+						},
+						"rows": [
+							{
+								"y": 0,
+								"start": 1,
+								"tdata": [
+									{
+										"b": 1
+									},
+									{
+										"b": 1
+									},
+									{
+										"b": 1
+									},
+									{
+										"b": 1
+									},
+									{
+										"b": 1
+									}
+								]
+							},
+							{
+								"y": 1,
+								"start": 0,
+								"tdata": [
+									{
+										"r": 1
+									},
+									{
+										"t": 39
+									},
+									{
+										"t": 39
+									},
+									{
+										"t": 39
+									},
+									{
+										"t": 39
+									},
+									{
+										"r": 1,
+										"t": 39
+									}
+								]
+							},
+							{
+								"y": 2,
+								"start": 0,
+								"tdata": [
+									{
+										"r": 1
+									},
+									{
+										"t": 39
+									},
+									{
+										"t": 39
+									},
+									{
+										"t": 39
+									},
+									{
+										"t": 39
+									},
+									{
+										"r": 1,
+										"t": 39
+									}
+								]
+							},
+							{
+								"y": 3,
+								"start": 0,
+								"tdata": [
+									{
+										"r": 1
+									},
+									{
+										"t": 39
+									},
+									{
+										"t": 39
+									},
+									{
+										"m": 14,
+										"t": 39
+									},
+									{
+										"t": 39
+									},
+									{
+										"r": 1,
+										"t": 39
+									}
+								]
+							},
+							{
+								"y": 4,
+								"start": 0,
+								"tdata": [
+									{
+										"r": 1
+									},
+									{
+										"t": 39
+									},
+									{
+										"t": 39
+									},
+									{
+										"t": 39
+									},
+									{
+										"t": 39
+									},
+									{
+										"r": 1,
+										"t": 39
+									}
+								]
+							},
+							{
+								"y": 5,
+								"start": 0,
+								"tdata": [
+									{
+										"r": 1
+									},
+									{
+										"b": 1,
+										"t": 39
+									},
+									{
+										"b": 1,
+										"t": 39
+									},
+									{
+										"b": 27,
+										"t": 39
+									},
+									{
+										"b": 1,
+										"t": 39
+									},
+									{
+										"r": 1,
+										"b": 1,
+										"t": 39
+									}
+								]
+							},
+							{
+								"y": 6,
+								"start": 2,
+								"tdata": [
+									{
+										"r": 1
+									},
+									{
+										"r": 1,
+										"t": 39
+									}
+								]
+							},
+							{
+								"y": 7,
+								"start": 2,
+								"tdata": [
+									{
+										"r": 1,
+										"b": 1
+									},
+									{
+										"r": 1,
+										"t": 39
+									},
+									{
+										"b": 1
+									}
+								]
+							},
+							{
+								"y": 8,
+								"start": 1,
+								"tdata": [
+									{
+										"r": 1
+									},
+									{
+										"t": 39
+									},
+									{
+										"t": 39
+									},
+									{
+										"r": 1,
+										"t": 39
+									}
+								]
+							},
+							{
+								"y": 9,
+								"start": 1,
+								"tdata": [
+									{
+										"r": 1
+									},
+									{
+										"b": 1,
+										"t": 39
+									},
+									{
+										"b": 1,
+										"m": 9,
+										"t": 39
+									},
+									{
+										"r": 1,
+										"b": 1,
+										"t": 39
+									}
+								]
+							}
+						]
+					},
+					"notes": [
+						{
+							"x": 3,
+							"y": 9,
+							"monospaced": false,
+							"__data": "#START N\n#TAG Start"
+						},
+						{
+							"x": 3,
+							"y": 3,
+							"monospaced": false,
+							"__data": "#TAG Arena"
+						},
+						{
+							"x": 0,
+							"y": 0,
+							"monospaced": false,
+							"__data": "#ATLAS flats\n#ATLAS eveScout,martialist,nettleSage,sneedCrawler\n#DEFINE tWall,1\n#DEFINE dSign,2\n#DEFINE dDoor,3\n#DEFINE dGate,4\n#DEFINE dOpenGate,5\n#DEFINE dLever,6\n#DEFINE dPulledLever,7\n#DEFINE dLockedDoor,8\n#DEFINE oChest,20\n#DEFINE oWeb,21\n#DEFINE oBoulder,22 \n#STYLE 0,tWall\n#STYLE 1,tWall\n#DECAL Sign,tWall,dSign\n#DECAL Door,tWall,dDoor\n#DECAL Gate,tWall,dGate\n#DECAL Lever,tWall,dLever\n#SCRIPT rush.ink"
+						},
+						{
+							"x": 3,
+							"y": 5,
+							"monospaced": false,
+							"__data": "#OPEN"
+						}
+					]
+				}
+			]
+		}
+	]
+}

@@ -28,7 +28,7 @@ Run `yarn watch`. This will start a local webserver at http://localhost:8080. Fe
 
 ## Maps
 
-The engine supports maps exported from Grid Cartographer to a JSON format. To enable Poisoned Daggers features you add Notes to cells. Lines that do not begin with `#` are ignored. The following Notes should be placed to the top left of any other cells in the level so they get loaded first:
+The engine supports maps exported from Grid Cartographer to a JSON format. Make sure your map is set to have a "Top-Left Origin". To enable Poisoned Daggers features you add Notes to cells. Lines that do not begin with `#` are ignored. The following Notes should be placed to the top left of any other cells in the level so they get loaded first:
 
 | Tag                              | Meaning                                                        |
 | -------------------------------- | -------------------------------------------------------------- |
@@ -40,14 +40,14 @@ The engine supports maps exported from Grid Cartographer to a JSON format. To en
 
 These Notes affect the cell they are placed in. Markers are ignored.
 
-| Tag                    | Meaning                                      |
-| ---------------------- | -------------------------------------------- |
-| `#START dir`           | Party will be placed here when map is loaded |
-| `#TAG tag,tag,...`     | Places tags that can be read by scripts      |
-| `#OBJECT id`           | Places an object (graphic) here              |
-| `#STRING name,"value"` | Sets a string attribute                      |
-| `#NUMBER name,value`   | Sets a number attribute                      |
-| `#OPEN`                | All gates connected to this cell begin open  |
+| Tag                    | Meaning                                                  |
+| ---------------------- | -------------------------------------------------------- |
+| `#START dir`           | Party will be placed here when map is loaded             |
+| `#TAG tag,tag,...`     | Places tags that can be read by scripts                  |
+| `#OBJECT id`           | Places an object (graphic) here                          |
+| `#STRING name,"value"` | Sets a string attribute                                  |
+| `#NUMBER name,value`   | Sets a number attribute                                  |
+| `#OPEN`                | right- and down- gates connected to this cell begin open |
 
 ## Scripts
 
@@ -60,30 +60,31 @@ You can also add `# once` to make the knot only execute once. This is implemente
 
 By using `INCLUDE daggers.ink` you get access to a number of builtin functions:
 
-| Function                     | Meaning                                    |
-| ---------------------------- | ------------------------------------------ |
-| `active()`                   | get active PC ID                           |
-| `addArenaEnemy(name)`        | queue enemy for next arena fight           |
-| `addTag(xy,tag)`             | add a tag to a cell                        |
-| `damagePC(pcId,stat,amount)` | damage a PC                                |
-| `facing()`                   | get party facing dir                       |
-| `forEachTaggedTile(tag,fn)`  | fn is called with each tagged cell's xy    |
-| `getDecal(xy,dir)`           | get decal ID on cell wall                  |
-| `getNumber(name)`            | get `#NUMBER name` from map                |
-| `getString(name)`            | get `#STRING name` from map                |
-| `getTagPosition(tag)`        | finds the first cell's xy with this tag    |
-| `giveItem(item)`             | adds item to party inventory               |
-| `here()`                     | get party xy                               |
-| `isArenaFightPending()`      | does arena queue have at least one enemy   |
-| `move(xy,dir)`               | returns xy after moving in direction       |
-| `name(dir)`                  | get PC name                                |
-| `playSound(name)`            | play a sound effect                        |
-| `removeObject(xy)`           | remove object in cell                      |
-| `removeTag(xy,tag)`          | remove tag from cell                       |
-| `rotate(dir,n)`              | returns dir after n clockwise rotations    |
-| `setDecal(xy,dir,decal)`     | set decal in cell                          |
-| `setObstacle(flag)`          | if true, prevents moving through this cell |
-| `setSolid(xy,dir,flag)`      | set cell wall solidity                     |
-| `skill()`                    | get name of active PC skill                |
-| `skillCheck(stat,dc)`        | roll active PC stat against DC             |
-| `startArenaFight()`          | puts arena queue into fight, clears queue  |
+| Function                     | Meaning                                                                     |
+| ---------------------------- | --------------------------------------------------------------------------- |
+| `active()`                   | get active PC ID                                                            |
+| `addArenaEnemy(name)`        | queue enemy for next arena fight                                            |
+| `addTag(xy,tag)`             | add a tag to a cell                                                         |
+| `damagePC(pcId,stat,amount)` | damage a PC                                                                 |
+| `facing()`                   | get party facing dir                                                        |
+| `forEachTaggedTile(tag,fn)`  | fn is called with each tagged cell's xy                                     |
+| `getDecal(xy,dir)`           | get decal ID on cell wall                                                   |
+| `getNumber(name)`            | get `#NUMBER name` from map                                                 |
+| `getString(name)`            | get `#STRING name` from map                                                 |
+| `getTagPosition(tag)`        | finds the first cell's xy with this tag                                     |
+| `giveItem(item)`             | adds item to party inventory                                                |
+| `here()`                     | get party xy                                                                |
+| `isArenaFightPending()`      | does arena queue have at least one enemy                                    |
+| `move(xy,dir)`               | returns xy after moving in direction                                        |
+| `name(dir)`                  | get PC name                                                                 |
+| `playSound(name)`            | play a sound effect                                                         |
+| `removeObject(xy)`           | remove object in cell                                                       |
+| `removeTag(xy,tag)`          | remove tag from cell                                                        |
+| `rotate(dir,n)`              | returns dir after n clockwise rotations                                     |
+| `setDecal(xy,dir,decal)`     | set decal in cell                                                           |
+| `setObstacle(flag)`          | if true, prevents moving through this cell                                  |
+| `setSolid(xy,dir,flag)`      | set cell wall solidity                                                      |
+| `skill()`                    | get name of active PC skill                                                 |
+| `skillCheck(stat,dc)`        | roll active PC stat against DC                                              |
+| `startArenaFight("knot")`    | puts arena queue into fight, clears queue, moves to knot once fight is over |
+| `teleportParty(xy,dir)`      | move party to location                                                      |

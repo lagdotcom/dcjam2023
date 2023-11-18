@@ -242,7 +242,7 @@ VAR arenaOpen = true
 # enter: ArenaMiddle
     { isArenaFightPending():
         The forcs of Mullanginan rally around you!
-        ~ startArenaFight()
+        ~ startArenaFight("")
       - else:
         This is a safe haven... for now.
     } -> DONE

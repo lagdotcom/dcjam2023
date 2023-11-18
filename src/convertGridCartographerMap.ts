@@ -102,6 +102,7 @@ class GCMapConverter {
     if (!f) throw new Error(`No such floor: ${floor}`);
 
     for (const note of f.notes.sort(compareNotes)) {
+      // TODO these values are incorrect if origin is "bl"
       const { __data, x, y } = note;
 
       for (const line of __data?.split("\n") ?? []) {

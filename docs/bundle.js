@@ -1017,15 +1017,23 @@
   var sneedCrawler_default2 = "./sneedCrawler-B5CE42IQ.png";
 
   // ink:D:\Code\dcjam2023\res\map.ink
-  var map_default = "./map-YRYQPRIR.ink";
+  var map_default = "./map-YEJLQB7U.ink";
 
   // res/map.json
   var map_default2 = "./map-HXD5COAC.json";
+
+  // ink:D:\Code\dcjam2023\res\rush.ink
+  var rush_default = "./rush-LZWVRJNU.ink";
+
+  // res/rush.json
+  var rush_default2 = "./rush-TNETU4RD.json";
 
   // src/resources.ts
   var Resources = {
     "map.ink": map_default,
     "map.json": map_default2,
+    "rush.ink": rush_default,
+    "rush.json": rush_default2,
     "flats.png": flats_default2,
     "flats.json": flats_default,
     "eveScout.png": eveScout_default2,
@@ -2821,6 +2829,13 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       this.active = 0;
       this.running = false;
       this.skill = "NONE";
+      g.eventHandlers.onCombatOver.add(({ winners }) => {
+        if (winners === "party" && this.afterFight && g.currentCell) {
+          const name = this.afterFight;
+          this.afterFight = void 0;
+          void this.executePath(g.currentCell, "AFTER_FIGHT", { name });
+        }
+      });
     }
     parseAndRun(source) {
       const program = new import_Story.Story(source);
@@ -2866,7 +2881,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       const getPositionByTag = (tag) => {
         const position = this.g.findCellWithTag(tag);
         if (!position)
-          throw new Error(`Cannot find tag: ${tag}`);
+          console.warn(`Cannot find tag: ${tag}`);
         return position;
       };
       const getSide = (xy2, d) => {
@@ -3000,14 +3015,20 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
         const roll = this.g.roll(pc) + pc[stat];
         return roll >= dc;
       });
-      program.BindExternalFunction("startArenaFight", () => {
+      program.BindExternalFunction("startArenaFight", (afterFight) => {
         const count = this.g.pendingArenaEnemies.length;
         if (!count)
           return false;
         const enemies2 = this.g.pendingArenaEnemies.splice(0, count);
+        if (afterFight)
+          this.afterFight = afterFight;
         this.g.combat.begin(enemies2, "arena");
         return true;
       });
+      program.BindExternalFunction(
+        "teleportParty",
+        (xy2, dir) => this.g.teleport(tagToXy(xy2), dir)
+      );
       program.ContinueMaximally();
       for (const [name] of program.mainContentContainer.namedContent) {
         const entry = { name };
@@ -4401,7 +4422,8 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
             for (const cn of this.selected)
               this.g.party.push(new Player(this.g, cn));
             startGame(this.selected);
-            void this.g.loadGCMap("map.json", 0, -1);
+            const mapName = e.shiftKey && e.ctrlKey ? "rush.json" : "map.json";
+            void this.g.loadGCMap(mapName, 0, -1);
           }
           break;
         case "Escape":
@@ -5161,6 +5183,21 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       }
       this.markUnnavigable(this.position, dir);
       return false;
+    }
+    teleport(destination, dir) {
+      const cell = this.getCell(destination.x, destination.y);
+      if (!cell)
+        throw new Error(
+          `Tried to teleport to ${destination.x},${destination.y}, does not exist.`
+        );
+      const old = this.position;
+      this.position = destination;
+      this.facing = dir;
+      this.markVisited();
+      this.draw();
+      this.setObstacle(false);
+      this.fire("onPartyMove", { from: old, to: this.position });
+      void this.scripting.onEnter(this.position);
     }
     toggleLog() {
       this.showLog = !this.showLog;

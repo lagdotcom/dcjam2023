@@ -417,6 +417,25 @@ export default class Engine implements Game {
     return false;
   }
 
+  teleport(destination: XY, dir: Dir) {
+    const cell = this.getCell(destination.x, destination.y);
+    if (!cell)
+      throw new Error(
+        `Tried to teleport to ${destination.x},${destination.y}, does not exist.`,
+      );
+
+    const old = this.position;
+
+    this.position = destination;
+    this.facing = dir;
+    this.markVisited();
+    this.draw();
+    this.setObstacle(false);
+
+    this.fire("onPartyMove", { from: old, to: this.position });
+    void this.scripting.onEnter(this.position);
+  }
+
   toggleLog() {
     this.showLog = !this.showLog;
     this.draw();

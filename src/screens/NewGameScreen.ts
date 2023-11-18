@@ -67,7 +67,9 @@ export default class NewGameScreen implements GameScreen {
             this.g.party.push(new Player(this.g, cn));
 
           startGame(this.selected);
-          void this.g.loadGCMap("map.json", 0, -1);
+
+          const mapName = e.shiftKey && e.ctrlKey ? "rush.json" : "map.json";
+          void this.g.loadGCMap(mapName, 0, -1);
         }
         break;
 

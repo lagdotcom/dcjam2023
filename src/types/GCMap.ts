@@ -280,6 +280,8 @@ export interface Note {
   /** The Y co-ordinate of the note given in the co-ordinate space specified by the origin attribute of the setup element. */
   y: number;
 
+  monospaced: boolean;
+
   __data?: string;
 }
 
@@ -315,8 +317,50 @@ export interface Row {
 }
 
 export interface Tile {
+  /** The style of the B edge of this tile. */
+  b?: Edge;
+
+  /** The color of the B edge. This is a palette index from 0 to 255. See the palette element section below for more information. See the tile data model document for the location of the B edge for the grid shape used. */
+  bc?: number;
+
+  /** If set to 1 this signifies the tile has a ceiling. */
+  c?: "1";
+
+  /** Ceiling drop elevation of this tile, an integer value from 1 to 255. Tiles with a ceiling drop elevation of 0 will not have this attribute. */
+  cd?: number;
+
+  /** If set to 1 this signifies the tile is dark. */
+  d?: "1";
+
+  /** Elevation of this tile, an integer value from 1 to 255. Tiles with an elevation of 0 will not have this attribute. */
+  el?: string;
+
+  /** This tile has a footprint if this value is 1. If there is not footprint, or the export footprints option is disabled, this attribute is omitted. */
+  fp?: "1";
+
+  /** A value composed from characters r, g and/or b that specify which of the three coloured FX flags have been assigned to this tile. Multiple characters can be present and assigned to the tile. */
+  fx?: string;
+
+  /** The style of the I edge of this tile. */
+  i?: Edge;
+
+  /** The color of the in-block edge. This is a palette index from 0 to 255. See the palette element below for more information. */
+  ibc?: number;
+
+  /** An in-block edge is present. */
+  ibe?: "1";
+
+  /** The color of the I edge. This is a palette index from 0 to 255. See the palette element section below for more information. See the tile data model document for the location of the I edge for the grid shape used. */
+  ic?: number;
+
+  /** The style of the in-block edge of this tile. Corner edges don't have a style (only wall) and this attribute will not be present for these edges. */
+  ibs?: InBlockEdge;
+
   /** A standard marker is present. */
   m?: Marker;
+
+  /** The color of the marker layer. This is a palette index from 0 to 255. See the palette element below for more information. Note that color custom markers are not tinted and should ignore this value. */
+  mc?: number;
 
   /** A custom color marker is present. This is a value from 0 to 8191 corresponding to the index of the custom tile used in the color list. See the custom element for more information. */
   mcc?: number;
@@ -324,56 +368,17 @@ export interface Tile {
   /** A custom monochrome marker is present. This is a value from 0 to 8191 corresponding to the index of the custom tile used in the monochrome list. See the custom element for more information. */
   mcm?: number;
 
-  /** The color of the marker layer. This is a palette index from 0 to 255. See the palette element below for more information. Note that color custom markers are not tinted and should ignore this value. */
-  mc?: number;
-
-  /** An in-block edge is present. */
-  ibe?: "1";
-
-  /** The style of the in-block edge of this tile. Corner edges don't have a style (only wall) and this attribute will not be present for these edges. */
-  ibs?: InBlockEdge;
-
-  /** The color of the in-block edge. This is a palette index from 0 to 255. See the palette element below for more information. */
-  ibc?: number;
-
-  /** A standard terrain type is present. */
-  t?: Terrain;
-
-  /** A custom monochrome terrain is present. This is a value from 0 to 7999 corresponding to the index of the custom tile used in the monochrome list. See the custom element for more information. */
-  tcm?: number;
-
-  /** A custom color terrain is present. This is a value from 0 to 7999 corresponding to the index of the custom tile used in the color list. See the custom element for more information. */
-  tcc?: number;
-
-  /** The color of the terrain layer. This is a palette index from 0 to 255. See the palette element section below for more information. Note that color custom terrain is not tinted and should ignore this value. */
-  tc?: number;
-
   /** The style of the R edge of this tile. */
   r?: Edge;
-
-  /** The style of the I edge of this tile. */
-  i?: Edge;
-
-  /** The style of the B edge of this tile. */
-  b?: Edge;
 
   /** The color of the R edge. This is a palette index from 0 to 255. See the palette element section below for more information. See the tile data model document for the location of the R edge for the grid shape used. */
   rc?: number;
 
-  /** The color of the I edge. This is a palette index from 0 to 255. See the palette element section below for more information. See the tile data model document for the location of the I edge for the grid shape used. */
-  ic?: number;
+  /** If set to 1 this tile has been flagged as solid by the solid tile brush. */
+  s?: "1";
 
-  /** The color of the B edge. This is a palette index from 0 to 255. See the palette element section below for more information. See the tile data model document for the location of the B edge for the grid shape used. */
-  bc?: number;
-
-  /** If set to 1 this signifies the tile is dark. */
-  d?: "1";
-
-  /** A value composed from characters r, g and/or b that specify which of the three colored FX flags have been assigned to this tile. Multiple characters can be present and assigned to the tile. */
-  fx?: string;
-
-  /** If set to 1 this signifies the tile has a ceiling. */
-  c?: "1";
+  /** If the terrain snipper tool has been used on this tile to remove some part of the ground, this element is present. It can have one of two values: tl or br which represent whether the top/left or bottom/right of the tile is still visible. */
+  snip?: "tl" | "br";
 
   /** A string of characters that indicate special attribute flags assigned to this tile (custom tiles only). Multiple characters can be present and will always appear in the order listed. Meanings are:
     • h Tile is horizontally flipped.
@@ -381,9 +386,21 @@ export interface Tile {
     • r Tile is rotated 90 degrees clockwise. */
   sp?: string;
 
-  /** If the terrain snipper tool has been used on this tile to remove some part of the ground, this element is present. It can have one of two values: tl or br which represent whether the top/left or bottom/right of the tile is still visible. */
-  snip?: "tl" | "br";
+  /** A standard terrain type is present. */
+  t?: Terrain;
 
-  /** Elevation of this tile, an integer value from 1 to 255. Tiles with an elevation of 0 will not have this attribute. */
-  el?: string;
+  /** The color of the terrain layer. This is a palette index from 0 to 255. See the palette element section below for more information. Note that color custom terrain is not tinted and should ignore this value. */
+  tc?: number;
+
+  /** A custom color terrain is present. This is a value from 0 to 7999 corresponding to the index of the custom tile used in the color list. See the custom element for more information. */
+  tcc?: number;
+
+  /** A custom monochrome terrain is present. This is a value from 0 to 7999 corresponding to the index of the custom tile used in the monochrome list. See the custom element for more information. */
+  tcm?: number;
+
+  /** A string of characters that indicate special attribute flags assigned to the terrain layer (custom tiles only). Multiple characters can be present and will always appear in the order listed. Meanings are:
+    • h Tile is horizontally flipped.
+    • v Tile is vertically flipped.
+    • r Tile is rotated 90 degrees clockwise. */
+  tsp?: `${"h" | ""}${"v" | ""}${"r" | ""}`;
 }

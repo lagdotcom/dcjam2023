@@ -26,6 +26,7 @@ export default class EngineInkScripting {
   onTagEnter: Map<string, KnotEntry>;
   onTagInteract: Map<string, KnotEntry>;
   active: Dir;
+  afterFight?: string;
   running: boolean;
   skill: string;
   story!: Story;
@@ -36,6 +37,14 @@ export default class EngineInkScripting {
     this.active = 0;
     this.running = false;
     this.skill = "NONE";
+
+    g.eventHandlers.onCombatOver.add(({ winners }) => {
+      if (winners === "party" && this.afterFight && g.currentCell) {
+        const name = this.afterFight;
+        this.afterFight = undefined;
+        void this.executePath(g.currentCell, "AFTER_FIGHT", { name });
+      }
+    });
   }
 
   parseAndRun(source: string) {
@@ -80,7 +89,7 @@ export default class EngineInkScripting {
     };
     const getPositionByTag = (tag: string) => {
       const position = this.g.findCellWithTag(tag);
-      if (!position) throw new Error(`Cannot find tag: ${tag}`);
+      if (!position) console.warn(`Cannot find tag: ${tag}`);
       return position;
     };
     const getSide = (xy: XYTag, d: Dir) => {
@@ -213,14 +222,18 @@ export default class EngineInkScripting {
       const roll = this.g.roll(pc) + pc[stat];
       return roll >= dc;
     });
-    program.BindExternalFunction("startArenaFight", () => {
+    program.BindExternalFunction("startArenaFight", (afterFight: string) => {
       const count = this.g.pendingArenaEnemies.length;
       if (!count) return false;
 
       const enemies = this.g.pendingArenaEnemies.splice(0, count);
+      if (afterFight) this.afterFight = afterFight;
       this.g.combat.begin(enemies, "arena");
       return true;
     });
+    program.BindExternalFunction("teleportParty", (xy: XYTag, dir: Dir) =>
+      this.g.teleport(tagToXy(xy), dir),
+    );
 
     program.ContinueMaximally();
     for (const [name] of program.mainContentContainer.namedContent) {

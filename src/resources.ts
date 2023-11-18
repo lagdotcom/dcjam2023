@@ -10,10 +10,14 @@ import sneedCrawlerJson from "../res/atlas/sneedCrawler.json";
 import sneedCrawlerImage from "../res/atlas/sneedCrawler.png";
 import mapInk from "../res/map.ink";
 import mapJson from "../res/map.json";
+import rushInk from "../res/rush.ink";
+import rushJson from "../res/rush.json";
 
 const Resources: Record<string, string> = {
   "map.ink": mapInk,
   "map.json": mapJson,
+  "rush.ink": rushInk,
+  "rush.json": rushJson,
 
   "flats.png": flatsImage,
   "flats.json": flatsJson,
