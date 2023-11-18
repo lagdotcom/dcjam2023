@@ -20,7 +20,7 @@ function splitWords(s: string) {
 export default function textWrap(
   source: string,
   width: number,
-  measure: (str: string) => TextMetrics
+  measure: (str: string) => TextMetrics,
 ) {
   const measurement = measure(source);
   if (measurement.width < width)

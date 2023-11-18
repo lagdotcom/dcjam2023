@@ -27,7 +27,7 @@ export const JacketAndRucksack: Item = {
     act({ g, targets }) {
       // TODO have/has
       g.addToLog(
-        `${niceList(targets.map((x) => x.name))} has nowhere to hide!`
+        `${niceList(targets.map((x) => x.name))} has nowhere to hide!`,
       );
 
       // TODO: [Search] enemy is more likely to drop items

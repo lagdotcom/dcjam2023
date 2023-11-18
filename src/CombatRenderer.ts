@@ -9,7 +9,7 @@ export default class CombatRenderer {
     public position = xy(60, 0),
     public size = xy(144, 160),
     public padding = xy(2, 2),
-    public rowPadding = 5
+    public rowPadding = 5,
   ) {}
 
   render() {
@@ -51,7 +51,7 @@ export default class CombatRenderer {
           `${action.name} (${action.sp})`,
           x + padding.x,
           y + rowHeight / 2,
-          undefined
+          undefined,
         );
         y += rowHeight;
       }

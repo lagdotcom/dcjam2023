@@ -84,7 +84,7 @@ export type GameEvents = {
 };
 export type EventHandler<K extends GameEventName> = (
   this: GameEffect,
-  e: GameEvents[K]
+  e: GameEvents[K],
 ) => void;
 
 export type GameEventHandler = {

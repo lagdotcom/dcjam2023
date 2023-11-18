@@ -24,7 +24,7 @@ export default class CombatManager {
     public g: Engine,
     public enemyInitialDelay = 3000,
     public enemyTurnDelay = 1000,
-    public enemyFrameTime = 100
+    public enemyFrameTime = 100,
   ) {
     this.effects = [];
     this.resetEnemies();
@@ -89,7 +89,7 @@ export default class CombatManager {
 
     this.enemyAnimationInterval = setInterval(
       this.animateEnemies,
-      this.enemyFrameTime
+      this.enemyFrameTime,
     );
   }
 
@@ -137,7 +137,7 @@ export default class CombatManager {
     if (this.side === "enemy")
       this.enemyTurnTimeout = setTimeout(
         this.enemyTick,
-        this.enemyInitialDelay
+        this.enemyInitialDelay,
       );
     this.g.draw();
   }
@@ -155,13 +155,13 @@ export default class CombatManager {
 
           const { amount, possibilities } = this.g.getTargetPossibilities(
             enemy,
-            action
+            action,
           );
 
           if (possibilities.length)
             return { enemy, action, amount, possibilities };
         })
-        .filter(isDefined)
+        .filter(isDefined),
     );
     if (!moves.length) {
       this.enemyTurnTimeout = undefined;

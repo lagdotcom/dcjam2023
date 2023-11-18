@@ -145,7 +145,7 @@ export default class MapDataManager {
       if (overlays) entry.overlays = Object.fromEntries(Array.from(overlays));
       if (walls)
         entry.walls = Object.fromEntries(
-          Array.from(walls).map(([key, data]) => [key, condense(data)])
+          Array.from(walls).map(([key, data]) => [key, condense(data)]),
         );
 
       data[name] = entry;
@@ -164,8 +164,8 @@ export default class MapDataManager {
       this.allOverlays.set(
         name,
         new Map(
-          Object.entries(overlays).map(([tag, cell]) => [tag as XYTag, cell])
-        )
+          Object.entries(overlays).map(([tag, cell]) => [tag as XYTag, cell]),
+        ),
       );
       this.allScripts.set(name, script);
       this.allWalls.set(
@@ -178,8 +178,8 @@ export default class MapDataManager {
               isSolid: condensed.includes("s"),
               canSeeWall: condensed.includes("w"),
             },
-          ])
-        )
+          ]),
+        ),
       );
     }
   }

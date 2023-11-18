@@ -68,7 +68,7 @@ declare module "gameanalytics" {
       itemId?: string,
       cartType?: string,
       customFields?: CustomFields,
-      mergeFields?: boolean
+      mergeFields?: boolean,
     ): void;
     addResourceEvent(
       flowType?: EGAResourceFlowType,
@@ -77,7 +77,7 @@ declare module "gameanalytics" {
       itemType?: string,
       itemId?: string,
       customFields?: CustomFields,
-      mergeFields?: boolean
+      mergeFields?: boolean,
     ): void;
     addProgressionEvent(
       progressionStatus?: EGAProgressionStatus,
@@ -86,19 +86,19 @@ declare module "gameanalytics" {
       progression03?: string,
       score?: number,
       customFields?: CustomFields,
-      mergeFields?: boolean
+      mergeFields?: boolean,
     ): void;
     addDesignEvent(
       eventId: string,
       value?: number,
       customFields?: CustomFields,
-      mergeFields?: boolean
+      mergeFields?: boolean,
     ): void;
     addErrorEvent(
       severity?: EGAErrorSeverity,
       message?: string,
       customFields?: CustomFields,
-      mergeFields?: boolean
+      mergeFields?: boolean,
     ): void;
     addAdEventWithNoAdReason(
       adAction?: EGAAdAction,
@@ -107,7 +107,7 @@ declare module "gameanalytics" {
       adPlacement?: string,
       noAdReason?: EGAAdError,
       customFields?: CustomFields,
-      mergeFields?: boolean
+      mergeFields?: boolean,
     ): void;
     addAdEventWithDuration(
       adAction?: EGAAdAction,
@@ -116,7 +116,7 @@ declare module "gameanalytics" {
       adPlacement?: string,
       duration?: number,
       customFields?: CustomFields,
-      mergeFields?: boolean
+      mergeFields?: boolean,
     ): void;
     addAdEvent(
       adAction?: EGAAdAction,
@@ -124,7 +124,7 @@ declare module "gameanalytics" {
       adSdkName?: string,
       adPlacement?: string,
       customFields?: CustomFields,
-      mergeFields?: boolean
+      mergeFields?: boolean,
     ): void;
     setEnabledInfoLog(flag?: boolean): void;
     setEnabledVerboseLog(flag?: boolean): void;

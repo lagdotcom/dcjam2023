@@ -37,7 +37,7 @@ export const IronFullcase: Item = {
       const opposite = g.getOpponent(me);
       if (opposite) {
         g.addToLog(
-          `${opposite.name} withers in the face of ${me.name}'s endurance!`
+          `${opposite.name} withers in the face of ${me.name}'s endurance!`,
         );
         g.addEffect(() => ({
           name: "Endured",

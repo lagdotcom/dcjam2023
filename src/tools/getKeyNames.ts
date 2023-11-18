@@ -2,7 +2,7 @@ export default function getKeyNames(
   key: string,
   shift: boolean,
   alt: boolean,
-  ctrl: boolean
+  ctrl: boolean,
 ) {
   const names = [key];
 

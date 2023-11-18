@@ -136,7 +136,7 @@ class GCMapConverter {
             Dir.S,
             this.tile(x, y + 1),
             Dir.N,
-            this.startsOpen.has(tag)
+            this.startsOpen.has(tag),
           );
 
         if (tile.r)
@@ -147,7 +147,7 @@ class GCMapConverter {
             Dir.E,
             this.tile(x + 1, y),
             Dir.W,
-            this.startsOpen.has(tag)
+            this.startsOpen.has(tag),
           );
 
         x++;
@@ -185,7 +185,7 @@ class GCMapConverter {
           ...arg.split(",").map((name) => ({
             image: getResourceURL(name + ".png"),
             json: getResourceURL(name + ".json"),
-          }))
+          })),
         );
         return;
 
@@ -256,7 +256,7 @@ class GCMapConverter {
     ld: Dir,
     rt: WorldCell,
     rd: Dir,
-    opened: boolean
+    opened: boolean,
   ) {
     const { main, opposite } = EdgeDetails[edge] ?? defaultEdge;
     const texture = this.getTexture(index);
@@ -288,7 +288,7 @@ export default function convertGridCartographerMap(
   j: GCMap,
   region = 0,
   floor = 0,
-  env: Record<string, number> = {}
+  env: Record<string, number> = {},
 ) {
   const converter = new GCMapConverter(env);
   return converter.convert(j, region, floor);

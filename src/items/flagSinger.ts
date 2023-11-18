@@ -26,8 +26,8 @@ export const SignedCasque: Item = {
     act({ g, targets }) {
       g.addToLog(
         `${niceList(targets.map((x) => x.name))} feel${pluralS(
-          targets
-        )} more protected.`
+          targets,
+        )} more protected.`,
       );
       g.addEffect(() => ({
         name: "Cheer",

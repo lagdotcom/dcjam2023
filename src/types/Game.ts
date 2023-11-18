@@ -20,7 +20,7 @@ export default interface Game {
     targets: Combatant[],
     amount: number,
     type: AttackableStat,
-    origin: "normal" | "magic"
+    origin: "normal" | "magic",
   ): number;
 
   endTurn(): void;

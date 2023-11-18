@@ -24,7 +24,7 @@ export default class Sounds {
     for (const url of Object.values(allSounds)) void g.res.loadAudio(url);
 
     g.eventHandlers.onKilled.add(
-      ({ who }) => void this.play(who.isPC ? "cry1" : "death1")
+      ({ who }) => void this.play(who.isPC ? "cry1" : "death1"),
     );
   }
 

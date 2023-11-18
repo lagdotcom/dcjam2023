@@ -32,7 +32,7 @@ export default class ResourceManager {
       promise.then((arg) => {
         this.loaded++;
         return arg;
-      })
+      }),
     );
     return promise;
   }
@@ -51,7 +51,7 @@ export default class ResourceManager {
           this.images[src] = img;
           resolve(img);
         });
-      })
+      }),
     );
   }
 
@@ -66,7 +66,7 @@ export default class ResourceManager {
         .then((atlas) => {
           this.atlases[src] = atlas;
           return atlas;
-        })
+        }),
     );
   }
 
@@ -81,7 +81,7 @@ export default class ResourceManager {
         .then((map) => {
           this.maps[src] = map;
           return map;
-        })
+        }),
     );
   }
 
@@ -96,7 +96,7 @@ export default class ResourceManager {
         .then((script) => {
           this.scripts[src] = script;
           return script;
-        })
+        }),
     );
   }
 
@@ -114,7 +114,7 @@ export default class ResourceManager {
           this.audio[src] = audio;
           resolve(audio);
         });
-      })
+      }),
     );
   }
 }

@@ -56,7 +56,7 @@ export default class StatsScreen implements GameScreen, HasHotspots {
     public g: Engine,
     public position = xy(91, 21),
     public size = xy(296, 118),
-    public padding = xy(2, 2)
+    public padding = xy(2, 2),
   ) {
     this.background = g.screen;
     this.cursorColumn = "inventory";
@@ -304,7 +304,7 @@ export default class StatsScreen implements GameScreen, HasHotspots {
     item: Item,
     x: number,
     y: number,
-    selected: boolean
+    selected: boolean,
   ) {
     const canEquip = pc.canEquip(item);
 

@@ -10,7 +10,7 @@ import Dir from "./types/Dir";
 export const tileTag = (
   id: number,
   type: AtlasTile["type"],
-  tile: AtlasTile["tile"]
+  tile: AtlasTile["tile"],
 ) => `${type}${id}:${tile.x},${tile.z}`;
 
 export default class DungeonRenderer {
@@ -20,7 +20,7 @@ export default class DungeonRenderer {
     public g: Engine,
     public dungeon: Atlas,
     public atlasImage: HTMLImageElement,
-    public offset = xy(91, 21)
+    public offset = xy(91, 21),
   ) {
     this.imageData = new Map();
   }
@@ -42,7 +42,7 @@ export default class DungeonRenderer {
           entry.coords.x,
           entry.coords.y,
           entry.coords.w,
-          entry.coords.h
+          entry.coords.h,
         );
         const tmpCanvas = document.createElement("canvas");
         tmpCanvas.width = entry.coords.w;
@@ -52,7 +52,7 @@ export default class DungeonRenderer {
           const data = this.flipImage(
             entry.coords.w,
             entry.coords.h,
-            imageData.data
+            imageData.data,
           );
           imageData.data.set(data);
         }
@@ -63,7 +63,7 @@ export default class DungeonRenderer {
           createImageBitmap(imageData).then((bmp) => {
             entry.image = bmp;
             return entry;
-          })
+          }),
         );
       }
     }
@@ -140,7 +140,7 @@ export default class DungeonRenderer {
     const tiles = getFieldOfView(
       this.g,
       this.dungeon.width,
-      this.dungeon.depth
+      this.dungeon.depth,
     );
     for (const pos of tiles) {
       const cell = this.g.getCell(pos.x, pos.y);

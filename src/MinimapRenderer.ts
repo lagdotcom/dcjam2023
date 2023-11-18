@@ -26,7 +26,7 @@ function rect(
   oy: number,
   w: number,
   h: number,
-  tag: SideType
+  tag: SideType,
 ) {
   ctx.fillStyle = sideColours[tag];
   ctx.fillRect(x + ox, y + oy, w, h);
@@ -38,7 +38,7 @@ export default class MinimapRenderer {
     public tileSize = 16,
     public wallSize = 2,
     public size = xy(2, 2),
-    public position = xy(375, 170)
+    public position = xy(375, 170),
   ) {}
 
   render() {
@@ -59,7 +59,7 @@ export default class MinimapRenderer {
 
         const { cell, north, east, south, west } = this.g.getMinimapData(
           tx,
-          ty
+          ty,
         );
         if (cell) {
           ctx.fillStyle = Colours.mapVisited;
@@ -94,7 +94,7 @@ export default class MinimapRenderer {
     draw(
       facingChars[facing],
       startX + tileSize * (size.x + 0.5),
-      startY + tileSize * (size.y + 0.5)
+      startY + tileSize * (size.y + 0.5),
     );
   }
 }

@@ -21,7 +21,7 @@ export default class SplashScreen implements GameScreen {
       this.image = img;
       this.position = xyi(
         g.canvas.width / 2 - img.width / 2,
-        g.canvas.height / 2 - img.height / 2
+        g.canvas.height / 2 - img.height / 2,
       );
       g.draw();
       return img;
@@ -53,7 +53,9 @@ export default class SplashScreen implements GameScreen {
     clearTimeout(this.timeout);
 
     this.g.useScreen(
-      anySavedGamesExist() ? new TitleScreen(this.g) : new NewGameScreen(this.g)
+      anySavedGamesExist()
+        ? new TitleScreen(this.g)
+        : new NewGameScreen(this.g),
     );
   };
 }

@@ -13,7 +13,10 @@ export default class DeathScreen implements GameScreen {
   oldScreen: GameScreen;
   spotElements = [];
 
-  constructor(public g: Engine, public lastToDie: Player) {
+  constructor(
+    public g: Engine,
+    public lastToDie: Player,
+  ) {
     this.alpha = 0.1;
     this.doNotClear = true;
     this.interval = setInterval(this.render, 400);
@@ -55,7 +58,7 @@ export default class DeathScreen implements GameScreen {
     const { lines } = textWrap(
       classes[this.lastToDie.className].deathQuote,
       width - 200,
-      measure
+      measure,
     );
     const textHeight = lines.length * lineHeight;
 

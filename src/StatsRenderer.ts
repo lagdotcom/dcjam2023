@@ -26,7 +26,7 @@ class MarbleAnimator {
   constructor(
     public parent: StatsRenderer,
     public interval = 50,
-    public progressTick = 0.2
+    public progressTick = 0.2,
   ) {
     this.progress = 0;
     this.swaps = [];
@@ -72,7 +72,7 @@ export default class StatsRenderer implements HasHotspots {
     public g: Engine,
     public text = xy(25, 21),
     public hp = xy(7, 29),
-    public sp = xy(7, 35)
+    public sp = xy(7, 35),
   ) {
     this.animator = new MarbleAnimator(this);
     this.spots = [];
@@ -127,10 +127,10 @@ export default class StatsRenderer implements HasHotspots {
     y: number,
     current: number,
     max: number,
-    colour: string
+    colour: string,
   ) {
     const width = Math.floor(
-      barWidth * Math.max(0, Math.min(1, current / max))
+      barWidth * Math.max(0, Math.min(1, current / max)),
     );
 
     this.g.ctx.fillStyle = colour;

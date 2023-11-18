@@ -14,7 +14,7 @@ export default function withTextStyle(
     fontSize?: number;
     fontFace?: string;
     globalAlpha?: number;
-  }
+  },
 ) {
   ctx.textAlign = textAlign;
   ctx.textBaseline = textBaseline;

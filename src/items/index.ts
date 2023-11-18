@@ -17,8 +17,8 @@ const allItems = Object.fromEntries(
     warCaller,
     consumable,
   ].flatMap((repository) =>
-    Object.values(repository).map((item) => [item.name, item])
-  )
+    Object.values(repository).map((item) => [item.name, item]),
+  ),
 );
 
 export function getItem(s?: string): Item | undefined {

@@ -21,7 +21,7 @@ export default class LoadingScreen implements GameScreen {
     draw(
       `Loading: ${res.loaded}/${res.loading}`,
       canvas.width / 2,
-      canvas.height / 2
+      canvas.height / 2,
     );
     this.g.draw();
   }

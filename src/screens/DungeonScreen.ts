@@ -18,7 +18,10 @@ interface RenderSetup {
 export default class DungeonScreen implements GameScreen {
   spotElements: HasHotspots[];
 
-  constructor(public g: Engine, public renderSetup: RenderSetup) {
+  constructor(
+    public g: Engine,
+    public renderSetup: RenderSetup,
+  ) {
     void g.jukebox.play("explore");
     this.spotElements = [renderSetup.hud.skills, renderSetup.hud.stats];
   }
@@ -50,7 +53,7 @@ export default class DungeonScreen implements GameScreen {
       draw(
         `Loading: ${res.loaded}/${res.loading}`,
         canvas.width / 2,
-        canvas.height / 2
+        canvas.height / 2,
       );
       this.g.draw();
       return;

@@ -22,6 +22,6 @@ export function getItemColour(yellow: boolean, bright: boolean) {
       ? Colours.itemActiveHighlighted
       : Colours.itemHighlighted
     : yellow
-    ? Colours.itemActive
-    : Colours.item;
+      ? Colours.itemActive
+      : Colours.item;
 }

@@ -15,7 +15,7 @@ export default class SkillRenderer implements HasHotspots {
     public position = xy(0, 0),
     public offset = xy(20, 42),
     public buttonSize = xy(80, 16),
-    public rowHeight = 18
+    public rowHeight = 18,
   ) {
     this.spots = [];
   }

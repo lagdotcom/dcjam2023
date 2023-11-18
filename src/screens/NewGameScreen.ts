@@ -93,7 +93,7 @@ export default class NewGameScreen implements GameScreen {
       draw(
         selected.size === 4 ? "Press Space to begin" : "Pick 4 with Enter",
         canvas.width / 2,
-        canvas.height - 20
+        canvas.height - 20,
       );
     }
 

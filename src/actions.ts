@@ -15,7 +15,7 @@ export const oneOpponent: ActionTarget = {
 };
 export const opponents = (
   count?: number,
-  offsets?: (0 | 1 | 2 | 3)[]
+  offsets?: (0 | 1 | 2 | 3)[],
 ): ActionTarget => ({
   type: "enemy",
   distance: 1,

@@ -109,7 +109,7 @@ class FovCalculator {
 export default function getFieldOfView(
   g: Engine,
   width: number,
-  depth: number
+  depth: number,
 ) {
   const calc = new FovCalculator(g);
   return calc.calculate(width, depth);

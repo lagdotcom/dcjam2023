@@ -26,7 +26,7 @@ class RollListener {
     public g: Engine,
     public position = xyi(g.canvas.width / 2, 212),
     public initialDelay = 2000,
-    public fadeDelay = 500
+    public fadeDelay = 500,
   ) {
     this.value = 0;
     this.colour = "white";
@@ -34,8 +34,8 @@ class RollListener {
     this.g.eventHandlers.onRoll.add(({ value, size }) =>
       this.rolled(
         value,
-        value === 1 ? "red" : value === size ? "lime" : "white"
-      )
+        value === 1 ? "red" : value === size ? "lime" : "white",
+      ),
     );
   }
 

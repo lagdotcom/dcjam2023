@@ -17,7 +17,7 @@ interface RenderingContext {
 export default function getCanvasContext<T extends ContextId>(
   canvas: HTMLCanvasElement,
   type: T,
-  options?: ContextOptions[T]
+  options?: ContextOptions[T],
 ): RenderingContext[T] {
   const ctx = canvas.getContext(type, options);
   if (!ctx) throw new Error(`canvas.getContext(${type})`);

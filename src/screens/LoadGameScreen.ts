@@ -16,7 +16,7 @@ export default class LoadGameScreen implements GameScreen {
     public g: Engine,
     public games = getSavedGames(),
     public index = 0,
-    public position = xyi(60, 60)
+    public position = xyi(60, 60),
   ) {
     void g.jukebox.play("title");
   }

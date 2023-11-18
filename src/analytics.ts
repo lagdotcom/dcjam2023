@@ -63,7 +63,7 @@ export function startFight(pos: XY, enemies: string[]) {
     EGAProgressionStatus.Start,
     currentArea,
     "Fight",
-    xyToTag(pos)
+    xyToTag(pos),
   );
   for (const enemy of enemies)
     GA.addDesignEvent(`Fight:Begin:${sanitise(enemy)}`);
@@ -74,7 +74,7 @@ export function winFight(pos: XY) {
     EGAProgressionStatus.Complete,
     currentArea,
     "Fight",
-    xyToTag(pos)
+    xyToTag(pos),
   );
 }
 

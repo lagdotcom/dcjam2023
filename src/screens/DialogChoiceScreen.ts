@@ -20,7 +20,7 @@ export default class DialogChoiceScreen implements GameScreen {
     public choices: Choice[],
     public position = xy(91, 21),
     public size = xy(296, 118),
-    public padding = xy(20, 20)
+    public padding = xy(20, 20),
   ) {
     this.index = 0;
     this.background = g.screen;

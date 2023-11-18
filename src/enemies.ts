@@ -37,8 +37,8 @@ const Lash: CombatAction = {
     if (g.applyDamage(me, targets, 3, "hp", "normal") > 0) {
       g.addToLog(
         `${niceList(targets.map((x) => x.name))} feel${pluralS(
-          targets
-        )} temporarily demoralized.`
+          targets,
+        )} temporarily demoralized.`,
       );
       g.addEffect(() => ({
         name: "Lash",
@@ -139,7 +139,10 @@ export class Enemy implements Combatant {
   usedThisTurn: Set<string>;
   lastAction?: string;
 
-  constructor(public g: Engine, public template: EnemyTemplate) {
+  constructor(
+    public g: Engine,
+    public template: EnemyTemplate,
+  ) {
     this.isPC = false;
     this.animation = template.animation;
     this.frame = 0;

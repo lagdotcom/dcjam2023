@@ -142,7 +142,7 @@ export default class Engine implements Game {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-expect-error
     this.eventHandlers = Object.fromEntries(
-      GameEventNames.map((name) => [name, new Set()])
+      GameEventNames.map((name) => [name, new Set()]),
     );
     this.zoomRatio = 1;
     this.controls = new Map(DefaultControls);
@@ -240,7 +240,7 @@ export default class Engine implements Game {
     worldLocation: WorldLocation,
     w: World,
     position?: XY,
-    dir?: Dir
+    dir?: Dir,
   ) {
     const world = clone(w);
     this.useScreen(new LoadingScreen(this));
@@ -284,7 +284,7 @@ export default class Engine implements Game {
     region: number,
     floor: number,
     loadPosition?: XY,
-    loadFacing?: Dir
+    loadFacing?: Dir,
   ) {
     this.useScreen(new LoadingScreen(this));
 
@@ -304,7 +304,7 @@ export default class Engine implements Game {
       { resourceID, region, floor },
       { name, atlases, cells, start, facing },
       loadPosition,
-      loadFacing
+      loadFacing,
     );
   }
 
@@ -567,8 +567,8 @@ export default class Engine implements Game {
     return me.isPC
       ? this.combat.enemies[dir][0]
       : distance === 0
-      ? this.party[dir]
-      : undefined;
+        ? this.party[dir]
+        : undefined;
   }
 
   getAllies(me: Combatant, includeMe: boolean) {
@@ -578,7 +578,7 @@ export default class Engine implements Game {
 
   getTargetPossibilities(
     c: Combatant,
-    a: CombatAction
+    a: CombatAction,
   ): { amount: number; possibilities: Combatant[] } {
     if (a.targets.type === "self") return { amount: 1, possibilities: [c] };
 
@@ -635,7 +635,7 @@ export default class Engine implements Game {
 
     const msg = (action.useMessage ?? `[NAME] uses ${action.name}!`).replace(
       "[NAME]",
-      me.name
+      me.name,
     );
     if (msg) this.addToLog(msg);
     else this.draw();
@@ -726,7 +726,7 @@ export default class Engine implements Game {
   makePermanentDuff(
     target: Combatant,
     stat: "camaraderie" | "determination" | "spirit",
-    amount: number
+    amount: number,
   ) {
     const effect: GameEffect = {
       name: "Scorn",
@@ -751,7 +751,7 @@ export default class Engine implements Game {
     targets: Combatant[],
     amount: number,
     type: AttackableStat,
-    origin: "normal" | "magic"
+    origin: "normal" | "magic",
   ) {
     let total = 0;
 
@@ -1012,7 +1012,7 @@ export default class Engine implements Game {
       save.worldLocation.region,
       save.worldLocation.floor,
       tagToXy(save.position),
-      save.facing
+      save.facing,
     );
 
     this.draw();

@@ -62,10 +62,11 @@ export default class Jukebox {
     g.eventHandlers.onPartyTurn.add(this.tryPlay);
 
     g.eventHandlers.onCombatBegin.add(
-      ({ type }) => void this.play(type === "normal" ? "combat" : "arena")
+      ({ type }) => void this.play(type === "normal" ? "combat" : "arena"),
     );
     g.eventHandlers.onCombatOver.add(
-      ({ winners }) => void this.play(winners === "party" ? "explore" : "death")
+      ({ winners }) =>
+        void this.play(winners === "party" ? "explore" : "death"),
     );
 
     // start loading music pre-emptively

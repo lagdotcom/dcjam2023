@@ -8,7 +8,7 @@ export default class Grid<T> {
 
   constructor(
     public defaultValue: (xy: XY) => T,
-    public toTag: (xy: XY) => XYTag = xyToTag
+    public toTag: (xy: XY) => XYTag = xyToTag,
   ) {
     this.entries = new Map();
     this.width = 0;

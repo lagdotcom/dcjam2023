@@ -12,7 +12,7 @@ function getBaseStat(
   className: ClassName,
   stat: AttackableStat,
   bonusStat?: AttackableStat,
-  bonusIfTrue = 1
+  bonusIfTrue = 1,
 ) {
   return classes[className][stat] + (bonusStat === stat ? bonusIfTrue : 0);
 }
@@ -53,7 +53,7 @@ export default class Player implements Combatant {
     public g: Engine,
     public className: ClassName,
     bonus?: AttackableStat,
-    items = classes[className].items
+    items = classes[className].items,
   ) {
     this.name = classes[className].name;
     this.isPC = true;
@@ -81,7 +81,7 @@ export default class Player implements Combatant {
 
   get equipment() {
     return [this.LeftHand, this.RightHand, this.Body, this.Special].filter(
-      isDefined
+      isDefined,
     );
   }
 

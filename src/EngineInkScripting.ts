@@ -112,7 +112,7 @@ export default class EngineInkScripting {
         const pc = getPC(index);
         const stat = getStat(type);
         this.g.applyDamage(pc, [pc], amount, stat, "normal");
-      }
+      },
     );
     program.BindExternalFunction("facing", () => this.g.facing, true);
     program.BindExternalFunction(
@@ -122,27 +122,27 @@ export default class EngineInkScripting {
           this.story.EvaluateFunction(callback.componentsString, [
             xyToTag(pos),
           ]);
-      }
+      },
     );
     program.BindExternalFunction(
       "getDecal",
       (xy: XYTag, dir: Dir) => getSide(xy, dir).decal ?? 0,
-      true
+      true,
     );
     program.BindExternalFunction(
       "getNumber",
       (name: string) => this.g.currentCell?.numbers[name] ?? 0,
-      true
+      true,
     );
     program.BindExternalFunction(
       "getString",
       (name: string) => this.g.currentCell?.strings[name] ?? "",
-      true
+      true,
     );
     program.BindExternalFunction(
       "getTagPosition",
       (tag: string) => xyToTag(getPositionByTag(tag)),
-      true
+      true,
     );
     program.BindExternalFunction("giveItem", (name: string) => {
       const item = getItem(name);
@@ -152,17 +152,17 @@ export default class EngineInkScripting {
     program.BindExternalFunction(
       "isArenaFightPending",
       () => this.g.pendingArenaEnemies.length > 0,
-      true
+      true,
     );
     program.BindExternalFunction(
       "move",
       (xy: XYTag, dir: Dir) => xyToTag(move(tagToXy(xy), dir)),
-      true
+      true,
     );
     program.BindExternalFunction(
       "name",
       (dir: Dir) => this.g.party[dir].name,
-      true
+      true,
     );
     program.BindExternalFunction("playSound", (name: string) => {
       const sound = getSound(name);
@@ -177,7 +177,7 @@ export default class EngineInkScripting {
       const cell = getCell(xy);
       if (!removeItem(cell.tags, tag))
         console.warn(
-          `script tried to remove tag ${tag} at ${xy} -- not present`
+          `script tried to remove tag ${tag} at ${xy} -- not present`,
         );
 
       this.g.map.update(xy, cell);
@@ -185,7 +185,7 @@ export default class EngineInkScripting {
     program.BindExternalFunction(
       "rotate",
       (dir: Dir, quarters: number) => rotate(dir, quarters),
-      true
+      true,
     );
     program.BindExternalFunction(
       "setDecal",
@@ -193,10 +193,10 @@ export default class EngineInkScripting {
         const side = getSide(xy, dir);
         side.decal = decal;
         this.g.map.update(xy, getCell(xy));
-      }
+      },
     );
     program.BindExternalFunction("setObstacle", (blocked: boolean) =>
-      this.g.setObstacle(blocked)
+      this.g.setObstacle(blocked),
     );
     program.BindExternalFunction(
       "setSolid",
@@ -204,7 +204,7 @@ export default class EngineInkScripting {
         const side = getSide(xy, dir);
         side.solid = solid;
         this.g.map.update(xy, getCell(xy));
-      }
+      },
     );
     program.BindExternalFunction("skill", () => this.skill, true);
     program.BindExternalFunction("skillCheck", (type: string, dc: number) => {
@@ -298,7 +298,7 @@ export default class EngineInkScripting {
           this.g,
           result || "",
           // TODO could use tags etc.
-          this.story.currentChoices
+          this.story.currentChoices,
         );
         this.g.useScreen(screen);
 

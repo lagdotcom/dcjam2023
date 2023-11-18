@@ -29,26 +29,6 @@
     isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
     mod
   ));
-  var __async = (__this, __arguments, generator) => {
-    return new Promise((resolve, reject) => {
-      var fulfilled = (value) => {
-        try {
-          step(generator.next(value));
-        } catch (e) {
-          reject(e);
-        }
-      };
-      var rejected = (value) => {
-        try {
-          step(generator.throw(value));
-        } catch (e) {
-          reject(e);
-        }
-      };
-      var step = (x) => x.done ? resolve(x.value) : Promise.resolve(x.value).then(fulfilled, rejected);
-      step((generator = generator.apply(__this, __arguments)).next());
-    });
-  };
 
   // cdn:gameanalytics
   var require_gameanalytics = __commonJS({
@@ -458,13 +438,12 @@
 
   // src/tools/lists.ts
   function niceList(items) {
-    var _a;
     if (items.length === 0)
       return "nobody";
     if (items.length === 1)
       return items[0];
     const firstBunch = items.slice(0, -1);
-    const last = (_a = items.at(-1)) != null ? _a : "nobody";
+    const last = items.at(-1) ?? "nobody";
     return `${firstBunch.join(", ")} and ${last}`;
   }
   function pluralS(items) {
@@ -935,7 +914,7 @@
       const { padding, position, rowPadding, size } = this;
       const { combat, ctx, facing, party } = this.g;
       const active = combat.side === "player" ? party[facing] : void 0;
-      if (active == null ? void 0 : active.alive) {
+      if (active?.alive) {
         ctx.fillStyle = Colours_default.logShadow;
         ctx.fillRect(position.x, position.y, size.x, size.y);
         const { draw, lineHeight } = withTextStyle(ctx, {
@@ -1132,7 +1111,6 @@
       return this.grid.getOrDefault({ x, y });
     }
     convert(j, region = 0, floor = 0) {
-      var _a, _b;
       if (!(region in j.regions))
         throw new Error(`No such region: ${region}`);
       const r = j.regions[region];
@@ -1141,14 +1119,14 @@
         throw new Error(`No such floor: ${floor}`);
       for (const note of f.notes.sort(compareNotes)) {
         const { __data, x, y } = note;
-        for (const line of (_a = __data == null ? void 0 : __data.split("\n")) != null ? _a : []) {
+        for (const line of __data?.split("\n") ?? []) {
           if (!line.startsWith("#"))
             continue;
           const [cmd, ...args] = line.split(" ");
           this.applyCommand(cmd, args.join(" "), x, y);
         }
       }
-      for (const row of (_b = f.tiles.rows) != null ? _b : []) {
+      for (const row of f.tiles.rows ?? []) {
         let x = f.tiles.bounds.x0 + row.start;
         const y = r.setup.origin === "tl" ? row.y : f.tiles.bounds.height - (row.y - f.tiles.bounds.y0) - 1;
         for (const tile of row.tdata) {
@@ -1262,20 +1240,19 @@
       }
     }
     setEdge(edge, index, lt, ld, rt, rd, opened) {
-      var _a, _b, _c;
-      const { main, opposite } = (_a = EdgeDetails[edge]) != null ? _a : defaultEdge;
+      const { main, opposite } = EdgeDetails[edge] ?? defaultEdge;
       const texture = this.getTexture(index);
       const leftSide = {
         wall: main.wall ? texture : void 0,
         decalType: main.decal,
-        decal: this.decals.get(`${(_b = main.decal) != null ? _b : ""},${texture}`),
+        decal: this.decals.get(`${main.decal ?? ""},${texture}`),
         solid: main.solid
       };
       lt.sides[ld] = leftSide;
       const rightSide = {
         wall: opposite.wall ? texture : void 0,
         decalType: opposite.decal,
-        decal: this.decals.get(`${(_c = opposite.decal) != null ? _c : ""},${texture}`),
+        decal: this.decals.get(`${opposite.decal ?? ""},${texture}`),
         solid: opposite.solid
       };
       rt.sides[rd] = rightSide;
@@ -1386,17 +1363,17 @@
       if (leftVisible) {
         const leftDir = rotate(facing, 3);
         const leftWall = cell.sides[leftDir];
-        if (!(leftWall == null ? void 0 : leftWall.wall))
+        if (!leftWall?.wall)
           this.propagate(move(position, leftDir), width - 1, depth);
       }
       if (rightVisible) {
         const rightDir = rotate(facing, 1);
         const rightWall = cell.sides[rightDir];
-        if (!(rightWall == null ? void 0 : rightWall.wall))
+        if (!rightWall?.wall)
           this.propagate(move(position, rightDir), width - 1, depth);
       }
       const forwardWall = cell.sides[facing];
-      if (!(forwardWall == null ? void 0 : forwardWall.wall))
+      if (!forwardWall?.wall)
         this.propagate(move(position, facing), width, depth - 1);
     }
   };
@@ -1541,22 +1518,22 @@
           continue;
         if (pos.leftVisible) {
           const left = cell.sides[leftSide];
-          if (left == null ? void 0 : left.wall)
+          if (left?.wall)
             this.drawImage(left.wall, "side", pos.dx - 1, pos.dz);
-          if (left == null ? void 0 : left.decal)
+          if (left?.decal)
             this.drawImage(left.decal, "side", pos.dx - 1, pos.dz);
         }
         if (pos.rightVisible) {
           const right = cell.sides[rightSide];
-          if (right == null ? void 0 : right.wall)
+          if (right?.wall)
             this.drawImage(right.wall, "side", pos.dx + 1, pos.dz);
-          if (right == null ? void 0 : right.decal)
+          if (right?.decal)
             this.drawImage(right.decal, "side", pos.dx + 1, pos.dz);
         }
         const front = cell.sides[this.g.facing];
-        if (front == null ? void 0 : front.wall)
+        if (front?.wall)
           this.drawFrontImage(front.wall, "front", pos.dx, pos.dz - 1);
-        if (front == null ? void 0 : front.decal)
+        if (front?.decal)
           this.drawFrontImage(front.decal, "front", pos.dx, pos.dz - 1);
         if (cell.object)
           this.drawFrontImage(cell.object, "object", pos.dx, pos.dz);
@@ -2719,7 +2696,6 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       this.background = g.screen;
     }
     onKey(e) {
-      var _a;
       switch (e.code) {
         case "ArrowUp":
         case "KeyW":
@@ -2731,7 +2707,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
           return this.g.draw();
         case "Enter":
         case "Return":
-          (_a = this.resolve) == null ? void 0 : _a.call(this, this.choices[this.index]);
+          this.resolve?.(this.choices[this.index]);
           return this.g.useScreen(this.background);
       }
     }
@@ -2763,11 +2739,9 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
         }
       }
     }
-    run() {
-      return __async(this, null, function* () {
-        return new Promise((resolve) => {
-          this.resolve = resolve;
-        });
+    async run() {
+      return new Promise((resolve) => {
+        this.resolve = resolve;
       });
     }
   };
@@ -2807,12 +2781,10 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
         ({ who }) => void this.play(who.isPC ? "cry1" : "death1")
       );
     }
-    play(name) {
-      return __async(this, null, function* () {
-        const audio = yield this.g.res.loadAudio(allSounds[name]);
-        audio.currentTime = 0;
-        yield audio.play();
-      });
+    async play(name) {
+      const audio = await this.g.res.loadAudio(allSounds[name]);
+      audio.currentTime = 0;
+      await audio.play();
     }
   };
 
@@ -2861,7 +2833,6 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       this.story.state.LoadJsonObj(data);
     }
     run(program) {
-      var _a;
       this.onTagEnter.clear();
       this.onTagInteract.clear();
       this.story = program;
@@ -2899,10 +2870,9 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
         return position;
       };
       const getSide = (xy2, d) => {
-        var _a2;
         const dir = getDir(d);
         const cell = getCell(xy2);
-        const side = (_a2 = cell.sides[dir]) != null ? _a2 : {};
+        const side = cell.sides[dir] ?? {};
         if (!cell.sides[dir])
           cell.sides[dir] = side;
         return side;
@@ -2942,26 +2912,17 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       );
       program.BindExternalFunction(
         "getDecal",
-        (xy2, dir) => {
-          var _a2;
-          return (_a2 = getSide(xy2, dir).decal) != null ? _a2 : 0;
-        },
+        (xy2, dir) => getSide(xy2, dir).decal ?? 0,
         true
       );
       program.BindExternalFunction(
         "getNumber",
-        (name) => {
-          var _a2, _b;
-          return (_b = (_a2 = this.g.currentCell) == null ? void 0 : _a2.numbers[name]) != null ? _b : 0;
-        },
+        (name) => this.g.currentCell?.numbers[name] ?? 0,
         true
       );
       program.BindExternalFunction(
         "getString",
-        (name) => {
-          var _a2, _b;
-          return (_b = (_a2 = this.g.currentCell) == null ? void 0 : _a2.strings[name]) != null ? _b : "";
-        },
+        (name) => this.g.currentCell?.strings[name] ?? "",
         true
       );
       program.BindExternalFunction(
@@ -3050,7 +3011,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       program.ContinueMaximally();
       for (const [name] of program.mainContentContainer.namedContent) {
         const entry = { name };
-        const tags = (_a = program.TagsForContentAtPath(name)) != null ? _a : [];
+        const tags = program.TagsForContentAtPath(name) ?? [];
         for (const tag of tags) {
           const [left, right] = tag.split(":");
           if (left === "enter")
@@ -3064,18 +3025,16 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
         }
       }
     }
-    onEnter(pos) {
-      return __async(this, null, function* () {
-        const cell = this.g.getCell(pos.x, pos.y);
-        if (!cell)
-          return;
-        this.active = this.g.facing;
-        for (const tag of cell.tags) {
-          const entry = this.onTagEnter.get(tag);
-          if (entry)
-            yield this.executePath(cell, tag, entry);
-        }
-      });
+    async onEnter(pos) {
+      const cell = this.g.getCell(pos.x, pos.y);
+      if (!cell)
+        return;
+      this.active = this.g.facing;
+      for (const tag of cell.tags) {
+        const entry = this.onTagEnter.get(tag);
+        if (entry)
+          await this.executePath(cell, tag, entry);
+      }
     }
     hasInteraction() {
       const cell = this.g.currentCell;
@@ -3088,53 +3047,47 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       }
       return false;
     }
-    onInteract(pcIndex) {
-      return __async(this, null, function* () {
-        const cell = this.g.currentCell;
-        if (!cell)
-          return;
-        this.active = pcIndex;
-        this.skill = this.g.party[pcIndex].skill;
-        for (const tag of cell.tags) {
-          const entry = this.onTagInteract.get(tag);
-          if (entry)
-            yield this.executePath(cell, tag, entry);
-        }
+    async onInteract(pcIndex) {
+      const cell = this.g.currentCell;
+      if (!cell)
+        return;
+      this.active = pcIndex;
+      this.skill = this.g.party[pcIndex].skill;
+      for (const tag of cell.tags) {
+        const entry = this.onTagInteract.get(tag);
+        if (entry)
+          await this.executePath(cell, tag, entry);
+      }
+    }
+    async executePath(cell, tag, entry) {
+      this.story.ChoosePathString(entry.name);
+      if (entry.once) {
+        removeItem(cell.tags, tag);
+        this.g.map.update(xyToTag(this.g.position), cell);
+      }
+      return new Promise((resolve) => {
+        void this.runUntilDone().then(resolve);
       });
     }
-    executePath(cell, tag, entry) {
-      return __async(this, null, function* () {
-        this.story.ChoosePathString(entry.name);
-        if (entry.once) {
-          removeItem(cell.tags, tag);
-          this.g.map.update(xyToTag(this.g.position), cell);
+    async runUntilDone() {
+      this.running = true;
+      while (this.story.canContinue) {
+        const result = this.story.Continue();
+        if (this.story.currentChoices.length) {
+          const screen = new DialogChoiceScreen(
+            this.g,
+            result || "",
+            // TODO could use tags etc.
+            this.story.currentChoices
+          );
+          this.g.useScreen(screen);
+          const choice = await screen.run();
+          this.story.ChooseChoiceIndex(choice.index);
         }
-        return new Promise((resolve) => {
-          void this.runUntilDone().then(resolve);
-        });
-      });
-    }
-    runUntilDone() {
-      return __async(this, null, function* () {
-        this.running = true;
-        while (this.story.canContinue) {
-          const result = this.story.Continue();
-          if (this.story.currentChoices.length) {
-            const screen = new DialogChoiceScreen(
-              this.g,
-              result || "",
-              // TODO could use tags etc.
-              this.story.currentChoices
-            );
-            this.g.useScreen(screen);
-            const choice = yield screen.run();
-            this.story.ChooseChoiceIndex(choice.index);
-          }
-          if (result)
-            this.g.addToLog(result);
-        }
-        this.running = false;
-      });
+        if (result)
+          this.g.addToLog(result);
+      }
+      this.running = false;
     }
   };
 
@@ -3207,7 +3160,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
             rect(ctx, dx, dy, 0, edge, tileSize, wallSize, south);
           if (west)
             rect(ctx, dx, dy, 0, 0, wallSize, tileSize, west);
-          if (cell == null ? void 0 : cell.object) {
+          if (cell?.object) {
             const { draw: draw2 } = withTextStyle(ctx, {
               textAlign: "center",
               textBaseline: "middle",
@@ -3439,28 +3392,26 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       this.roll = new RollListener(g);
       this.skills = new SkillRenderer(g);
     }
-    acquireImages() {
-      return __async(this, null, function* () {
-        const [base, buttons, mapBorder, marble, ring] = yield Promise.all([
-          this.g.res.loadImage(base_default),
-          this.g.res.loadImage(buttons_default),
-          this.g.res.loadImage(map_border_default),
-          this.g.res.loadImage(marble_default),
-          this.g.res.loadImage(ring_default)
-        ]);
-        const { width, height } = this.g.canvas;
-        this.images = { base, buttons, mapBorder, marble, ring };
-        this.positions = {
-          base: zero,
-          buttons: xyi(32, height - buttons.height),
-          mapBorder: xyi(width - mapBorder.width, height - mapBorder.height),
-          marble: zero,
-          // not used
-          ring: xyi((width - ring.width) / 2 - 2, height - ring.height)
-        };
-        this.skills.position = this.positions.buttons;
-        return this.images;
-      });
+    async acquireImages() {
+      const [base, buttons, mapBorder, marble, ring] = await Promise.all([
+        this.g.res.loadImage(base_default),
+        this.g.res.loadImage(buttons_default),
+        this.g.res.loadImage(map_border_default),
+        this.g.res.loadImage(marble_default),
+        this.g.res.loadImage(ring_default)
+      ]);
+      const { width, height } = this.g.canvas;
+      this.images = { base, buttons, mapBorder, marble, ring };
+      this.positions = {
+        base: zero,
+        buttons: xyi(32, height - buttons.height),
+        mapBorder: xyi(width - mapBorder.width, height - mapBorder.height),
+        marble: zero,
+        // not used
+        ring: xyi((width - ring.width) / 2 - 2, height - ring.height)
+      };
+      this.skills.position = this.positions.buttons;
+      return this.images;
     }
     paste(image) {
       const pos = this.positions[image];
@@ -3571,17 +3522,15 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
           void g.res.loadAudio(tr.url);
       }
     }
-    acquire(track) {
-      return __async(this, null, function* () {
-        if (!track.audio) {
-          const audio = yield this.g.res.loadAudio(track.url);
-          audio.addEventListener("ended", this.trackEnded);
-          track.audio = audio;
-          if (track.loop)
-            audio.loop = true;
-        }
-        return track;
-      });
+    async acquire(track) {
+      if (!track.audio) {
+        const audio = await this.g.res.loadAudio(track.url);
+        audio.addEventListener("ended", this.trackEnded);
+        track.audio = audio;
+        if (track.loop)
+          audio.loop = true;
+      }
+      return track;
     }
     get status() {
       if (this.delayTimer)
@@ -3596,39 +3545,34 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
         this.delayTimer = void 0;
       }
     }
-    play(p) {
-      return __async(this, null, function* () {
-        var _a, _b;
-        this.cancelDelay();
-        this.wantToPlay = p;
-        (_b = (_a = this.playing) == null ? void 0 : _a.audio) == null ? void 0 : _b.pause();
-        const playlist = playlists[p];
-        this.playlist = playlist;
-        this.index = random(playlist.tracks.length);
-        return this.start();
-      });
+    async play(p) {
+      this.cancelDelay();
+      this.wantToPlay = p;
+      this.playing?.audio?.pause();
+      const playlist = playlists[p];
+      this.playlist = playlist;
+      this.index = random(playlist.tracks.length);
+      return this.start();
     }
-    start() {
-      return __async(this, null, function* () {
-        if (!this.playlist)
-          return false;
-        this.cancelDelay();
-        const track = this.playlist.tracks[this.index];
-        this.playing = yield this.acquire(track);
-        if (!this.playing.audio)
-          throw Error(`Acquire ${track.name} failed`);
-        try {
-          this.playing.audio.currentTime = 0;
-          yield this.playing.audio.play();
-          this.playing = track;
-          this.wantToPlay = void 0;
-          return true;
-        } catch (e) {
-          console.warn(e);
-          this.playing = void 0;
-          return false;
-        }
-      });
+    async start() {
+      if (!this.playlist)
+        return false;
+      this.cancelDelay();
+      const track = this.playlist.tracks[this.index];
+      this.playing = await this.acquire(track);
+      if (!this.playing.audio)
+        throw Error(`Acquire ${track.name} failed`);
+      try {
+        this.playing.audio.currentTime = 0;
+        await this.playing.audio.play();
+        this.playing = track;
+        this.wantToPlay = void 0;
+        return true;
+      } catch (e) {
+        console.warn(e);
+        this.playing = void 0;
+        return false;
+      }
     }
     stop() {
       if (this.playing) {
@@ -3774,14 +3718,13 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       this.overlays.set(xy2, cell);
     }
     serialize() {
-      var _a, _b, _c, _d;
       this.saveScriptState();
       const data = {};
       for (const name of this.allCells.keys()) {
-        const cells = (_a = this.allCells.get(name)) == null ? void 0 : _a.values();
-        const overlays = (_b = this.allOverlays.get(name)) == null ? void 0 : _b.entries();
-        const script = (_c = this.allScripts.get(name)) != null ? _c : {};
-        const walls = (_d = this.allWalls.get(name)) == null ? void 0 : _d.entries();
+        const cells = this.allCells.get(name)?.values();
+        const overlays = this.allOverlays.get(name)?.entries();
+        const script = this.allScripts.get(name) ?? {};
+        const walls = this.allWalls.get(name)?.entries();
         const entry = { cells: [], overlays: {}, script, walls: {} };
         if (cells)
           entry.cells = Array.from(cells);
@@ -3905,7 +3848,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
   function getBaseStat(className, stat, bonusStat, bonusIfTrue = 1) {
     return classes_default[className][stat] + (bonusStat === stat ? bonusIfTrue : 0);
   }
-  var Player = class {
+  var Player = class _Player {
     constructor(g, className, bonus, items = classes_default[className].items) {
       this.g = g;
       this.className = className;
@@ -3937,7 +3880,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       );
     }
     static load(g, data) {
-      const p = new Player(g, data.className);
+      const p = new _Player(g, data.className);
       p.name = data.name;
       p.hp = data.hp;
       p.sp = data.sp;
@@ -3954,17 +3897,16 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
         className,
         hp,
         sp,
-        LeftHand: LeftHand == null ? void 0 : LeftHand.name,
-        RightHand: RightHand == null ? void 0 : RightHand.name,
-        Body: Body == null ? void 0 : Body.name,
-        Special: Special == null ? void 0 : Special.name
+        LeftHand: LeftHand?.name,
+        RightHand: RightHand?.name,
+        Body: Body?.name,
+        Special: Special?.name
       };
     }
     getStat(stat, base = 0) {
-      var _a;
       let value = base;
       for (const item of this.equipment) {
-        value += (_a = item == null ? void 0 : item.bonus[stat]) != null ? _a : 0;
+        value += item?.bonus[stat] ?? 0;
       }
       return this.g.applyStatModifiers(this, stat, value);
     }
@@ -5042,9 +4984,8 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       }
     }
     onMouseMove(pos) {
-      var _a;
       const result = this.getSpot(pos);
-      this.canvas.style.cursor = (_a = result == null ? void 0 : result.spot.cursor) != null ? _a : "";
+      this.canvas.style.cursor = result?.spot.cursor ?? "";
     }
     onClick(pos) {
       const result = this.getSpot(pos);
@@ -5091,67 +5032,62 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
           return this.openStats();
       }
     }
-    loadWorld(worldLocation, w, position, dir) {
-      return __async(this, null, function* () {
-        const world = src_default(w);
-        this.useScreen(new LoadingScreen(this));
-        this.worldLocation = worldLocation;
-        this.world = world;
-        this.worldSize = xyi(world.cells[0].length, world.cells.length);
-        this.position = position != null ? position : w.start;
-        this.facing = dir != null ? dir : w.facing;
-        const combat = new CombatRenderer(this);
-        const hud = new HUDRenderer(this);
-        const log = new LogRenderer(this);
-        const atlasPromises = w.atlases.map((a) => this.res.loadAtlas(a.json));
-        const imagePromises = w.atlases.map((a) => this.res.loadImage(a.image));
-        const atlases = yield Promise.all(atlasPromises);
-        const images = yield Promise.all(imagePromises);
-        yield hud.acquireImages();
-        const dungeon = new DungeonRenderer(this, atlases[0], images[0]);
-        for (let i = 0; i < atlases.length; i++) {
-          yield dungeon.addAtlas(atlases[i].layers, images[i]);
-          if (i > 1)
-            dungeon.dungeon.layers.push(...atlases[i].layers);
-        }
-        this.map.enter(w.name);
-        if (position)
-          loadIntoArea(w.name);
-        else {
-          this.markVisited();
-          startArea(w.name);
-        }
-        this.useScreen(new DungeonScreen(this, { combat, dungeon, hud, log }));
-      });
+    async loadWorld(worldLocation, w, position, dir) {
+      const world = src_default(w);
+      this.useScreen(new LoadingScreen(this));
+      this.worldLocation = worldLocation;
+      this.world = world;
+      this.worldSize = xyi(world.cells[0].length, world.cells.length);
+      this.position = position ?? w.start;
+      this.facing = dir ?? w.facing;
+      const combat = new CombatRenderer(this);
+      const hud = new HUDRenderer(this);
+      const log = new LogRenderer(this);
+      const atlasPromises = w.atlases.map((a) => this.res.loadAtlas(a.json));
+      const imagePromises = w.atlases.map((a) => this.res.loadImage(a.image));
+      const atlases = await Promise.all(atlasPromises);
+      const images = await Promise.all(imagePromises);
+      await hud.acquireImages();
+      const dungeon = new DungeonRenderer(this, atlases[0], images[0]);
+      for (let i = 0; i < atlases.length; i++) {
+        await dungeon.addAtlas(atlases[i].layers, images[i]);
+        if (i > 1)
+          dungeon.dungeon.layers.push(...atlases[i].layers);
+      }
+      this.map.enter(w.name);
+      if (position)
+        loadIntoArea(w.name);
+      else {
+        this.markVisited();
+        startArea(w.name);
+      }
+      this.useScreen(new DungeonScreen(this, { combat, dungeon, hud, log }));
     }
-    loadGCMap(resourceID, region, floor, loadPosition, loadFacing) {
-      return __async(this, null, function* () {
-        this.useScreen(new LoadingScreen(this));
-        const jsonUrl = getResourceURL(resourceID);
-        const map = yield this.res.loadGCMap(jsonUrl);
-        const { atlases, cells, scripts, start, facing, name } = convertGridCartographerMap(map, region, floor, EnemyObjects);
-        if (!atlases.length)
-          throw new Error(`${jsonUrl} did not contain #ATLAS`);
-        for (const url of scripts) {
-          const code = yield this.res.loadScript(url);
-          this.scripting.parseAndRun(code);
-        }
-        return this.loadWorld(
-          { resourceID, region, floor },
-          { name, atlases, cells, start, facing },
-          loadPosition,
-          loadFacing
-        );
-      });
+    async loadGCMap(resourceID, region, floor, loadPosition, loadFacing) {
+      this.useScreen(new LoadingScreen(this));
+      const jsonUrl = getResourceURL(resourceID);
+      const map = await this.res.loadGCMap(jsonUrl);
+      const { atlases, cells, scripts, start, facing, name } = convertGridCartographerMap(map, region, floor, EnemyObjects);
+      if (!atlases.length)
+        throw new Error(`${jsonUrl} did not contain #ATLAS`);
+      for (const url of scripts) {
+        const code = await this.res.loadScript(url);
+        this.scripting.parseAndRun(code);
+      }
+      return this.loadWorld(
+        { resourceID, region, floor },
+        { name, atlases, cells, start, facing },
+        loadPosition,
+        loadFacing
+      );
     }
     isVisited(x, y) {
       return this.map.isVisited({ x, y });
     }
     getCell(x, y) {
-      var _a;
       if (x < 0 || x >= this.worldSize.x || y < 0 || y >= this.worldSize.y)
         return;
-      const cell = (_a = this.world) == null ? void 0 : _a.cells[y][x];
+      const cell = this.world?.cells[y][x];
       if (cell && this.combat.inCombat) {
         const result = getCardinalOffset(this.position, { x, y });
         if (result) {
@@ -5198,7 +5134,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       if (!at)
         return false;
       const wall2 = at.sides[dir];
-      if (wall2 == null ? void 0 : wall2.solid)
+      if (wall2?.solid)
         return false;
       const destination = move(this.position, dir);
       const cell = this.getCell(destination.x, destination.y);
@@ -5248,8 +5184,8 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
         this.map.visit(pos);
         for (let dir = 0; dir <= 3; dir++) {
           const wall2 = cell.sides[dir];
-          const canSeeDoor = (wall2 == null ? void 0 : wall2.decalType) === "Door";
-          const hasTexture = typeof (wall2 == null ? void 0 : wall2.wall) === "number";
+          const canSeeDoor = wall2?.decalType === "Door";
+          const hasTexture = typeof wall2?.wall === "number";
           const looksSolid = hasTexture;
           const data = {
             canSeeDoor,
@@ -5364,10 +5300,9 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       return includeMe ? allies : allies.filter((c) => c !== me);
     }
     getTargetPossibilities(c, a) {
-      var _a;
       if (a.targets.type === "self")
         return { amount: 1, possibilities: [c] };
-      const amount = (_a = a.targets.count) != null ? _a : Infinity;
+      const amount = a.targets.count ?? Infinity;
       const filters = [
         a.targets.type === "ally" ? (o) => o.isPC === c.isPC : (o) => o.isPC !== c.isPC
       ];
@@ -5403,11 +5338,10 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       return e;
     }
     act(me, action, targets) {
-      var _a;
       const x = action.x ? me.sp : action.sp;
       me.sp -= x;
       me.usedThisTurn.add(action.name);
-      const msg = ((_a = action.useMessage) != null ? _a : `[NAME] uses ${action.name}!`).replace(
+      const msg = (action.useMessage ?? `[NAME] uses ${action.name}!`).replace(
         "[NAME]",
         me.name
       );
@@ -5686,30 +5620,28 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       saveGame();
       return data;
     }
-    load(save) {
-      return __async(this, null, function* () {
-        if (!validateEngine(save)) {
-          console.warn(validateEngine.errors);
-          return;
-        }
-        this.facing = save.facing;
-        this.inventory = save.inventory.map((name) => getItem(name)).filter(isDefined);
-        this.map.load(save.maps);
-        this.obstacle = save.obstacle ? tagToXy(save.obstacle) : void 0;
-        this.party = save.party.map((data) => Player.load(this, data));
-        this.pendingArenaEnemies = save.pendingArenaEnemies;
-        this.pendingNormalEnemies = save.pendingNormalEnemies;
-        this.log = [];
-        this.showLog = false;
-        yield this.loadGCMap(
-          save.worldLocation.resourceID,
-          save.worldLocation.region,
-          save.worldLocation.floor,
-          tagToXy(save.position),
-          save.facing
-        );
-        this.draw();
-      });
+    async load(save) {
+      if (!validateEngine(save)) {
+        console.warn(validateEngine.errors);
+        return;
+      }
+      this.facing = save.facing;
+      this.inventory = save.inventory.map((name) => getItem(name)).filter(isDefined);
+      this.map.load(save.maps);
+      this.obstacle = save.obstacle ? tagToXy(save.obstacle) : void 0;
+      this.party = save.party.map((data) => Player.load(this, data));
+      this.pendingArenaEnemies = save.pendingArenaEnemies;
+      this.pendingNormalEnemies = save.pendingNormalEnemies;
+      this.log = [];
+      this.showLog = false;
+      await this.loadGCMap(
+        save.worldLocation.resourceID,
+        save.worldLocation.region,
+        save.worldLocation.floor,
+        tagToXy(save.position),
+        save.facing
+      );
+      this.draw();
     }
     openStats() {
       this.useScreen(new StatsScreen(this));
