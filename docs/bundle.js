@@ -4998,7 +4998,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       this.jukebox = new Jukebox(this);
       this.sfx = new Sounds(this);
       this.useScreen(new SplashScreen(this));
-      canvas.addEventListener("keyup", (e) => this.screen.onKey(e));
+      canvas.addEventListener("keydown", (e) => this.screen.onKey(e));
       const transform = (e) => xyi(e.offsetX / this.zoomRatio, e.offsetY / this.zoomRatio);
       canvas.addEventListener("mousemove", (e) => this.onMouseMove(transform(e)));
       canvas.addEventListener("click", (e) => this.onClick(transform(e)));

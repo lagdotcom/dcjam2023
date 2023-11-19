@@ -164,7 +164,7 @@ export default class Engine implements Game {
     this.sfx = new Sounds(this);
     this.useScreen(new SplashScreen(this));
 
-    canvas.addEventListener("keyup", (e) => this.screen.onKey(e));
+    canvas.addEventListener("keydown", (e) => this.screen.onKey(e));
 
     const transform = (e: MouseEvent): XY =>
       xyi(e.offsetX / this.zoomRatio, e.offsetY / this.zoomRatio);
