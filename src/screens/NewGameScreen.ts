@@ -68,8 +68,13 @@ export default class NewGameScreen implements GameScreen {
 
           startGame(this.selected);
 
-          const mapName = e.shiftKey && e.ctrlKey ? "rush.json" : "map.json";
-          void this.g.loadGCMap(mapName, 0, -1);
+          const mapName = this.getMapName();
+          this.g.loadGCMap(mapName, 0, -1).catch((e) => {
+            if (e instanceof Error) alert(e.message);
+            else alert(String(e));
+
+            this.g.useScreen(new NewGameScreen(this.g));
+          });
         }
         break;
 
@@ -77,6 +82,12 @@ export default class NewGameScreen implements GameScreen {
         if (anySavedGamesExist()) this.g.useScreen(new TitleScreen(this.g));
         break;
     }
+  }
+
+  getMapName() {
+    return (
+      new URLSearchParams(document.location.search).get("map") ?? "map.json"
+    );
   }
 
   render(): void {

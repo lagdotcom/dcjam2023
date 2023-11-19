@@ -6,6 +6,7 @@
   "scripts": {
     "build": "node build.mjs",
     "watch": "node watch.mjs",
+    "start": "node watch.mjs",
     "lint": "eslint src"
   },
   "dependencies": {

@@ -4374,7 +4374,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
   };
 
   // src/screens/NewGameScreen.ts
-  var NewGameScreen = class {
+  var NewGameScreen = class _NewGameScreen {
     constructor(g) {
       this.g = g;
       this.spotElements = [];
@@ -4422,8 +4422,14 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
             for (const cn of this.selected)
               this.g.party.push(new Player(this.g, cn));
             startGame(this.selected);
-            const mapName = e.shiftKey && e.ctrlKey ? "rush.json" : "map.json";
-            void this.g.loadGCMap(mapName, 0, -1);
+            const mapName = this.getMapName();
+            this.g.loadGCMap(mapName, 0, -1).catch((e2) => {
+              if (e2 instanceof Error)
+                alert(e2.message);
+              else
+                alert(String(e2));
+              this.g.useScreen(new _NewGameScreen(this.g));
+            });
           }
           break;
         case "Escape":
@@ -4431,6 +4437,9 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
             this.g.useScreen(new TitleScreen(this.g));
           break;
       }
+    }
+    getMapName() {
+      return new URLSearchParams(document.location.search).get("map") ?? "map.json";
     }
     render() {
       const { index, selected } = this;
