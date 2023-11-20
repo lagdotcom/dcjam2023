@@ -7,6 +7,7 @@
     "build": "node build.mjs",
     "watch": "node watch.mjs",
     "start": "node watch.mjs",
+    "kanka": "node kanka.mjs",
     "lint": "eslint src"
   },
   "dependencies": {

@@ -4,22 +4,15 @@ import {
   Brace,
   Deflect,
   DuoStab,
-  oneOpponent,
   opponents,
 } from "../actions";
 import Item from "../types/Item";
+import { Actions, Items } from "./kankaData";
 
 export const GorgothilSword: Item = {
-  name: "Gorgothil Sword",
-  restrict: ["Cleavesman"],
-  slot: "Hand",
-  type: "Weapon",
-  bonus: {},
+  ...Items.GorgothilSword,
   action: {
-    name: "Bash",
-    tags: ["attack"],
-    sp: 1,
-    targets: oneOpponent,
+    ...Actions.Bash,
     act({ g, me, targets }) {
       const amount = g.roll(me) + 4;
       g.applyDamage(me, targets, amount, "hp", "normal");
