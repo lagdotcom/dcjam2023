@@ -1,10 +1,12 @@
-import { endTurnAction, generateAttack } from "./actions";
+import { EndTurn } from "./actionImplementations";
+import { Attack } from "./actions";
 import classes from "./classes";
 import Engine from "./Engine";
 import { getItem } from "./items";
 import removeItem from "./tools/arrays";
 import isDefined from "./tools/isDefined";
 import { ClassName } from "./types/ClassName";
+import CombatAction from "./types/CombatAction";
 import Combatant, { AttackableStat, BoostableStat } from "./types/Combatant";
 import Item from "./types/Item";
 
@@ -29,6 +31,14 @@ export interface SerializedPlayer {
   Body?: string;
   Special?: string;
 }
+
+export const endTurnAction: CombatAction = {
+  name: "End Turn",
+  tags: [],
+  sp: 0,
+  targets: { type: "ally" },
+  act: EndTurn,
+};
 
 export default class Player implements Combatant {
   name: string;
@@ -164,7 +174,7 @@ export default class Player implements Combatant {
   get actions() {
     return Array.from(this.equipment.values())
       .map((i) => i.action)
-      .concat(generateAttack(), endTurnAction);
+      .concat(Attack, endTurnAction);
   }
 
   get canMove() {

@@ -1,9 +1,17 @@
-import { GorgothilSword, Haringplate } from "./items/cleavesman";
-import { AdaloaxPelt, BoltSlinger } from "./items/farScout";
-import { CarvingKnife, SignedCasque } from "./items/flagSinger";
-import { Cornucopia, JacketAndRucksack } from "./items/loamSeer";
-import { HaringleeKasaya, Penduchaimmer } from "./items/martialist";
-import { IronFullcase, OwlSkull } from "./items/warCaller";
+import {
+  AdaloaxPelt,
+  BoltSlinger,
+  CarvingKnife,
+  Cornucopia,
+  GorgothilSword,
+  HaringleeKasaya,
+  Haringplate,
+  IronFullcase,
+  JacketAndRucksack,
+  OwlSkull,
+  Penduchaimmer,
+  SignedCasque,
+} from "./items";
 import { ClassName } from "./types/ClassName";
 import Combatant, { AttackableStat } from "./types/Combatant";
 import Item from "./types/Item";

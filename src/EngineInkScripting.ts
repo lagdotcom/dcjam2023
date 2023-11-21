@@ -156,6 +156,7 @@ export default class EngineInkScripting {
     program.BindExternalFunction("giveItem", (name: string) => {
       const item = getItem(name);
       if (item) this.g.inventory.push(item);
+      else console.warn(`Could not create item: ${name}`);
     });
     program.BindExternalFunction("here", () => xyToTag(this.g.position), true);
     program.BindExternalFunction(

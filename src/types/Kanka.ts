@@ -52,10 +52,24 @@ export enum KankaAttributeTypeID {
   Number = 6,
 }
 
-export interface KankaAttribute {
-  api_key: string;
+interface Bookkeeping {
   created_at: string;
   created_by: number | null;
+  updated_at: string;
+  updated_by: number | null;
+}
+
+export interface KankaAbility extends Bookkeeping {
+  id: number;
+  visibility_id: number;
+  charges: null;
+  ability_id: number;
+  position: number;
+  note: string;
+}
+
+export interface KankaAttribute extends Bookkeeping {
+  api_key: string;
   default_order: number;
   entity_id: number;
   id: number;
@@ -66,12 +80,10 @@ export interface KankaAttribute {
   parsed: string;
   type: KankaAttributeType;
   type_id: KankaAttributeTypeID;
-  updated_at: string;
-  updated_by: number | null;
   value: string | null;
 }
 
-export interface KankaEntity {
+export interface KankaEntity extends Bookkeeping {
   id: number;
   name: string;
   /** @deprecated */
@@ -89,15 +101,16 @@ export interface KankaEntity {
   tooltip: null;
   header_image: null;
   tags: number[];
-  created_at: string;
-  created_by: number;
-  updated_at: string;
-  updated_by: number;
   urls: { view: string; api: string };
 }
 
-export type KankaEntityWithAttributes = KankaEntity & {
+export type KankaEntityWithRelated = KankaEntity & {
   attributes: KankaAttribute[];
+  posts: [];
+  entity_events: [];
+  relations: [];
+  inventory: [];
+  entity_abilities: KankaAbility[];
 };
 
 export interface KankaListRequest<T> {

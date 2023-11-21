@@ -1,19 +1,18 @@
 import {
+  Attack,
   Barb,
   Bless,
   Bravery,
   Deflect,
   Defy,
   Flight,
-  generateAttack,
-  oneOpponent,
+  Lash,
   Parry,
   Sand,
   Scar,
   Trick,
 } from "./actions";
 import Engine from "./Engine";
-import { niceList, pluralS } from "./tools/lists";
 import { wrap } from "./tools/numbers";
 import CombatAction from "./types/CombatAction";
 import Combatant, { BoostableStat } from "./types/Combatant";
@@ -27,30 +26,6 @@ type EnemyTemplate = Pick<
   Combatant,
   "name" | "maxHP" | "maxSP" | "camaraderie" | "determination" | "spirit" | "dr"
 > & { actions: CombatAction[]; object: number; animation: EnemyAnimation };
-
-const Lash: CombatAction = {
-  name: "Lash",
-  tags: ["attack", "duff"],
-  sp: 3,
-  targets: oneOpponent,
-  act({ g, me, targets }) {
-    if (g.applyDamage(me, targets, 3, "hp", "normal") > 0) {
-      g.addToLog(
-        `${niceList(targets.map((x) => x.name))} feel${pluralS(
-          targets,
-        )} temporarily demoralized.`,
-      );
-      g.addEffect(() => ({
-        name: "Lash",
-        duration: 2,
-        affects: targets,
-        onCalculateDetermination(e) {
-          if (this.affects.includes(e.who)) e.value--;
-        },
-      }));
-    }
-  },
-};
 
 export const EnemyObjects = {
   eNettleSage: 100,
@@ -74,7 +49,7 @@ const enemies = {
     determination: 3,
     spirit: 4,
     dr: 0,
-    actions: [generateAttack(0, 1), Deflect, Sand, Trick],
+    actions: [Attack, Deflect, Sand, Trick],
   },
   "Sneed Crawler": {
     object: EnemyObjects.eSneedCrawler,
@@ -86,7 +61,7 @@ const enemies = {
     determination: 5,
     spirit: 4,
     dr: 2,
-    actions: [generateAttack(0, 1), Scar, Barb],
+    actions: [Attack, Scar, Barb],
   },
   "Mullanginan Martialist": {
     object: EnemyObjects.eMullanginanMartialist,
@@ -98,7 +73,7 @@ const enemies = {
     determination: 4,
     spirit: 4,
     dr: 1,
-    actions: [generateAttack(0, 1), Parry, Defy, Flight],
+    actions: [Attack, Parry, Defy, Flight],
   },
   "Nettle Sage": {
     object: EnemyObjects.eNettleSage,
@@ -110,7 +85,7 @@ const enemies = {
     determination: 2,
     spirit: 6,
     dr: 0,
-    actions: [generateAttack(0, 1), Bravery, Bless, Lash],
+    actions: [Attack, Bravery, Bless, Lash],
   },
 } satisfies Record<string, EnemyTemplate>;
 export type EnemyName = keyof typeof enemies;

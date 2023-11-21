@@ -1,6 +1,5 @@
 import clone from "nanoclone";
 
-import { endTurnAction } from "./actions";
 import { loadIntoArea, partyDied, saveGame, startArea } from "./analytics";
 import CombatManager from "./CombatManager";
 import CombatRenderer from "./CombatRenderer";
@@ -14,7 +13,7 @@ import { getItem } from "./items";
 import Jukebox from "./Jukebox";
 import LogRenderer from "./LogRenderer";
 import MapDataManager from "./MapDataManager";
-import Player, { SerializedPlayer } from "./Player";
+import Player, { endTurnAction, SerializedPlayer } from "./Player";
 import ResourceManager from "./ResourceManager";
 import { getResourceURL } from "./resources";
 import { validateEngine } from "./schemas";

@@ -20,6 +20,13 @@ export type ActionTarget =
       offsets?: (0 | 1 | 2 | 3)[];
     };
 
+export type ActionImpl = (e: {
+  g: Game;
+  targets: Combatant[];
+  me: Combatant;
+  x: number;
+}) => void;
+
 export default interface CombatAction {
   name: string;
   sp: number;
@@ -28,5 +35,5 @@ export default interface CombatAction {
   tags: ActionTag[];
   targets: ActionTarget;
   targetFilter?: Predicate<Combatant>;
-  act(e: { g: Game; targets: Combatant[]; me: Combatant; x: number }): void;
+  act: ActionImpl;
 }
