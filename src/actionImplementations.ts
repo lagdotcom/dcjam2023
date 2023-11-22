@@ -291,7 +291,6 @@ export const Honour: ActionImpl = ({ g, targets }) => {
     },
   }));
 };
-export const Honor = Honour; // americaaaaaaaa
 
 export const Inspire: ActionImpl = ({ g, me, targets }) => {
   g.addEffect(() => ({

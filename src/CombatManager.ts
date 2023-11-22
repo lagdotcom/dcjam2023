@@ -1,5 +1,6 @@
 import { startFight, winFight } from "./analytics";
-import { Enemy, EnemyName, spawn } from "./enemies";
+import { EnemyName } from "./enemies";
+import Enemy, { spawn } from "./Enemy";
 import Engine from "./Engine";
 import Player from "./Player";
 import isDefined from "./tools/isDefined";

@@ -4,6 +4,7 @@
     "**/node_modules": true
   },
 
+  "cSpell.language": "en-GB",
   "cSpell.words": [
     "adaloax",
     "Belsome",
