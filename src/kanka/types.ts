@@ -235,6 +235,20 @@ export interface EntityAbility extends Bookkeeping {
   note: string;
 }
 
+export interface Inventory extends Bookkeeping {
+  amount: number;
+  copy_item_entry: boolean;
+  description: string;
+  entity_id: number;
+  id: number;
+  is_equipped: boolean;
+  is_private: boolean;
+  item_id: number;
+  name: string;
+  position: string;
+  visibility_id: number;
+}
+
 export interface Relation extends Bookkeeping {
   id: number;
   owner_id: number;
@@ -253,7 +267,7 @@ export type RelatedInfo = {
   posts: [];
   entity_events: [];
   relations: Relation[];
-  inventory: [];
+  inventory: Inventory[];
   entity_abilities: EntityAbility[];
   entity_assets: [];
 };

@@ -9,10 +9,6 @@
   var __commonJS = (cb, mod) => function __require() {
     return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
   };
-  var __export = (target, all) => {
-    for (var name in all)
-      __defProp(target, name, { get: all[name], enumerable: true });
-  };
   var __copyProps = (to, from, except, desc) => {
     if (from && typeof from === "object" || typeof from === "function") {
       for (let key of __getOwnPropNames(from))
@@ -98,14 +94,14 @@
   function partyDied() {
     GA.addProgressionEvent(import_gameanalytics.EGAProgressionStatus.Fail, currentArea, "Floor");
   }
-  function startFight(pos, enemies2) {
+  function startFight(pos, enemies) {
     GA.addProgressionEvent(
       import_gameanalytics.EGAProgressionStatus.Start,
       currentArea,
       "Fight",
       xyToTag(pos)
     );
-    for (const enemy of enemies2)
+    for (const enemy of enemies)
       GA.addDesignEvent(`Fight:Begin:${sanitise(enemy)}`);
   }
   function winFight(pos) {
@@ -169,9 +165,99 @@
     return clone(src, /* @__PURE__ */ new Map());
   }
 
+  // src/types/Dir.ts
+  var Dir = /* @__PURE__ */ ((Dir2) => {
+    Dir2[Dir2["N"] = 0] = "N";
+    Dir2[Dir2["E"] = 1] = "E";
+    Dir2[Dir2["S"] = 2] = "S";
+    Dir2[Dir2["W"] = 3] = "W";
+    return Dir2;
+  })(Dir || {});
+  var Dir_default = Dir;
+
+  // src/tools/geometry.ts
+  var xy = (x, y) => ({ x, y });
+  var xyi = (x, y) => ({
+    x: Math.floor(x),
+    y: Math.floor(y)
+  });
+  function sameXY(a, b) {
+    return a.x === b.x && a.y === b.y;
+  }
+  function addXY(a, b) {
+    return { x: a.x + b.x, y: a.y + b.y };
+  }
+  var displacements = [xy(0, -1), xy(1, 0), xy(0, 1), xy(-1, 0)];
+  function move(pos, dir) {
+    return addXY(pos, displacements[dir]);
+  }
+  function rotate(dir, clockwise) {
+    return (dir + clockwise + 4) % 4;
+  }
+  function dirFromInitial(initial) {
+    switch (initial) {
+      case "E":
+        return Dir_default.E;
+      case "S":
+        return Dir_default.S;
+      case "W":
+        return Dir_default.W;
+      case "N":
+      default:
+        return Dir_default.N;
+    }
+  }
+  function getCardinalOffset(start, destination) {
+    const dx = destination.x - start.x;
+    const dy = destination.y - start.y;
+    if (dx && dy)
+      return;
+    if (dy < 0)
+      return { dir: Dir_default.N, offset: -dy };
+    if (dx > 0)
+      return { dir: Dir_default.E, offset: dx };
+    if (dy > 0)
+      return { dir: Dir_default.S, offset: dy };
+    if (dx < 0)
+      return { dir: Dir_default.W, offset: -dx };
+  }
+  var dirOffsets = {
+    [Dir_default.N]: { [Dir_default.N]: 0, [Dir_default.E]: 1, [Dir_default.S]: 2, [Dir_default.W]: 3 },
+    [Dir_default.E]: { [Dir_default.N]: 3, [Dir_default.E]: 0, [Dir_default.S]: 1, [Dir_default.W]: 2 },
+    [Dir_default.S]: { [Dir_default.N]: 2, [Dir_default.E]: 3, [Dir_default.S]: 0, [Dir_default.W]: 1 },
+    [Dir_default.W]: { [Dir_default.N]: 1, [Dir_default.E]: 2, [Dir_default.S]: 3, [Dir_default.W]: 0 }
+  };
+  function getDirOffset(start, end) {
+    return dirOffsets[start][end];
+  }
+  function lerpXY(from, to, ratio) {
+    if (ratio <= 0)
+      return from;
+    if (ratio >= 1)
+      return to;
+    const fr = 1 - ratio;
+    return xy(from.x * fr + to.x * ratio, from.y * fr + to.y * ratio);
+  }
+
   // src/tools/isDefined.ts
   function isDefined(item) {
     return typeof item !== "undefined";
+  }
+
+  // src/tools/lists.ts
+  function niceList(items) {
+    if (items.length === 0)
+      return "nobody";
+    if (items.length === 1)
+      return items[0];
+    const firstBunch = items.slice(0, -1);
+    const last = items.at(-1) ?? "nobody";
+    return `${firstBunch.join(", ")} and ${last}`;
+  }
+  function pluralS(items) {
+    if (items.length === 1)
+      return "s";
+    return "";
   }
 
   // src/tools/rng.ts
@@ -199,290 +285,400 @@
     return a.filter((item) => b.includes(item));
   }
 
-  // src/actions.ts
-  var onlyMe = { type: "self" };
-  var ally = (count) => ({ type: "ally", count });
-  var allAllies = { type: "ally" };
-  var oneOpponent = {
-    type: "enemy",
-    distance: 1,
-    count: 1,
-    offsets: [0]
+  // src/actionImplementations.ts
+  var makeAttack = ({
+    base,
+    roll = true,
+    type = "hp",
+    origin = "normal"
+  }) => ({ g, me, targets }) => {
+    const rollAmount = roll ? g.roll(me) : 0;
+    const amount = rollAmount + base;
+    g.applyDamage(me, targets, amount, type, origin);
   };
-  var opponents = (count, offsets) => ({
-    type: "enemy",
-    distance: 1,
-    count,
-    offsets
-  });
-  var generateAttack = (plus = 0, sp = 2) => ({
-    name: "Attack",
-    tags: ["attack"],
-    sp,
-    targets: oneOpponent,
-    act({ g, targets, me }) {
-      const bonus = me.attacksInARow;
-      const amount = g.roll(me) + plus + bonus;
-      g.applyDamage(me, targets, amount, "hp", "normal");
-    }
-  });
-  var endTurnAction = {
-    name: "End Turn",
-    tags: [],
-    sp: 0,
-    targets: allAllies,
-    useMessage: "",
-    act({ g }) {
-      g.endTurn();
-    }
+  var Arrow = makeAttack({ base: 2 });
+  var Attack = ({ g, targets, me }) => {
+    const bonus = me.attacksInARow;
+    const amount = g.roll(me) + bonus;
+    g.applyDamage(me, targets, amount, "hp", "normal");
   };
-  var Barb = {
-    name: "Barb",
-    tags: ["counter"],
-    sp: 3,
-    targets: onlyMe,
-    act({ g, me }) {
-      g.addEffect(() => ({
-        name: "Barb",
-        duration: 2,
-        affects: [me],
-        onAfterDamage(e) {
-          if (this.affects.includes(e.target)) {
-            const targets = [
-              g.getOpponent(me, 0),
-              g.getOpponent(me, 1),
-              g.getOpponent(me, 3)
-            ].filter(isDefined);
-            if (targets.length) {
-              const target = oneOf(targets);
-              const amount = g.roll(me);
-              g.addToLog(`${e.target.name} flails around!`);
-              g.applyDamage(me, [target], amount, "hp", "normal");
-            }
-          }
-        }
-      }));
-    }
-  };
-  var Bless = {
-    name: "Bless",
-    tags: ["heal", "spell"],
-    sp: 1,
-    targets: ally(1),
-    targetFilter: (c) => c.hp < c.maxHP,
-    act({ g, me, targets }) {
-      for (const target of targets) {
-        const amount = Math.max(0, target.camaraderie) + 2;
-        g.heal(me, [target], amount);
-      }
-    }
-  };
-  var Brace = {
-    name: "Brace",
-    tags: ["buff"],
-    sp: 3,
-    targets: onlyMe,
-    act({ g, me }) {
-      g.addEffect((destroy) => ({
-        name: "Brace",
-        duration: 2,
-        affects: [me],
-        buff: true,
-        onCalculateDamage(e) {
-          if (this.affects.includes(e.target)) {
-            e.multiplier /= 2;
-            destroy();
-          }
-        }
-      }));
-    }
-  };
-  var Bravery = {
-    name: "Bravery",
-    tags: ["buff"],
-    sp: 3,
-    targets: allAllies,
-    act({ g, targets }) {
-      g.addEffect(() => ({
-        name: "Bravery",
-        duration: 2,
-        affects: targets,
-        buff: true,
-        onCalculateDR(e) {
-          if (this.affects.includes(e.who))
-            e.value += 2;
-        }
-      }));
-    }
-  };
-  var Deflect = {
-    name: "Deflect",
-    tags: ["buff"],
-    sp: 2,
-    targets: onlyMe,
-    act({ g, me }) {
-      g.addEffect((destroy) => ({
-        name: "Deflect",
-        duration: 2,
-        affects: [me],
-        onCalculateDamage(e) {
-          if (this.affects.includes(e.target)) {
-            g.addToLog(`${me.name} deflects the blow.`);
-            e.multiplier = 0;
-            destroy();
-            return;
-          }
-        }
-      }));
-    }
-  };
-  var Defy = {
-    name: "Defy",
-    tags: ["buff"],
-    sp: 3,
-    targets: onlyMe,
-    act({ g, me }) {
-      g.addEffect(() => ({
-        name: "Defy",
-        duration: 2,
-        affects: [me],
-        onAfterDamage({ target, attacker }) {
-          if (!this.affects.includes(target))
-            return;
-          g.addToLog(`${me.name} stuns ${attacker.name} with their defiance!`);
-          g.addEffect(() => ({
-            name: "Defied",
-            duration: 1,
-            affects: [attacker],
-            onCanAct(e) {
-              if (this.affects.includes(e.who))
-                e.cancel = true;
-            }
-          }));
-        }
-      }));
-    }
-  };
-  var DuoStab = {
-    name: "DuoStab",
-    tags: ["attack"],
-    sp: 3,
-    targets: opponents(2, [0, 2]),
-    act({ g, me, targets }) {
-      g.applyDamage(me, targets, 6, "hp", "normal");
-    }
-  };
-  var Flight = {
-    name: "Flight",
-    tags: ["attack"],
-    sp: 4,
-    targets: opponents(1, [1, 3]),
-    act({ g, me, targets }) {
-      const amount = g.roll(me) + 10;
-      g.applyDamage(me, targets, amount, "hp", "normal");
-    }
-  };
-  var Parry = {
-    name: "Parry",
-    tags: ["counter", "buff"],
-    sp: 3,
-    targets: onlyMe,
-    act({ g, me }) {
-      g.addEffect((destroy) => ({
-        name: "Parry",
-        duration: 2,
-        affects: [me],
-        onBeforeAction(e) {
-          if (intersection(this.affects, e.targets).length && e.action.tags.includes("attack")) {
-            g.addToLog(`${me.name} counters!`);
+  var Barb = ({ g, me }) => {
+    g.addEffect(() => ({
+      name: "Barb",
+      duration: 2,
+      affects: [me],
+      onAfterDamage({ target }) {
+        if (this.affects.includes(target)) {
+          const targets = [
+            g.getOpponent(me, 0),
+            g.getOpponent(me, 1),
+            g.getOpponent(me, 3)
+          ].filter(isDefined);
+          if (targets.length) {
+            const target2 = oneOf(targets);
             const amount = g.roll(me);
-            g.applyDamage(me, [e.attacker], amount, "hp", "normal");
-            destroy();
-            e.cancel = true;
-            return;
+            g.addToLog(`${target2.name} flails around!`);
+            g.applyDamage(me, [target2], amount, "hp", "normal");
           }
         }
-      }));
+      }
+    }));
+  };
+  var Bash = makeAttack({ base: 4 });
+  var Bless = ({ g, me, targets }) => {
+    for (const target of targets) {
+      const amount = Math.max(0, target.camaraderie) + 2;
+      g.heal(me, [target], amount);
     }
   };
-  var Sand = {
-    name: "Sand",
-    tags: ["duff"],
-    sp: 3,
-    targets: oneOpponent,
-    act({ g, me, targets }) {
-      g.applyDamage(me, targets, 1, "determination", "normal");
-    }
+  var Brace = ({ g, me }) => {
+    g.addEffect((destroy) => ({
+      name: "Brace",
+      duration: 2,
+      affects: [me],
+      buff: true,
+      onCalculateDamage(e) {
+        if (this.affects.includes(e.target)) {
+          e.multiplier /= 2;
+          destroy();
+        }
+      }
+    }));
   };
-  var Scar = {
-    name: "Scar",
-    tags: ["attack"],
-    sp: 3,
-    targets: oneOpponent,
-    act({ g, me, targets }) {
-      const amount = 4;
-      g.applyDamage(me, targets, amount, "hp", "normal");
-      g.applyDamage(me, targets, amount, "hp", "normal");
-      g.applyDamage(me, targets, amount, "hp", "normal");
-    }
+  var Chakra = ({ g, me }) => {
+    g.addEffect(() => ({
+      name: "Chakra",
+      duration: 2,
+      affects: [me],
+      buff: true,
+      onRoll(e) {
+        if (this.affects.includes(e.who))
+          e.value = e.size;
+      }
+    }));
   };
-  var Trick = {
-    name: "Trick",
-    tags: ["duff"],
-    sp: 3,
-    targets: oneOpponent,
-    act({ g, me, targets }) {
-      g.applyDamage(me, targets, 1, "camaraderie", "normal");
-    }
+  var Deflect = ({ g, me }) => {
+    g.addEffect((destroy) => ({
+      name: "Deflect",
+      duration: 2,
+      affects: [me],
+      onCalculateDamage(e) {
+        if (this.affects.includes(e.target)) {
+          g.addToLog(`${me.name} deflects the blow.`);
+          e.multiplier = 0;
+          destroy();
+          return;
+        }
+      }
+    }));
   };
-
-  // src/tools/lists.ts
-  function niceList(items) {
-    if (items.length === 0)
-      return "nobody";
-    if (items.length === 1)
-      return items[0];
-    const firstBunch = items.slice(0, -1);
-    const last = items.at(-1) ?? "nobody";
-    return `${firstBunch.join(", ")} and ${last}`;
-  }
-  function pluralS(items) {
-    if (items.length === 1)
-      return "s";
-    return "";
-  }
-
-  // src/tools/numbers.ts
-  function wrap(n, max) {
-    const m = n % max;
-    return m < 0 ? m + max : m;
-  }
-
-  // src/enemies.ts
-  var Lash = {
-    name: "Lash",
-    tags: ["attack", "duff"],
-    sp: 3,
-    targets: oneOpponent,
-    act({ g, me, targets }) {
-      if (g.applyDamage(me, targets, 3, "hp", "normal") > 0) {
-        g.addToLog(
-          `${niceList(targets.map((x) => x.name))} feel${pluralS(
-            targets
-          )} temporarily demoralized.`
-        );
+  var Defy = ({ g, me }) => {
+    g.addEffect(() => ({
+      name: "Defy",
+      duration: 2,
+      affects: [me],
+      onAfterDamage({ target, attacker }) {
+        if (!this.affects.includes(target))
+          return;
+        g.addToLog(`${me.name} stuns ${attacker.name} with their defiance!`);
         g.addEffect(() => ({
-          name: "Lash",
-          duration: 2,
-          affects: targets,
-          onCalculateDetermination(e) {
+          name: "Defied",
+          duration: 1,
+          affects: [attacker],
+          onCanAct(e) {
             if (this.affects.includes(e.who))
-              e.value--;
+              e.cancel = true;
           }
         }));
       }
+    }));
+  };
+  var DuoStab = ({ g, me, targets }) => {
+    g.applyDamage(me, targets, 6, "hp", "normal");
+  };
+  var EndTurn = ({ g }) => g.endTurn();
+  var Flight = makeAttack({ base: 10 });
+  var Fortify = () => {
+  };
+  var Honour = ({ g, targets }) => {
+    g.addEffect(() => ({
+      name: "Honour",
+      duration: 2,
+      affects: targets,
+      buff: true,
+      onCalculateDamage(e) {
+        if (this.affects.includes(e.target) && e.type === "determination")
+          e.multiplier = 0;
+      }
+    }));
+  };
+  var Lash = ({ g, me, targets }) => {
+    if (g.applyDamage(me, targets, 3, "hp", "normal") > 0) {
+      g.addToLog(
+        `${niceList(targets.map((x) => x.name))} feel${pluralS(
+          targets
+        )} temporarily demoralized.`
+      );
+      g.addEffect(() => ({
+        name: "Lash",
+        duration: 2,
+        affects: targets,
+        onCalculateDetermination(e) {
+          if (this.affects.includes(e.who))
+            e.value--;
+        }
+      }));
     }
   };
+  var Mantra = ({ g, me, targets }) => {
+    me.determination--;
+    for (const target of targets) {
+      target.determination++;
+      g.addToLog(`${me.name} gives everything to inspire ${target.name}.`);
+    }
+  };
+  var Mudra = ({ g, me }) => {
+    g.addEffect(() => ({
+      name: "Mudra",
+      duration: 2,
+      affects: [me],
+      onCalculateDamage(e) {
+        if (intersection(this.affects, [e.attacker, e.target]).length)
+          e.multiplier *= 2;
+      }
+    }));
+  };
+  var Parry = ({ g, me }) => {
+    g.addEffect((destroy) => ({
+      name: "Parry",
+      duration: 2,
+      affects: [me],
+      onBeforeAction(e) {
+        if (intersection(this.affects, e.targets).length && e.action.tags.includes("attack")) {
+          g.addToLog(`${me.name} counters!`);
+          const amount = g.roll(me);
+          g.applyDamage(me, [e.attacker], amount, "hp", "normal");
+          destroy();
+          e.cancel = true;
+          return;
+        }
+      }
+    }));
+  };
+  var Sand = ({ g, me, targets }) => {
+    g.applyDamage(me, targets, 1, "determination", "normal");
+  };
+  var Scar = ({ g, me, targets }) => {
+    const amount = 4;
+    g.applyDamage(me, targets, amount, "hp", "normal");
+    g.applyDamage(me, targets, amount, "hp", "normal");
+    g.applyDamage(me, targets, amount, "hp", "normal");
+  };
+  var Swarm = makeAttack({ base: 3, roll: false, origin: "magic" });
+  var Sweep = makeAttack({ base: 4, roll: false });
+  var Tackle = makeAttack({ base: 0 });
+  var Thrust = makeAttack({ base: 3 });
+  var Trick = makeAttack({ base: 1, roll: false, type: "camaraderie" });
+
+  // src/actions.ts
+  var Attack2 = {
+    name: "Attack",
+    tags: [],
+    sp: 1,
+    targets: { type: "enemy", count: 1, distance: 1, offsets: [0] },
+    act: Attack
+  };
+  var Barb2 = {
+    name: "Barb",
+    tags: [],
+    sp: 3,
+    targets: { type: "self" },
+    act: Barb
+  };
+  var Bash2 = {
+    name: "Bash",
+    tags: [],
+    sp: 1,
+    targets: { type: "enemy", count: 1, distance: 1, offsets: [0] },
+    act: Bash
+  };
+  var Bless2 = {
+    name: "Bless",
+    tags: [],
+    sp: 2,
+    targets: { type: "ally", count: 1 },
+    act: Bless
+  };
+  var Brace2 = {
+    name: "Brace",
+    tags: [],
+    sp: 3,
+    targets: { type: "self" },
+    act: Brace
+  };
+  var Chakra2 = {
+    name: "Chakra",
+    tags: [],
+    sp: 3,
+    targets: { type: "self" },
+    act: Chakra
+  };
+  var Deflect2 = {
+    name: "Deflect",
+    tags: [],
+    sp: 3,
+    targets: { type: "self" },
+    act: Deflect
+  };
+  var Defy2 = {
+    name: "Defy",
+    tags: [],
+    sp: 3,
+    targets: { type: "self/enemy" },
+    act: Defy
+  };
+  var DuoStab2 = {
+    name: "Duo Stab",
+    tags: [],
+    sp: 3,
+    targets: { type: "enemy/multiple", count: 2, distance: 1, offsets: [0, 2] },
+    act: DuoStab
+  };
+  var Flight2 = {
+    name: "Flight",
+    tags: [],
+    sp: 4,
+    targets: { type: "enemy", count: 1, distance: 1, offsets: [1, 3] },
+    act: Flight
+  };
+  var Fortify2 = {
+    name: "Fortify",
+    tags: [],
+    sp: 3,
+    targets: { type: "self/ally" },
+    act: Fortify
+  };
+  var Honour2 = {
+    name: "Honour",
+    tags: [],
+    sp: 2,
+    targets: { type: "self/ally" },
+    act: Honour
+  };
+  var Lash2 = {
+    name: "Lash",
+    tags: [],
+    sp: 3,
+    targets: { type: "enemy", count: 1, offsets: [0, 1, 2, 3] },
+    act: Lash
+  };
+  var Mantra2 = {
+    name: "Mantra",
+    tags: [],
+    sp: 3,
+    targets: { type: "ally", count: 1, distance: 1, offsets: [0, 1, 2, 3] },
+    act: Mantra
+  };
+  var Mudra2 = {
+    name: "Mudra",
+    tags: [],
+    sp: 3,
+    targets: { type: "self" },
+    act: Mudra
+  };
+  var Parry2 = {
+    name: "Parry",
+    tags: [],
+    sp: 3,
+    targets: { type: "self/enemy" },
+    act: Parry
+  };
+  var Sand2 = {
+    name: "Sand",
+    tags: [],
+    sp: 1,
+    targets: { type: "enemy", count: 1, distance: 1, offsets: [0, 1, 2, 3] },
+    act: Sand
+  };
+  var Scar2 = {
+    name: "Scar",
+    tags: [],
+    sp: 3,
+    targets: { type: "enemy", count: 1, distance: 1, offsets: [0] },
+    act: Scar
+  };
+  var Sweep2 = {
+    name: "Sweep",
+    tags: [],
+    sp: 3,
+    targets: { type: "enemy/multiple", count: 3, distance: 3, offsets: [0] },
+    act: Sweep
+  };
+  var Tackle2 = {
+    name: "Tackle",
+    tags: [],
+    sp: 3,
+    targets: { type: "enemy", count: 1, distance: 1, offsets: [1, 3] },
+    act: Tackle
+  };
+  var Thrust2 = {
+    name: "Thrust",
+    tags: [],
+    sp: 2,
+    targets: { type: "self/ally/enemy", count: 1, distance: 1, offsets: [0, 2] },
+    act: Thrust
+  };
+  var Trick2 = {
+    name: "Trick",
+    tags: [],
+    sp: 1,
+    targets: { type: "enemy", count: 1, distance: 1, offsets: [0, 1, 2, 3] },
+    act: Trick
+  };
+
+  // src/enemyData.ts
+  var EveScout = {
+    name: "Eve Scout",
+    maxHP: 10,
+    maxSP: 5,
+    camaraderie: 3,
+    determination: 3,
+    spirit: 4,
+    dr: 0,
+    actions: [Attack2, Deflect2, Sand2, Trick2]
+  };
+  var MartialistMullanginan = {
+    name: "Martialist (Mullanginan)",
+    maxHP: 14,
+    maxSP: 4,
+    camaraderie: 3,
+    determination: 4,
+    spirit: 4,
+    dr: 0,
+    actions: [Attack2, Parry2, Defy2, Flight2]
+  };
+  var NettleSage = {
+    name: "Nettle Sage",
+    maxHP: 12,
+    maxSP: 7,
+    camaraderie: 2,
+    determination: 2,
+    spirit: 6,
+    dr: 0,
+    actions: [Attack2, Fortify2, Bless2, Lash2]
+  };
+  var SneedCrawler = {
+    name: "Sneed Crawler",
+    maxHP: 13,
+    maxSP: 4,
+    camaraderie: 1,
+    determination: 5,
+    spirit: 4,
+    dr: 0,
+    actions: [Attack2, Scar2, Barb2]
+  };
+
+  // src/enemies.ts
   var EnemyObjects = {
     eNettleSage: 100,
     eEveScout: 110,
@@ -493,60 +689,41 @@
     oSneedCrawler: 120,
     oMullanginanMartialist: 130
   };
-  var enemies = {
+  var allEnemies = {
     "Eve Scout": {
+      ...EveScout,
       object: EnemyObjects.eEveScout,
-      animation: { delay: 300, frames: [110, 111, 112, 113] },
-      name: "Eve Scout",
-      maxHP: 10,
-      maxSP: 5,
-      camaraderie: 3,
-      determination: 3,
-      spirit: 4,
-      dr: 0,
-      actions: [generateAttack(0, 1), Deflect, Sand, Trick]
+      animation: { delay: 300, frames: [110, 111, 112, 113] }
     },
     "Sneed Crawler": {
+      ...SneedCrawler,
       object: EnemyObjects.eSneedCrawler,
-      animation: { delay: 300, frames: [120, 121, 122, 123, 124, 125] },
-      name: "Sneed Crawler",
-      maxHP: 13,
-      maxSP: 4,
-      camaraderie: 1,
-      determination: 5,
-      spirit: 4,
-      dr: 2,
-      actions: [generateAttack(0, 1), Scar, Barb]
+      animation: { delay: 300, frames: [120, 121, 122, 123, 124, 125] }
     },
     "Mullanginan Martialist": {
-      object: EnemyObjects.eMullanginanMartialist,
-      animation: { delay: 300, frames: [130, 131, 130, 132] },
+      ...MartialistMullanginan,
       name: "Mullanginan Martialist",
-      maxHP: 14,
-      maxSP: 4,
-      camaraderie: 3,
-      determination: 4,
-      spirit: 4,
-      dr: 1,
-      actions: [generateAttack(0, 1), Parry, Defy, Flight]
+      object: EnemyObjects.eMullanginanMartialist,
+      animation: { delay: 300, frames: [130, 131, 130, 132] }
     },
     "Nettle Sage": {
+      ...NettleSage,
       object: EnemyObjects.eNettleSage,
-      animation: { delay: 300, frames: [100, 101, 100, 102] },
-      name: "Nettle Sage",
-      maxHP: 12,
-      maxSP: 7,
-      camaraderie: 2,
-      determination: 2,
-      spirit: 6,
-      dr: 0,
-      actions: [generateAttack(0, 1), Bravery, Bless, Lash]
+      animation: { delay: 300, frames: [100, 101, 100, 102] }
     }
   };
-  var EnemyNames = Object.keys(enemies);
+  var EnemyNames = Object.keys(allEnemies);
   function isEnemyName(name) {
     return EnemyNames.includes(name);
   }
+
+  // src/tools/numbers.ts
+  function wrap(n, max) {
+    const m = n % max;
+    return m < 0 ? m + max : m;
+  }
+
+  // src/Enemy.ts
   var Enemy = class {
     constructor(g, template) {
       this.g = g;
@@ -604,7 +781,7 @@
     }
   };
   function spawn(g, name) {
-    return new Enemy(g, enemies[name]);
+    return new Enemy(g, allEnemies[name]);
   }
 
   // src/tools/shuffle.ts
@@ -615,16 +792,6 @@
     }
     return array;
   }
-
-  // src/types/Dir.ts
-  var Dir = /* @__PURE__ */ ((Dir2) => {
-    Dir2[Dir2["N"] = 0] = "N";
-    Dir2[Dir2["E"] = 1] = "E";
-    Dir2[Dir2["S"] = 2] = "S";
-    Dir2[Dir2["W"] = 3] = "W";
-    return Dir2;
-  })(Dir || {});
-  var Dir_default = Dir;
 
   // src/CombatManager.ts
   var CombatManager = class {
@@ -718,15 +885,15 @@
         ...this.enemies[3]
       ];
     }
-    begin(enemies2, type) {
-      startFight(this.g.position, enemies2);
+    begin(enemies, type) {
+      startFight(this.g.position, enemies);
       for (const e of this.effects.slice())
         if (!e.permanent)
           this.g.removeEffect(e);
       this.resetEnemies();
       const dirs = shuffle([Dir_default.N, Dir_default.E, Dir_default.S, Dir_default.W]);
       let i = 0;
-      for (const name of enemies2) {
+      for (const name of enemies) {
         const enemy = spawn(this.g, name);
         this.enemies[dirs[i]].push(enemy);
         i = wrap(i + 1, dirs.length);
@@ -814,70 +981,6 @@
   var Colours_default = Colours;
   function getItemColour(yellow, bright) {
     return bright ? yellow ? Colours.itemActiveHighlighted : Colours.itemHighlighted : yellow ? Colours.itemActive : Colours.item;
-  }
-
-  // src/tools/geometry.ts
-  var xy = (x, y) => ({ x, y });
-  var xyi = (x, y) => ({
-    x: Math.floor(x),
-    y: Math.floor(y)
-  });
-  function sameXY(a, b) {
-    return a.x === b.x && a.y === b.y;
-  }
-  function addXY(a, b) {
-    return { x: a.x + b.x, y: a.y + b.y };
-  }
-  var displacements = [xy(0, -1), xy(1, 0), xy(0, 1), xy(-1, 0)];
-  function move(pos, dir) {
-    return addXY(pos, displacements[dir]);
-  }
-  function rotate(dir, clockwise) {
-    return (dir + clockwise + 4) % 4;
-  }
-  function dirFromInitial(initial) {
-    switch (initial) {
-      case "E":
-        return Dir_default.E;
-      case "S":
-        return Dir_default.S;
-      case "W":
-        return Dir_default.W;
-      case "N":
-      default:
-        return Dir_default.N;
-    }
-  }
-  function getCardinalOffset(start, destination) {
-    const dx = destination.x - start.x;
-    const dy = destination.y - start.y;
-    if (dx && dy)
-      return;
-    if (dy < 0)
-      return { dir: Dir_default.N, offset: -dy };
-    if (dx > 0)
-      return { dir: Dir_default.E, offset: dx };
-    if (dy > 0)
-      return { dir: Dir_default.S, offset: dy };
-    if (dx < 0)
-      return { dir: Dir_default.W, offset: -dx };
-  }
-  var dirOffsets = {
-    [Dir_default.N]: { [Dir_default.N]: 0, [Dir_default.E]: 1, [Dir_default.S]: 2, [Dir_default.W]: 3 },
-    [Dir_default.E]: { [Dir_default.N]: 3, [Dir_default.E]: 0, [Dir_default.S]: 1, [Dir_default.W]: 2 },
-    [Dir_default.S]: { [Dir_default.N]: 2, [Dir_default.E]: 3, [Dir_default.S]: 0, [Dir_default.W]: 1 },
-    [Dir_default.W]: { [Dir_default.N]: 1, [Dir_default.E]: 2, [Dir_default.S]: 3, [Dir_default.W]: 0 }
-  };
-  function getDirOffset(start, end) {
-    return dirOffsets[start][end];
-  }
-  function lerpXY(from, to, ratio) {
-    if (ratio <= 0)
-      return from;
-    if (ratio >= 1)
-      return to;
-    const fr = 1 - ratio;
-    return xy(from.x * fr + to.x * ratio, from.y * fr + to.y * ratio);
   }
 
   // src/tools/withTextStyle.ts
@@ -1017,7 +1120,7 @@
   var sneedCrawler_default2 = "./sneedCrawler-B5CE42IQ.png";
 
   // ink:D:\Code\dcjam2023\res\map.ink
-  var map_default = "./map-YEJLQB7U.ink";
+  var map_default = "./map-WCLB3GM3.ink";
 
   // res/map.json
   var map_default2 = "./map-HXD5COAC.json";
@@ -1552,714 +1655,53 @@
   // src/EngineInkScripting.ts
   var import_Story = __toESM(require_inkjs());
 
-  // src/items/cleavesman.ts
-  var cleavesman_exports = {};
-  __export(cleavesman_exports, {
-    ChivalrousMantle: () => ChivalrousMantle,
-    Gambesar: () => Gambesar,
-    GorgothilSword: () => GorgothilSword,
-    Gullark: () => Gullark,
-    Haringplate: () => Haringplate,
-    Jaegerstock: () => Jaegerstock,
-    Varganglia: () => Varganglia
-  });
-  var GorgothilSword = {
-    name: "Gorgothil Sword",
+  // src/items.ts
+  var ChivalrousMantle = {
+    name: "Chivalrous Mantle",
     restrict: ["Cleavesman"],
-    slot: "Hand",
-    type: "Weapon",
+    slot: "Special",
+    type: "Artefact",
     bonus: {},
-    action: {
-      name: "Bash",
-      tags: ["attack"],
-      sp: 1,
-      targets: oneOpponent,
-      act({ g, me, targets }) {
-        const amount = g.roll(me) + 4;
-        g.applyDamage(me, targets, amount, "hp", "normal");
-      }
-    }
-  };
-  var Haringplate = {
-    name: "Haringplate",
-    restrict: ["Cleavesman"],
-    slot: "Body",
-    type: "Armour",
-    bonus: { maxHP: 5 },
-    action: Brace
-  };
-  var Gullark = {
-    name: "Gullark",
-    restrict: ["Cleavesman"],
-    slot: "Hand",
-    type: "Shield",
-    bonus: { maxHP: 3 },
-    action: Deflect
-  };
-  var Jaegerstock = {
-    name: "Jaegerstock",
-    restrict: ["Cleavesman"],
-    slot: "Hand",
-    type: "Weapon",
-    bonus: {},
-    action: DuoStab
-  };
-  var Varganglia = {
-    name: "Varganglia",
-    restrict: ["Cleavesman"],
-    slot: "Body",
-    type: "Armour",
-    bonus: {},
-    action: Barb
+    action: Honour2,
+    lore: `(DESCRIPTION COMING LATER)`
   };
   var Gambesar = {
     name: "Gambesar",
     restrict: ["Cleavesman"],
     slot: "Body",
     type: "Armour",
-    bonus: { maxHP: 5 },
-    action: {
-      name: "Tackle",
-      tags: ["attack"],
-      sp: 3,
-      targets: opponents(1, [1, 3]),
-      act({ g, me, targets }) {
-        const amount = g.roll(me);
-        g.applyDamage(me, targets, amount, "hp", "normal");
-      }
-    }
+    bonus: {},
+    action: Tackle2,
+    lore: `Enchanted by Cherraphy's highest order of sages, gambesars are awarded only to cleavesman that return from battle after sustaining tremendous injury. It's said that wearing one allows the user to shift the environment around them, appearing multiple steps from where they first started in just an instant.`
   };
-  var ChivalrousMantle = {
-    name: "Chivalrous Mantle",
+  var GorgothilSword = {
+    name: "Gorgothil Sword",
     restrict: ["Cleavesman"],
-    slot: "Special",
-    bonus: {},
-    action: {
-      name: "Honour",
-      tags: [],
-      sp: 2,
-      targets: allAllies,
-      act({ g, targets }) {
-        g.addEffect(() => ({
-          name: "Honour",
-          duration: 2,
-          affects: targets,
-          buff: true,
-          onCalculateDamage(e) {
-            if (this.affects.includes(e.target) && e.type === "determination")
-              e.multiplier = 0;
-          }
-        }));
-      }
-    }
-  };
-  GorgothilSword.lore = `"""May this steel sing the color of heathen blood.""
-
-This phrase has been uttered ever since Gorgothil was liberated from the thralls of Mullanginan during the Lost War. Gorgothil is now an ever devoted ally, paying their debts by smithing weaponry for all cleavesmen under Cherraphy's wing."`;
-  Gullark.lore = `Dredged from the Furnace of Ogkh, gullarks are formerly the shells belonging to an ancient creature called a Crim; egg shaped quadrupeds with the face of someone screaming in torment. Many believe their extinction is owed to the over-production of gullarks during the Lost War.`;
-  Jaegerstock.lore = `Able to stab in a forward and back motion, then a back to forward motion, and once again in a forward and back motion. Wielders often put one foot forward to brace themselves, and those with transcendental minds? They also stab in a forward and back motion.`;
-  Varganglia.lore = `Armour that's slithered forth from Telnoth's scars after the Long War ended. Varganglia carcasses have become a common attire for cleavesmen, their pelts covered with thick and venomous barbs that erupt from the carcass when struck, making the wearer difficult to strike.`;
-  Gambesar.lore = `"Enchanted by Cherraphy's highest order of sages, gambesars are awarded only to cleavesman that return from battle after sustaining tremendous injury. It's said that wearing one allows the user to shift the environment around them, appearing multiple steps from where they first started in just an instant.`;
-
-  // src/items/consumable.ts
-  var consumable_exports = {};
-  __export(consumable_exports, {
-    HolyDew: () => HolyDew,
-    LifeDew: () => LifeDew,
-    Liquor: () => Liquor,
-    ManaDew: () => ManaDew,
-    Ration: () => Ration
-  });
-  var LifeDew = {
-    name: "Life Dew",
-    type: "Consumable",
-    bonus: {},
-    action: {
-      name: "Scatter",
-      tags: ["heal"],
-      sp: 1,
-      targets: ally(1),
-      targetFilter: (c) => c.hp < c.maxHP,
-      act({ g, me, targets }) {
-        g.heal(me, targets, 3);
-      }
-    }
-  };
-  var ManaDew = {
-    name: "Mana Dew",
-    type: "Consumable",
-    bonus: {},
-    action: {
-      name: "Scatter",
-      tags: ["heal"],
-      sp: 1,
-      targets: ally(1),
-      targetFilter: (c) => c.sp < c.maxSP,
-      act({ g, targets }) {
-        for (const target of targets) {
-          const newSP = Math.min(target.maxSP, target.sp + 3);
-          const gain = newSP - target.maxSP;
-          if (gain) {
-            target.sp += gain;
-            g.addToLog(`${target.name} feels recharged.`);
-          }
-        }
-      }
-    }
-  };
-  var Liquor = {
-    name: "Liquor",
-    type: "Consumable",
-    bonus: {},
-    action: {
-      name: "Drink",
-      tags: ["heal"],
-      sp: 1,
-      targets: ally(1),
-      act({ g, targets }) {
-        for (const target of targets) {
-          target.camaraderie++;
-          g.addToLog(`${target.name} feels a little more convivial.`);
-        }
-      }
-    }
-  };
-  var Ration = {
-    name: "Ration",
-    type: "Consumable",
-    bonus: {},
-    action: {
-      name: "Eat",
-      tags: ["heal"],
-      sp: 1,
-      targets: ally(1),
-      act({ g, targets }) {
-        for (const target of targets) {
-          target.determination++;
-          g.addToLog(`${target.name} feels a little more determined.`);
-        }
-      }
-    }
-  };
-  var HolyDew = {
-    name: "Holy Dew",
-    type: "Consumable",
-    bonus: {},
-    action: {
-      name: "Scatter",
-      tags: ["heal"],
-      sp: 1,
-      targets: ally(1),
-      act({ g, targets }) {
-        for (const target of targets) {
-          target.spirit++;
-          g.addToLog(`${target.name} feels their hopes lift.`);
-        }
-      }
-    }
-  };
-
-  // src/items/farScout.ts
-  var farScout_exports = {};
-  __export(farScout_exports, {
-    AdaloaxPelt: () => AdaloaxPelt,
-    BoltSlinger: () => BoltSlinger,
-    Haversack: () => Haversack,
-    PryingPoleaxe: () => PryingPoleaxe
-  });
-  var BoltSlinger = {
-    name: "Bolt Slinger",
-    restrict: ["Far Scout"],
     slot: "Hand",
     type: "Weapon",
     bonus: {},
-    action: {
-      name: "Arrow",
-      tags: ["attack"],
-      sp: 3,
-      targets: opponents(1, [1, 2, 3]),
-      act({ g, me, targets }) {
-        const amount = g.roll(me) + 2;
-        g.applyDamage(me, targets, amount, "hp", "normal");
-      }
-    }
-  };
-  var AdaloaxPelt = {
-    name: "Adaloax Pelt",
-    restrict: ["Far Scout"],
-    slot: "Body",
-    type: "Armour",
-    bonus: {},
-    action: {
-      name: "Bind",
-      tags: ["duff"],
-      sp: 4,
-      targets: oneOpponent,
-      act({ g, targets }) {
-        g.addToLog(`${niceList(targets.map((x) => x.name))} is bound tightly!`);
-        g.addEffect(() => ({
-          name: "Bind",
-          duration: 2,
-          affects: targets,
-          onCanAct(e) {
-            if (this.affects.includes(e.who))
-              e.cancel = true;
-          }
-        }));
-      }
-    }
-  };
-  var Haversack = {
-    name: "Haversack",
-    restrict: ["Far Scout"],
-    slot: "Hand",
-    type: "Weapon",
-    bonus: {},
-    action: Sand
-  };
-  var PryingPoleaxe = {
-    name: "Prying Poleaxe",
-    restrict: ["Far Scout"],
-    slot: "Hand",
-    type: "Weapon",
-    bonus: {},
-    action: {
-      name: "Gouge",
-      tags: ["attack", "duff"],
-      sp: 5,
-      targets: oneOpponent,
-      act({ g, me, targets }) {
-        const amount = g.roll(me) + 6;
-        if (g.applyDamage(me, targets, amount, "hp", "normal") > 0) {
-          g.addEffect(() => ({
-            name: "Gouge",
-            duration: 2,
-            affects: targets,
-            onCalculateDR(e) {
-              if (this.affects.includes(e.who))
-                e.multiplier = 0;
-            }
-          }));
-        }
-      }
-    }
-  };
-  BoltSlinger.lore = `A string and stick combo coming in many shapes and sizes. All with the express purpose of expelling sharp objects at blinding speeds. Any far scout worth their salt still opts for a retro-styled bolt slinger; clunky mechanisms and needless gadgets serve only to hinder one's own skills.`;
-  AdaloaxPelt.lore = `Traditional hunter-gatherer and scouting attire, adaloax pelts are often sold and coupled with a set of bolas for trapping prey. The rest of the adaloax is divided up into portions of meat and sold at market value, often a single adaloax can produce upwards of three pelts and enough meat to keep multiple people fed.`;
-  Haversack.lore = `People, creatures, automata and constructs of all kinds find different use for a haversack, but the sand pouch remains the same. Considered a coward's weapon by many, the remainder would disagree as sometimes flight is the only response to a fight. A hasty retreat is far more preferable than a future as carrion.`;
+    action: Bash2,
+    lore: `""May this steel sing the color of heathen blood.""
 
-  // src/items/flagSinger.ts
-  var flagSinger_exports = {};
-  __export(flagSinger_exports, {
-    CarvingKnife: () => CarvingKnife,
-    CatFacedMasquerade: () => CatFacedMasquerade,
-    DivaDress: () => DivaDress,
-    Fandagger: () => Fandagger,
-    FolkHarp: () => FolkHarp,
-    GrowlingCollar: () => GrowlingCollar,
-    SignedCasque: () => SignedCasque,
-    Storyscroll: () => Storyscroll,
-    WindmillRobe: () => WindmillRobe
-  });
-  var CarvingKnife = {
-    name: "Carving Knife",
-    restrict: ["Flag Singer"],
-    slot: "Hand",
-    type: "Weapon",
-    bonus: {},
-    action: Scar
+This phrase has been uttered ever since Gorgothil was liberated from the thralls of Mullanginan during the Lost War. Gorgothil is now an ever devoted ally, paying their debts by smithing weaponry for all cleavesmen under Cherraphy's wing.`
   };
-  var SignedCasque = {
-    name: "Signed Casque",
-    restrict: ["Flag Singer"],
-    slot: "Body",
-    type: "Armour",
-    bonus: {},
-    action: {
-      name: "Cheer",
-      tags: ["buff"],
-      sp: 2,
-      targets: ally(1),
-      act({ g, targets }) {
-        g.addToLog(
-          `${niceList(targets.map((x) => x.name))} feel${pluralS(
-            targets
-          )} more protected.`
-        );
-        g.addEffect(() => ({
-          name: "Cheer",
-          duration: 2,
-          affects: targets,
-          buff: true,
-          onCalculateDR(e) {
-            if (this.affects.includes(e.who))
-              e.value += 3;
-          }
-        }));
-      }
-    }
-  };
-  var Fandagger = {
-    name: "Fandagger",
-    restrict: ["Flag Singer"],
-    slot: "Hand",
-    type: "Flag",
-    bonus: {},
-    action: {
-      name: "Conduct",
-      tags: ["attack"],
-      sp: 3,
-      targets: oneOpponent,
-      act({ g, me, targets }) {
-        const dealt = g.applyDamage(me, targets, 6, "hp", "normal");
-        if (dealt > 0) {
-          const ally2 = oneOf(g.getAllies(me, false));
-          if (ally2) {
-            g.addToLog(`${me.name} conducts ${ally2.name}'s next attack.`);
-            g.addEffect((destroy) => ({
-              name: "Conduct",
-              duration: 1,
-              affects: [ally2],
-              buff: true,
-              onCalculateDamage(e) {
-                if (this.affects.includes(e.attacker)) {
-                  const bonus = g.roll(me);
-                  e.amount += bonus;
-                  destroy();
-                }
-              }
-            }));
-          }
-        }
-      }
-    }
-  };
-  var Storyscroll = {
-    name: "Storyscroll",
-    restrict: ["Flag Singer"],
-    slot: "Hand",
-    type: "Flag",
-    bonus: { spirit: 1 },
-    action: Bravery
-  };
-  var DivaDress = {
-    name: "Diva's Dress",
-    restrict: ["Flag Singer"],
-    slot: "Body",
-    type: "Armour",
-    bonus: { spirit: 1 },
-    action: Defy
-  };
-  var GrowlingCollar = {
-    name: "Growling Collar",
-    restrict: ["Flag Singer"],
-    slot: "Body",
-    type: "Armour",
-    bonus: {},
-    action: {
-      name: "Vox Pop",
-      tags: ["duff"],
-      sp: 4,
-      targets: allAllies,
-      act({ g, me, targets }) {
-        g.addEffect(() => ({
-          name: "Vox Pop",
-          duration: 2,
-          affects: targets,
-          buff: true,
-          onCalculateDR(e) {
-            if (this.affects.includes(e.who))
-              e.value += 2;
-          }
-        }));
-        const opponent = g.getOpponent(me);
-        if (opponent) {
-          const effects = g.getEffectsOn(opponent).filter((e) => e.buff);
-          if (effects.length) {
-            g.addToLog(`${opponent.name} loses their protections.`);
-            g.removeEffectsFrom(effects, opponent);
-            g.applyDamage(me, [opponent], g.roll(me), "hp", "normal");
-          }
-        }
-      }
-    }
-  };
-  var FolkHarp = {
-    name: "Folk Harp",
-    restrict: ["Flag Singer"],
-    slot: "Special",
-    bonus: {},
-    action: {
-      name: "Muse",
-      tags: ["buff"],
-      sp: 2,
-      targets: allAllies,
-      act({ g, targets }) {
-        g.addEffect(() => ({
-          name: "Muse",
-          duration: 2,
-          affects: targets,
-          onCalculateDamage(e) {
-            if (this.affects.includes(e.attacker))
-              e.amount += e.attacker.camaraderie;
-          }
-        }));
-      }
-    }
-  };
-  var CatFacedMasquerade = {
-    name: "Cat-faced Masquerade",
-    restrict: ["Flag Singer"],
-    slot: "Special",
-    bonus: {},
-    action: {
-      name: "Inspire",
-      tags: ["buff"],
-      sp: 4,
-      targets: allAllies,
-      act({ g, me, targets }) {
-        g.addEffect(() => ({
-          name: "Inspire",
-          duration: 2,
-          affects: targets,
-          onCalculateDamage(e) {
-            if (this.affects.includes(e.target)) {
-              e.multiplier = 0;
-              g.addToLog(`${e.attacker.name} faces backlash!`);
-              g.applyDamage(me, [e.attacker], g.roll(me), "hp", "magic");
-            }
-          }
-        }));
-      }
-    }
-  };
-  var WindmillRobe = {
-    name: "Windmill Robe",
-    restrict: ["Flag Singer"],
-    slot: "Special",
-    bonus: { dr: 1 },
-    action: {
-      name: "Unveil",
-      tags: [],
-      sp: 1,
-      targets: oneOpponent,
-      act() {
-      }
-    }
-  };
-  CarvingKnife.lore = `Not a martial weapon, but rather a craftsman and artist's tool. Having secretly spurned Cherraphy's foul request, this Singer carries this knife as a confirmation that what they did was right.`;
-  SignedCasque.lore = `A vest made of traditional plaster and adorned in writing with the feelings and wishes of each villager the Singer dares to protect.`;
-  Fandagger.lore = `Fandaggers are graceful tools of the rogue, to be danced with and to be thrown between acrobats in relay. Held at one end they concertina into painted fans; the other suits the stabbing grip.`;
-  Storyscroll.lore = `A furled tapestry illustrated with a brief history of Haringlee myth. When the Flag Singer whirls it about them as though dancing with ribbons, their comrades are enriched by the spirit of the fantasies it depicts.`;
-  DivaDress.lore = `Few dare interfere with the performance of a Singer so dressed: these glittering magic garments dazzle any foolish enough to try! All may wear the Diva's Dress so long as it is earned by skill; gender matters not to the craft.`;
-  GrowlingCollar.lore = `A mechanical amplifier pressed tightly to the skin of the throat, held in place by a black leather collar. When you speak, it roars.`;
-  FolkHarp.lore = `An ancient traditional instrument, strings of animal innards sprung over a tune-measured wooden frame to create a playable musical scale. Can be plucked melodically, or strummed to produce a glistening, harmonic, rain-like sound.`;
-  CatFacedMasquerade.lore = `A mask that lends its wearer a mocking air, or one of being deeply unimpressed. Turning this disdainful expression on an enemy reassures your allies of their superiority; a simple means of encouragement in complicated times.`;
-  WindmillRobe.lore = `A pale blue robe with ultra-long sleeves, slung with diamond-shaped hanging sheets of fabric. Psychic expertise and practise allows you to manipulate these flags and perform intricate displays without so much as moving your arms; the most complicated dances can have a mesmerizing effect.`;
-
-  // src/items/loamSeer.ts
-  var loamSeer_exports = {};
-  __export(loamSeer_exports, {
-    BeekeeperBrooch: () => BeekeeperBrooch,
-    Cornucopia: () => Cornucopia,
-    IoliteCross: () => IoliteCross,
-    JacketAndRucksack: () => JacketAndRucksack,
-    MantleOfClay: () => MantleOfClay,
-    Mosscloak: () => Mosscloak,
-    RockringSleeve: () => RockringSleeve,
-    TortoiseFamiliar: () => TortoiseFamiliar,
-    WandOfWorkedFlint: () => WandOfWorkedFlint
-  });
-  var Cornucopia = {
-    name: "Cornucopia",
-    restrict: ["Loam Seer"],
-    slot: "Hand",
-    type: "Catalyst",
-    bonus: {},
-    action: Bless
-  };
-  var JacketAndRucksack = {
-    name: "Jacket and Rucksack",
-    restrict: ["Loam Seer"],
-    slot: "Body",
-    type: "Armour",
-    bonus: {},
-    action: {
-      name: "Observe",
-      tags: [],
-      sp: 4,
-      targets: oneOpponent,
-      act({ g, targets }) {
-        g.addToLog(
-          `${niceList(targets.map((x) => x.name))} has nowhere to hide!`
-        );
-        g.addEffect(() => ({
-          name: "Observe",
-          duration: 2,
-          affects: targets,
-          onCalculateDR(e) {
-            if (this.affects.includes(e.who))
-              e.value--;
-          }
-        }));
-      }
-    }
-  };
-  var IoliteCross = {
-    name: "Iolite Cross",
-    restrict: ["Loam Seer"],
-    slot: "Hand",
-    type: "Catalyst",
-    bonus: { spirit: 1 },
-    action: {
-      name: "Vanish",
-      tags: ["movement"],
-      sp: 2,
-      targets: onlyMe,
-      act() {
-      }
-    }
-  };
-  var BeekeeperBrooch = {
-    name: "Beekeeper's Brooch of Needling",
-    restrict: ["Loam Seer"],
-    slot: "Hand",
-    type: "Catalyst",
-    bonus: {},
-    action: {
-      name: "Swarm",
-      tags: ["attack", "spell"],
-      sp: 2,
-      targets: opponents(3, [0, 1, 3]),
-      act({ g, me, targets }) {
-        g.applyDamage(me, targets, 3, "hp", "magic");
-      }
-    }
-  };
-  var RockringSleeve = {
-    name: "Rockring Sleeve",
-    restrict: ["Loam Seer"],
-    slot: "Body",
-    type: "Armour",
-    bonus: { dr: 2 },
-    action: Bravery
-  };
-  var Mosscloak = {
-    name: "Mosscloak",
-    restrict: ["Loam Seer"],
-    slot: "Body",
-    type: "Armour",
-    bonus: {},
-    action: {
-      name: "Study",
-      tags: [],
-      sp: 1,
-      targets: onlyMe,
-      act({ g, me }) {
-        g.addEffect(() => ({
-          name: "Study",
-          duration: 2,
-          affects: [me],
-          onAfterDamage({ target, type }) {
-            if (this.affects.includes(target) && type === "hp")
-              target.sp = Math.min(target.sp + 2, target.maxSP);
-          }
-        }));
-      }
-    }
-  };
-  var WandOfWorkedFlint = {
-    name: "Wand of Worked Flint",
-    restrict: ["Loam Seer"],
-    slot: "Special",
-    bonus: {},
-    action: {
-      name: "Crackle",
-      tags: ["attack", "spell"],
-      sp: 2,
-      x: true,
-      targets: { type: "enemy" },
-      act({ g, me, targets, x }) {
-        for (let i = 0; i < x; i++) {
-          const alive = targets.filter((t) => t.alive);
-          if (!alive.length)
-            return;
-          const target = oneOf(alive);
-          const amount = g.roll(me) + 2;
-          g.applyDamage(me, [target], amount, "hp", "magic");
-        }
-      }
-    }
-  };
-  var TortoiseFamiliar = {
-    name: "Tortoise Familiar",
-    restrict: ["Loam Seer"],
-    slot: "Special",
-    bonus: { camaraderie: 1 },
-    action: {
-      name: "Reforge",
-      tags: ["heal", "spell"],
-      sp: 5,
-      targets: onlyMe,
-      act({ g, me }) {
-        g.heal(me, [me], Infinity);
-      }
-    }
-  };
-  var MantleOfClay = {
-    name: "Mantle of Clay",
-    restrict: ["Loam Seer"],
-    slot: "Special",
-    bonus: { dr: 1 },
-    action: {
-      name: "Rumble",
-      tags: ["attack", "spell"],
-      sp: 4,
-      targets: opponents(),
-      act({ g, me }) {
-        const amount = g.roll(me) + 10;
-        const opponent = g.getOpponent(me);
-        const others = [
-          g.getOpponent(me, 1),
-          g.getOpponent(me, 2),
-          g.getOpponent(me, 3)
-        ].filter(isDefined);
-        const targets = [opponent, oneOf(others)].filter(isDefined);
-        g.applyDamage(me, targets, amount, "hp", "magic");
-        g.applyDamage(me, targets, 1, "spirit", "magic");
-      }
-    }
-  };
-  Cornucopia.lore = `The proverbial horn of plenty, or rather a replica crafted by the artists of Haringlee, then bestowed by its priests with a magickal knack for exuding a sweet restorative nectar.`;
-  JacketAndRucksack.lore = `Clothes and containers of simple leather. Sensible wear for foragers and druidic types; not truly intended for fighting.`;
-  IoliteCross.lore = `A semi-precious crux. Light generated by uncanny phosphorous plants - or by the setting sun - hits this substance at a remarkable, almost magickal angle.`;
-  BeekeeperBrooch.lore = `The badge of office for any who ally with insectkind. Bids fierce clouds of bees to deliver a salvo of stings to the assailants of one truly in harmony with the earth, if they are humble and bereft of secret ambition.`;
-  RockringSleeve.lore = `A set of four polished hoops of granite, fit to mold closely to its wearer's forearm. Studied practitioners of the power that dwells within rock can share the protection of such a carapace with their compatriots.`;
-  Mosscloak.lore = `Deep into the wilderness where wood meets river, a type of silver-grey-green moss flourishes that piles on so thick that, when carefully detached from the tree trunk it hugs, can retain its integrity as a naturally-occurring fabric. This specimen reaches all the way from shoulder to foot and trails some length along the ground behind you!`;
-  WandOfWorkedFlint.lore = `A spike of sparking rock, decorated with one twisting groove from haft to tip. Rubbing your thumb along the thing produces a faint sizzling sound.`;
-  TortoiseFamiliar.lore = `The tortoise is one of the ground's favoured children, fashioned in its image. This one seems to have an interest in your cause.`;
-  MantleOfClay.lore = `Pots of runny clay, into which fingers and paintbrushes can be dipped. It grips the skin tight as any tattoo when applied in certain patterns, like veins; so too can the shaman who wears these marks espy the "veins" of the rocks below them and, with a tug, bid them tremble.`;
-
-  // src/items/martialist.ts
-  var martialist_exports = {};
-  __export(martialist_exports, {
-    Halberdigan: () => Halberdigan,
-    HalflightCowl: () => HalflightCowl,
-    HaringleeKasaya: () => HaringleeKasaya,
-    KhakkharaOfGhanju: () => KhakkharaOfGhanju,
-    LastEyeOfRaong: () => LastEyeOfRaong,
-    LoromayHand: () => LoromayHand,
-    NundarialVestments: () => NundarialVestments,
-    Penduchaimmer: () => Penduchaimmer,
-    YamorolMouth: () => YamorolMouth
-  });
-  var Penduchaimmer = {
-    name: "Penduchaimmer",
+  var Halberdigan = {
+    name: "Halberdigan",
     restrict: ["Martialist"],
     slot: "Hand",
     type: "Weapon",
     bonus: {},
-    action: DuoStab
+    action: Thrust2,
+    lore: `In times of peace, halberdigans were simply a tool for picking the fruits of the Ilbombora trees that littered Haringlee's countryside. A devastating fire set by Nightjar's residents and an ensuing drought was punishing enough that farmers began taking up martialism in the name of Cherraphy, in the hope that she'll restore the Ilbombora fields to their former glory.`
+  };
+  var HalflightCowl = {
+    name: "Halflight Cowl",
+    restrict: ["Martialist"],
+    slot: "Body",
+    type: "Armour",
+    bonus: {},
+    action: Flight2,
+    lore: `Commonly mistaken as a half light cowl. This cowl instead is named after Halfli's Flight, an ancient martialist technique that requires such speed and precision it gives off the appearance that it's user is flying. Though many martialists don this cowl, few are capable of performing Halfli's Flight to it's full potential.`
   };
   var HaringleeKasaya = {
     name: "Haringlee Kasaya",
@@ -2267,376 +1709,108 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     slot: "Body",
     type: "Armour",
     bonus: {},
-    action: Parry
+    action: Parry2,
+    lore: `Traditional garb worn by martialist masters of Haringlee, they are awarded only to those that spend their lives in devotion to the practices of spirtuality. The kasaya symbolizes the wholeness and total mastery of one's self, and one who's inner eye sees only their purpose in life.`
   };
-  var KhakkharaOfGhanju = {
-    name: "Khakkhara of Ghanju",
+  var Haringplate = {
+    name: "Haringplate",
+    restrict: ["Cleavesman"],
+    slot: "Body",
+    type: "Armour",
+    bonus: {},
+    action: Brace2,
+    lore: `As common a sight as the two moons in the sky. Adorned with the crest of Cherraphy, it symbolizes full acceptance of her teachings, her people, and wearers pledge their utmost devotion to her and the citizens of Haringlee.`
+  };
+  var Jaegerstock = {
+    name: "Jaegerstock",
+    restrict: ["Cleavesman"],
+    slot: "Hand",
+    type: "Weapon",
+    bonus: {},
+    action: DuoStab2,
+    lore: `Able to stab in a forward and back motion, then a back to forward motion, and once again in a forward and back motion. Wielders often put one foot forward to brace themselves, and those with transcendental minds? They also stab in a forward and back motion.`
+  };
+  var KhakkaraOfGhanju = {
+    name: "Khakkara of Ghanju",
     restrict: ["Martialist"],
     slot: "Hand",
     type: "Weapon",
     bonus: {},
-    action: {
-      name: "Sweep",
-      tags: ["attack"],
-      sp: 1,
-      targets: opponents(3, [0, 1, 3]),
-      act({ g, me, targets }) {
-        g.applyDamage(me, targets, 4, "hp", "normal");
-      }
-    }
+    action: Sweep2,
+    lore: `Ghanju is known simply as the first martialist, and the clanging of his khakkhara began and ended many wars. History has stricken his name from most texts, however, as it's said Ghanju practiced neither under Cherraphy or Mullanginan's teachings, nor those of any other God.`
   };
-  var Halberdigan = {
-    name: "Halberdigan",
+  var LastEyeOfRaong = {
+    name: "Last Eye of Raong",
     restrict: ["Martialist"],
-    slot: "Hand",
-    type: "Weapon",
-    bonus: { determination: 1 },
-    action: {
-      name: "Thrust",
-      tags: ["attack"],
-      sp: 2,
-      targets: opponents(1, [0, 1, 3]),
-      act({ g, me, targets }) {
-        const amount = g.roll(me) + 3;
-        g.applyDamage(me, targets, amount, "hp", "normal");
-      }
-    }
+    slot: "Special",
+    type: "Artefact",
+    bonus: {},
+    action: Chakra2,
+    lore: `In all essence, sense. Sight to view actions, sound to hear verse. All senses are owed to Raong, whom may only witness the world of Telnoth through this lens so viciously plucked from it's being in the primordial age.`
+  };
+  var LoromaysHand = {
+    name: "Loromay's Hand",
+    restrict: ["Martialist"],
+    slot: "Special",
+    type: "Artefact",
+    bonus: {},
+    action: Mudra2,
+    lore: `In all essence, an end. Gestures and actions performed, repeated through infinite motion. All motion and form finds an ending from Loromay, the primordial deathbed of all things and where even the actions of Gods become meaningless.`
   };
   var NundarialVestments = {
     name: "Nundarial Vestments",
     restrict: ["Martialist"],
     slot: "Body",
     type: "Armour",
-    bonus: { camaraderie: 1 },
-    action: Brace
-  };
-  var HalflightCowl = {
-    name: "Halflight Cowl",
-    restrict: ["Martialist"],
-    slot: "Body",
     bonus: {},
-    action: Flight
+    action: Brace2,
+    lore: `On the day of Nundariel's passing, it's said everyone wore these vestments at Cherraphy's order, to "honor a fool's futility". Historians wager this is in reference to Nundarial spending their lifetime weathering attacks behind closed doors, never striking back, forever without purpose, sleeping in the dulcet cradle of war.`
   };
-  var YamorolMouth = {
+  var Penduchaimmer = {
+    name: "Penduchaimmer",
+    restrict: ["Martialist"],
+    slot: "Hand",
+    type: "Weapon",
+    bonus: {},
+    action: DuoStab2,
+    lore: `Comprised of two anchors and bound together by threaded fiber plucked from spidokans, these traditional weapons of a martialist are built to stretch and spin much like the hands of a suspended gravity clock. Penduchaimmers are a reminder to all martialists that time will always find it's way back to the living, only in death does it cease.`
+  };
+  var VargangliaCarcass = {
+    name: "Varganglia Carcass",
+    restrict: ["Cleavesman"],
+    slot: "Body",
+    type: "Armour",
+    bonus: {},
+    action: Barb2,
+    lore: `Armor that's slithered forth from Telnoth's scars after the Long War ended. Varganglia carcasses have become a common attire for cleavesman, their pelts covered with thick and venemous barbs that erupt from the carcass when struck, making the wearer difficult to strike.`
+  };
+  var YamorolsMouth = {
     name: "Yamorol's Mouth",
     restrict: ["Martialist"],
     slot: "Special",
+    type: "Artefact",
     bonus: {},
-    action: {
-      name: "Mantra",
-      tags: [],
-      sp: 3,
-      targets: ally(1),
-      act({ g, me, targets }) {
-        me.determination--;
-        for (const target of targets) {
-          target.determination++;
-          g.addToLog(`${me.name} gives everything to inspire ${target.name}.`);
-        }
-      }
-    }
+    action: Mantra2,
+    lore: `In all essence, a beginning. Words spoken aloud, repeated in infinite chanting verse. All words and meanings find a beginning from Yamorol, the primordial birthplace of all things and where even the spirits of Gods are born.`
   };
-  var LoromayHand = {
-    name: "Loromay's Hand",
-    restrict: ["Martialist"],
-    slot: "Special",
-    bonus: { spirit: 1 },
-    action: {
-      name: "Mudra",
-      tags: ["buff", "duff"],
-      sp: 3,
-      targets: onlyMe,
-      act({ g, me }) {
-        g.addEffect(() => ({
-          name: "Mudra",
-          duration: 2,
-          affects: [me],
-          onCalculateDamage(e) {
-            if (intersection(this.affects, [e.attacker, e.target]).length)
-              e.multiplier *= 2;
-          }
-        }));
-      }
-    }
-  };
-  var LastEyeOfRaong = {
-    name: "Last Eye of Raong",
-    restrict: ["Martialist"],
-    slot: "Special",
-    bonus: {},
-    action: {
-      name: "Chakra",
-      tags: ["buff"],
-      sp: 3,
-      targets: onlyMe,
-      act({ g, me }) {
-        g.addEffect(() => ({
-          name: "Chakra",
-          duration: 2,
-          affects: [me],
-          buff: true,
-          onRoll(e) {
-            if (this.affects.includes(e.who))
-              e.value = e.size;
-          }
-        }));
-      }
-    }
-  };
-  Penduchaimmer.lore = `Comprised of two anchors and bound together by threaded fibre plucked from spidokans, these traditional weapons of a martialist are built to stretch and spin much like the hands of a suspended gravity clock. Penduchaimmers are a reminder to all martialists that time will always find it's way back to the living, only in death does it cease.`;
-  HaringleeKasaya.lore = `Traditional garb worn by martialist masters of Haringlee, they are awarded only to those that spend their lives in devotion to the practices of spirituality. The kasaya symbolizes the wholeness and total mastery of one's self, and one who's inner eye sees only their purpose in life.`;
-  KhakkharaOfGhanju.lore = `Ghanju is known simply as the first martialist, and the clanging of his khakkhara began and ended many wars. History has stricken his name from most texts, however, as it's said Ghanju practised neither under Cherraphy or Mullanginan's teachings, nor those of any other God.`;
-  Halberdigan.lore = `In times of peace, halberdigans were simply a tool for picking the fruits of the Ilbombora trees that littered Haringlee's countryside. A devastating fire set by Nightjar's residents and an ensuing drought was punishing enough that farmers began taking up martialism in the name of Cherraphy, in the hope that she'll restore the Ilbombora fields to their former glory.`;
-  NundarialVestments.lore = `On the day of Nundarial's passing, it's said everyone wore these vestments at Cherraphy's order, to "honour a fool's futility". Historians wager this is in reference to Nundarial spending their lifetime weathering attacks behind closed doors, never striking back, forever without purpose, sleeping in the dulcet cradle of war.`;
-  HalflightCowl.lore = `Commonly mistaken as a half light cowl. This cowl instead is named after Halfli's Flight, an ancient martialist technique that requires such speed and precision it gives off the appearance that it's user is flying. Though many martialists don this cowl, few are capable of performing Halfli's Flight to it's full potential.`;
-  YamorolMouth.lore = `In all essence, a beginning. Words spoken aloud, repeated in infinite chanting verse. All words and meanings find a beginning from Yamorol, the primordial birthplace of all things and where even the spirits of Gods are born.`;
-  LoromayHand.lore = `In all essence, an end. Gestures and actions performed, repeated in infinite repeating motion. All motion and form finds an ending from Loromay, the primordial deathbed of all things and where even the actions of Gods become meaningless.`;
-  LastEyeOfRaong.lore = `In all essence, sense. Sight to view actions, sound to hear verse. All senses are owed to Raong, whom may only witness the world of Telnoth through this lens so viciously plucked from its being in the primordial age.`;
-
-  // src/items/warCaller.ts
-  var warCaller_exports = {};
-  __export(warCaller_exports, {
-    BrassHeartInsignia: () => BrassHeartInsignia,
-    CherClaspeGauntlet: () => CherClaspeGauntlet,
-    HairShirt: () => HairShirt,
-    IronFullcase: () => IronFullcase,
-    OwlSkull: () => OwlSkull,
-    PlatesOfWhite: () => PlatesOfWhite,
-    PolishedArenaShield: () => PolishedArenaShield,
-    SaintGong: () => SaintGong,
-    SternMask: () => SternMask
-  });
-  var OwlSkull = {
-    name: "Owl's Skull",
-    restrict: ["War Caller"],
-    slot: "Hand",
-    type: "Catalyst",
-    bonus: {},
-    action: Defy
-  };
-  var IronFullcase = {
-    name: "Iron Fullcase",
-    restrict: ["War Caller"],
-    slot: "Body",
-    type: "Armour",
-    bonus: { dr: 1 },
-    action: {
-      name: "Endure",
-      tags: ["buff"],
-      sp: 2,
-      targets: onlyMe,
-      act({ g, me }) {
-        g.addEffect(() => ({
-          name: "Endure",
-          duration: 2,
-          affects: [me],
-          buff: true,
-          onCalculateDR(e) {
-            if (this.affects.includes(e.who))
-              e.value += 2;
-          }
-        }));
-        const opposite = g.getOpponent(me);
-        if (opposite) {
-          g.addToLog(
-            `${opposite.name} withers in the face of ${me.name}'s endurance!`
-          );
-          g.addEffect(() => ({
-            name: "Endured",
-            duration: 2,
-            affects: [opposite],
-            onCalculateDetermination(e) {
-              if (this.affects.includes(e.who))
-                e.value -= 2;
-            }
-          }));
-        }
-      }
-    }
-  };
-  var PolishedArenaShield = {
-    name: "Polished Arena-Shield",
-    restrict: ["War Caller"],
-    slot: "Hand",
-    type: "Shield",
-    bonus: { dr: 1 },
-    action: {
-      name: "Pose",
-      tags: ["movement"],
-      sp: 2,
-      targets: opponents(),
-      act({ g, me }) {
-        const front = g.getPosition(me).dir;
-        const right = rotate(front, 1);
-        const back = rotate(front, 2);
-        const left = rotate(front, 3);
-        const frontIsEmpty = () => !g.getOpponent(me);
-        const rightIsEmpty = () => !g.getOpponent(me, 1);
-        const backIsEmpty = () => !g.getOpponent(me, 2);
-        const leftIsEmpty = () => !g.getOpponent(me, 3);
-        if (frontIsEmpty()) {
-          if (!leftIsEmpty()) {
-            g.moveEnemy(left, front);
-          } else if (!rightIsEmpty()) {
-            g.moveEnemy(right, front);
-          }
-        }
-        if (!backIsEmpty) {
-          if (leftIsEmpty()) {
-            g.moveEnemy(back, left);
-          } else if (rightIsEmpty()) {
-            g.moveEnemy(back, right);
-          }
-        }
-      }
-    }
-  };
-  var BrassHeartInsignia = {
-    name: "Brass Heart Insignia",
-    restrict: ["War Caller"],
-    slot: "Hand",
-    type: "Catalyst",
-    bonus: { dr: 1 },
-    action: Bless
-  };
-  var HairShirt = {
-    name: "Hair Shirt",
-    restrict: ["War Caller"],
-    slot: "Body",
-    type: "Armour",
-    bonus: { determination: 1 },
-    action: {
-      name: "Kneel",
-      tags: ["duff"],
-      sp: 0,
-      targets: onlyMe,
-      act({ g, me }) {
-        g.addToLog(`${me.name} is ready to accept judgement.`);
-        g.addEffect(() => ({
-          name: "Kneel",
-          duration: 2,
-          affects: [me],
-          onCalculateDR(e) {
-            if (this.affects.includes(e.who))
-              e.value = 0;
-          }
-        }));
-      }
-    }
-  };
-  var PlatesOfWhite = {
-    name: "Plates of White, Brass and Gold",
-    restrict: ["War Caller"],
-    slot: "Body",
-    type: "Armour",
-    bonus: { dr: 3 },
-    action: {
-      name: "Gleam",
-      tags: ["buff"],
-      sp: 3,
-      targets: onlyMe,
-      act({ g, me }) {
-        g.addEffect((destroy) => ({
-          name: "Gleam",
-          duration: 2,
-          affects: [me],
-          onBeforeAction(e) {
-            if (intersection(this.affects, e.targets).length && e.action.tags.includes("spell")) {
-              e.cancel = true;
-              g.addToLog(`The gleam disrupts the spell.`);
-              destroy();
-              return;
-            }
-          }
-        }));
-      }
-    }
-  };
-  var SternMask = {
-    name: "The Stern Mask",
-    restrict: ["War Caller"],
-    slot: "Special",
-    bonus: { determination: 1 },
-    action: {
-      name: "Ram",
-      tags: ["attack"],
-      sp: 4,
-      targets: oneOpponent,
-      act({ g, me, targets }) {
-        g.applyDamage(me, targets, 6, "hp", "normal");
-        g.applyDamage(me, targets, 1, "camaraderie", "normal");
-        g.applyDamage(me, targets, 6, "hp", "normal");
-        g.applyDamage(me, targets, 1, "camaraderie", "normal");
-        for (const target of targets) {
-          if (target.camaraderie <= 0)
-            g.applyDamage(me, [target], g.roll(me), "hp", "normal");
-        }
-      }
-    }
-  };
-  var CherClaspeGauntlet = {
-    name: "Cher-claspe Gauntlet",
-    restrict: ["War Caller"],
-    slot: "Special",
-    bonus: {},
-    action: {
-      name: "Smash",
-      tags: ["attack"],
-      sp: 3,
-      x: true,
-      targets: oneOpponent,
-      act({ g, me, targets, x }) {
-        const magnitude = x + Math.floor(me.hp / me.maxHP * 8);
-        g.applyDamage(me, targets, magnitude * 4, "hp", "normal");
-      }
-    }
-  };
-  var SaintGong = {
-    name: "Saint's Gong",
-    restrict: ["War Caller"],
-    slot: "Special",
-    bonus: { maxSP: 1 },
-    action: {
-      name: "Truce",
-      tags: ["counter"],
-      sp: 6,
-      targets: { type: "enemy" },
-      act({ g, targets }) {
-        g.addEffect(() => ({
-          name: "Truce",
-          duration: 2,
-          affects: targets,
-          onCanAct(e) {
-            if (this.affects.includes(e.who) && e.action.tags.includes("attack"))
-              e.cancel = true;
-          }
-        }));
-      }
-    }
-  };
-  OwlSkull.lore = `All experienced knights know that menace lies mainly in the eyes, whether it be communicated via a glare through the slits of a full helmet or by a wild, haunting stare. War Callers find common ground with the owls that hunt their forests and sometimes try to tame them as familiars, as others do falcons in different realms.`;
-  IronFullcase.lore = `A stiff layer of iron to protect the innards, sleeveless to allow flexibility in one's arms. Arena veterans favour such gear, goading their opponents with weapons brandished wildly, their chest remaining an impossible target to hit.`;
-  PolishedArenaShield.lore = `As well as being a serviceable shield, this example has a percussive quality; when beaten with a club it resounds as a bell.`;
-  BrassHeartInsignia.lore = `War Caller iconography is not to be shown to anyone who has studied medicine; the Brass Heart signifies that the will to heal one's self comes from the chest, always thrust proudly forwards to receive terrible blows. (Two weeks in bed and a poultice applied thrice daily notwithstanding.)`;
-  HairShirt.lore = `A garment for penitents: the unwelcome itching generated by its wiry goat-hair lining must be surpassed through strength of will.`;
-  PlatesOfWhite.lore = `An impressive suit of armour, decorated in the colours that the Crusaders of Cherraphy favour. Despite the lavish attention to presentation, it is no ceremonial costume: beneath the inlaid discs of fine metal, steel awaits to contest any oncoming blade.`;
-  SternMask.lore = `A full helm, decorated in paint and fine metalwork to resemble the disdainful face of a saint. Each headbutt it delivers communicates severe chastisement.`;
-  CherClaspeGauntlet.lore = `A pair of iron gauntlets ensorcelled with a modest enchantment; upon the command of a priest, these matching metal gloves each lock into the shape of a fist and cannot be undone by the bearer; a stricture that War Callers willingly bear, that it may sustain their resolve and dismiss their idle habits.`;
-  SaintGong.lore = `A brass percussive disc mounted on a seven foot banner-pole and hung from hinge-chains, letting it swing freely enough that its shuddering surface rings clean. Most effective when tuned to the frequency of a chosen knight's bellows, allowing it to crash loudly in accompaniment with each war cry.`;
-
-  // src/items/index.ts
   var allItems = Object.fromEntries(
     [
-      cleavesman_exports,
-      farScout_exports,
-      flagSinger_exports,
-      loamSeer_exports,
-      martialist_exports,
-      warCaller_exports,
-      consumable_exports
-    ].flatMap(
-      (repository) => Object.values(repository).map((item) => [item.name, item])
-    )
+      ChivalrousMantle,
+      Gambesar,
+      GorgothilSword,
+      Halberdigan,
+      HalflightCowl,
+      HaringleeKasaya,
+      Haringplate,
+      Jaegerstock,
+      KhakkaraOfGhanju,
+      LastEyeOfRaong,
+      LoromaysHand,
+      NundarialVestments,
+      Penduchaimmer,
+      VargangliaCarcass,
+      YamorolsMouth
+    ].map((item) => [item.name, item])
   );
   function getItem(s) {
     return s ? allItems[s] : void 0;
@@ -2949,6 +2123,8 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
         const item = getItem(name);
         if (item)
           this.g.inventory.push(item);
+        else
+          console.warn(`Could not create item: ${name}`);
       });
       program.BindExternalFunction("here", () => xyToTag(this.g.position), true);
       program.BindExternalFunction(
@@ -3019,10 +2195,10 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
         const count = this.g.pendingArenaEnemies.length;
         if (!count)
           return false;
-        const enemies2 = this.g.pendingArenaEnemies.splice(0, count);
+        const enemies = this.g.pendingArenaEnemies.splice(0, count);
         if (afterFight)
           this.afterFight = afterFight;
-        this.g.combat.begin(enemies2, "arena");
+        this.g.combat.begin(enemies, "arena");
         return true;
       });
       program.BindExternalFunction(
@@ -3804,7 +2980,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     },
     Cleavesman: {
       name: "Mogrigg",
-      lore: `The village's headsman, a role instigated by Cherraphy and chosen at random. Considered a luckless man, not blamed for the three lives he's taken at his god's behest. Was previously a loyal soldier and pikeman at a time when his lord was just and interested in protecting the border villages, before the man's personality crumbled into rote righteousness. Mogrigg still has the scars, but none of the respect he earned. Of course he volunteered to brave the Nightjar! His hand was the first to rise!`,
+      lore: `Haringlee's headsman, a role instigated by Cherraphy and chosen at random. Considered a luckless man, not blamed for the three lives he's taken at his god's behest. Was previously a loyal soldier and pikeman at a time when his lord was just and interested in protecting the border villages, before the man's personality crumbled into rote righteousness. Mogrigg still has the scars, but none of the respect he earned. Of course he volunteered to brave the Nightjar! His hand was the first to rise!`,
       deathQuote: `Somewhere behind the whirlwind of resentment and a deafening rush of blood hid Mogrigg's thoughts. Ever had they been on the topic of death, even when his party mates had made him cackle with laughter or introduced to him new ways of thinking. The death wish was just too much. He rushed gleefully towards his doom, as he had in every previous battle. This time, he met it.`,
       hp: 25,
       sp: 6,
@@ -3812,7 +2988,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       camaraderie: 4,
       spirit: 3,
       items: [GorgothilSword, Haringplate],
-      skill: "Cut"
+      skill: "Cleave"
     },
     "Far Scout": {
       name: "Tam",
@@ -3823,7 +2999,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       determination: 3,
       camaraderie: 3,
       spirit: 5,
-      items: [BoltSlinger, AdaloaxPelt],
+      items: [],
       skill: "Tamper"
     },
     "War Caller": {
@@ -3835,7 +3011,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       determination: 5,
       camaraderie: 2,
       spirit: 4,
-      items: [OwlSkull, IronFullcase],
+      items: [],
       skill: "Prayer"
     },
     "Flag Singer": {
@@ -3847,7 +3023,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       determination: 2,
       camaraderie: 6,
       spirit: 3,
-      items: [CarvingKnife, SignedCasque],
+      items: [],
       skill: "Sing"
     },
     "Loam Seer": {
@@ -3859,7 +3035,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       determination: 2,
       camaraderie: 5,
       spirit: 4,
-      items: [Cornucopia, JacketAndRucksack],
+      items: [],
       skill: "Shift"
     }
   };
@@ -3869,6 +3045,13 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
   function getBaseStat(className, stat, bonusStat, bonusIfTrue = 1) {
     return classes_default[className][stat] + (bonusStat === stat ? bonusIfTrue : 0);
   }
+  var endTurnAction = {
+    name: "End Turn",
+    tags: [],
+    sp: 0,
+    targets: { type: "ally" },
+    act: EndTurn
+  };
   var Player = class _Player {
     constructor(g, className, bonus, items = classes_default[className].items) {
       this.g = g;
@@ -3966,7 +3149,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       return this.getStat("spirit", this.baseSpirit);
     }
     get actions() {
-      return Array.from(this.equipment.values()).map((i) => i.action).concat(generateAttack(), endTurnAction);
+      return Array.from(this.equipment.values()).map((i) => i.action).concat(Attack2, endTurnAction);
     }
     get canMove() {
       return !this.alive || this.sp > 0;

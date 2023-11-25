@@ -81,10 +81,10 @@ INCLUDE daggers.ink
 # interact: Web
     ~ temp n = name(active())
     { skill():
-        - "Cut":
+        - "Cleave":
             {skillCheck("determination", 4):
                 ~ clear_obstacle("Web")
-                {n} cuts the webs away. -> DONE
+                {n} cleaves the webs away. -> DONE
             }
         - "Smash":
             {skillCheck("determination", 6):
