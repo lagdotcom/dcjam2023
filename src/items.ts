@@ -2,6 +2,26 @@
 import * as actions from "./actions";
 import Item from "./types/Item";
 
+export const ChivalrousMantle: Item = {
+  name: "Chivalrous Mantle",
+  restrict: ["Cleavesman"],
+  slot: "Special",
+  type: "Artefact",
+  bonus: {},
+  action: actions.Honour,
+  lore: `(DESCRIPTION COMING LATER)`,
+};
+
+export const Gambesar: Item = {
+  name: "Gambesar",
+  restrict: ["Cleavesman"],
+  slot: "Body",
+  type: "Armour",
+  bonus: {},
+  action: actions.Tackle,
+  lore: `Enchanted by Cherraphy's highest order of sages, gambesars are awarded only to cleavesman that return from battle after sustaining tremendous injury. It's said that wearing one allows the user to shift the environment around them, appearing multiple steps from where they first started in just an instant.`,
+};
+
 export const GorgothilSword: Item = {
   name: "Gorgothil Sword",
   restrict: ["Cleavesman"],
@@ -28,7 +48,7 @@ export const HalflightCowl: Item = {
   name: "Halflight Cowl",
   restrict: ["Martialist"],
   slot: "Body",
-  type: "Armor",
+  type: "Armour",
   bonus: {},
   action: actions.Flight,
   lore: `Commonly mistaken as a half light cowl. This cowl instead is named after Halfli's Flight, an ancient martialist technique that requires such speed and precision it gives off the appearance that it's user is flying. Though many martialists don this cowl, few are capable of performing Halfli's Flight to it's full potential.`,
@@ -38,10 +58,30 @@ export const HaringleeKasaya: Item = {
   name: "Haringlee Kasaya",
   restrict: ["Martialist"],
   slot: "Body",
-  type: "Armor",
+  type: "Armour",
   bonus: {},
   action: actions.Parry,
   lore: `Traditional garb worn by martialist masters of Haringlee, they are awarded only to those that spend their lives in devotion to the practices of spirtuality. The kasaya symbolizes the wholeness and total mastery of one's self, and one who's inner eye sees only their purpose in life.`,
+};
+
+export const Haringplate: Item = {
+  name: "Haringplate",
+  restrict: ["Cleavesman"],
+  slot: "Body",
+  type: "Armour",
+  bonus: {},
+  action: actions.Brace,
+  lore: `As common a sight as the two moons in the sky. Adorned with the crest of Cherraphy, it symbolizes full acceptance of her teachings, her people, and wearers pledge their utmost devotion to her and the citizens of Haringlee.`,
+};
+
+export const Jaegerstock: Item = {
+  name: "Jaegerstock",
+  restrict: ["Cleavesman"],
+  slot: "Hand",
+  type: "Weapon",
+  bonus: {},
+  action: actions.DuoStab,
+  lore: `Able to stab in a forward and back motion, then a back to forward motion, and once again in a forward and back motion. Wielders often put one foot forward to brace themselves, and those with transcendental minds? They also stab in a forward and back motion.`,
 };
 
 export const KhakkaraOfGhanju: Item = {
@@ -78,7 +118,7 @@ export const NundarialVestments: Item = {
   name: "Nundarial Vestments",
   restrict: ["Martialist"],
   slot: "Body",
-  type: "Armor",
+  type: "Armour",
   bonus: {},
   action: actions.Brace,
   lore: `On the day of Nundariel's passing, it's said everyone wore these vestments at Cherraphy's order, to "honor a fool's futility". Historians wager this is in reference to Nundarial spending their lifetime weathering attacks behind closed doors, never striking back, forever without purpose, sleeping in the dulcet cradle of war.`,
@@ -94,6 +134,16 @@ export const Penduchaimmer: Item = {
   lore: `Comprised of two anchors and bound together by threaded fiber plucked from spidokans, these traditional weapons of a martialist are built to stretch and spin much like the hands of a suspended gravity clock. Penduchaimmers are a reminder to all martialists that time will always find it's way back to the living, only in death does it cease.`,
 };
 
+export const VargangliaCarcass: Item = {
+  name: "Varganglia Carcass",
+  restrict: ["Cleavesman"],
+  slot: "Body",
+  type: "Armour",
+  bonus: {},
+  action: actions.Barb,
+  lore: `Armor that's slithered forth from Telnoth's scars after the Long War ended. Varganglia carcasses have become a common attire for cleavesman, their pelts covered with thick and venemous barbs that erupt from the carcass when struck, making the wearer difficult to strike.`,
+};
+
 export const YamorolsMouth: Item = {
   name: "Yamorol's Mouth",
   restrict: ["Martialist"],
@@ -106,15 +156,20 @@ export const YamorolsMouth: Item = {
 
 export const allItems = Object.fromEntries(
   [
+    ChivalrousMantle,
+    Gambesar,
     GorgothilSword,
     Halberdigan,
     HalflightCowl,
     HaringleeKasaya,
+    Haringplate,
+    Jaegerstock,
     KhakkaraOfGhanju,
     LastEyeOfRaong,
     LoromaysHand,
     NundarialVestments,
     Penduchaimmer,
+    VargangliaCarcass,
     YamorolsMouth,
   ].map((item) => [item.name, item]),
 );

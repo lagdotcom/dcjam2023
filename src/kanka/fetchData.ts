@@ -51,6 +51,14 @@ class AttributeBag {
     this.map = new Map(attributes.map((a) => [a.name.split("[")[0], a.value]));
   }
 
+  hasAll(...names: string[]) {
+    for (const name of names) {
+      const value = this.opt(name);
+      if (!value) return false;
+    }
+    return true;
+  }
+
   req(name: string) {
     const value = this.map.get(name);
     if (value === null || value === undefined)
@@ -154,6 +162,15 @@ function tsEnemy(
       .join(",")}]
   };`;
 }
+
+function validCreature(creature: CreatureWithRelated) {
+  const attr = new AttributeBag("", creature.attributes);
+  if (attr.hasAll("HP", "SP", "CAM", "DTM", "SPT")) return true;
+
+  console.log(`-- skipping creature: ${creature.name}`);
+  return false;
+}
+
 function tsEnemies({ abilities, creatures }: KankaData) {
   return `${header}
   import * as actions from "./actions";
@@ -162,6 +179,7 @@ function tsEnemies({ abilities, creatures }: KankaData) {
   type EnemyData = Pick<Enemy,'name'|'maxHP'|'maxSP'|'camaraderie'|'determination'|'spirit'|'dr'|'actions'>;
   
   ${creatures
+    .filter(validCreature)
     .sort(byName)
     .map((c) => tsEnemy(c, abilities))
     .join("\n\n")}`;
@@ -179,11 +197,14 @@ function tsItem(item: ItemWithRelated, abilities: AbilityWithRelated[]) {
   for (const stat of BoostableStats)
     attr.useNZ(stat, (value) => (bonus[stat] = Number(value)));
 
+  let type = item.type;
+  if (type === "Armor") type = "Armour";
+
   return `export const ${name}: Item = {
     name: "${item.name}",
     restrict: ${JSON.stringify(restrict)},
     slot: "${attr.req("Slot")}",
-    type: "${item.type}",
+    type: "${type}",
     bonus: ${JSON.stringify(bonus)},
     action: actions.${getAbilityName(item.entity_abilities[0])}, ${attr.format(
       "Lore",
@@ -191,19 +212,27 @@ function tsItem(item: ItemWithRelated, abilities: AbilityWithRelated[]) {
     )}
   };`;
 }
+
+function validItem(item: ItemWithRelated) {
+  const attr = new AttributeBag("", item.attributes);
+  if (attr.hasAll("Slot") && item.type && item.entity_abilities.length > 0)
+    return true;
+
+  console.log(`-- skipping item: ${item.name}`);
+  return false;
+}
+
 function tsItems({ abilities, items }: KankaData) {
+  const validItems = items.filter(validItem).sort(byName);
+
   return `${header}
   import * as actions from "./actions";
   import Item from "./types/Item";
 
-  ${items
-    .sort(byName)
-    .map((item) => tsItem(item, abilities))
-    .join("\n\n")}
+  ${validItems.map((item) => tsItem(item, abilities)).join("\n\n")}
 
   export const allItems = Object.fromEntries(
-    [${items
-      .sort(byName)
+    [${validItems
       .map((i) => fix(i.name))
       .join(",")}].map((item) => [item.name, item]),
   );

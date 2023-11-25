@@ -162,12 +162,12 @@ export const Gouge: CombatAction = {
   act: impl.Gouge,
 };
 
-export const Honor: CombatAction = {
-  name: "Honor",
+export const Honour: CombatAction = {
+  name: "Honour",
   tags: [],
   sp: 2,
   targets: { type: "self/ally" },
-  act: impl.Honor,
+  act: impl.Honour,
 };
 
 export const Inspire: CombatAction = {
