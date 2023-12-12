@@ -2,6 +2,86 @@
 import * as actions from "./actions";
 import Item from "./types/Item";
 
+export const AdaloaxPelt: Item = {
+  name: "Adaloax Pelt",
+  restrict: ["Far Scout"],
+  slot: "Body",
+  type: "Armour",
+  bonus: {},
+  action: actions.Bind,
+  lore: `Traditional hunter-gatherer and scouting attire, adaloax pelts are often sold and coupled with a set of bolas for trapping prey. The rest of the adaloax is divided up into portions of meat and sold at market value, often a single adaloax can produce upwards of three pelts and enough meat to keep multiple people fed.`,
+};
+
+export const BahrnaduSmock: Item = {
+  name: "Bahrnadu Smock",
+  restrict: ["Far Scout"],
+  slot: "Body",
+  type: "Armour",
+  bonus: {},
+  action: actions.Trick,
+  lore: `So strong was Bahrnadu's magic that it could alter perception of those around it to whatever it's wielders wanted. During the Morrow of Absolution, a group of skilled assassins donned smocks with Bahrnadu's enchantments, disguising themselves as insurrectionists and secretly poisoning their foes. The dynasty of Rahl'nan fell that day, and the smocks were passed only to ancestors of those involved with the incident.`,
+};
+
+export const BeekeepersBroochOfNeedling: Item = {
+  name: "Beekeeper's Brooch of Needling",
+  restrict: ["Loam Seer"],
+  slot: "Hand",
+  type: "Catalyst",
+  bonus: {},
+  action: actions.Swarm,
+  lore: `The badge of office for any who ally with insectkind. Bids fierce clouds of bees to deliver a salvo of stings to the assailants of one truly in harmony with the earth, if they are humble and bereft of secret ambition.`,
+};
+
+export const BoltSlinger: Item = {
+  name: "Bolt Slinger",
+  restrict: ["Far Scout"],
+  slot: "Hand",
+  type: "Weapon",
+  bonus: {},
+  action: actions.Arrow,
+  lore: `A string and stick combo coming in many shapes and sizes. All with the express purpose of expelling sharp objects at blinding speeds. Any far scout worth their salt still opts for a retro-styled bolt slinger, clunky mechanisms and needless gadgets serve only to hinder one's own skills.`,
+};
+
+export const BrassHeartInsignia: Item = {
+  name: "Brass Heart Insignia",
+  restrict: ["War Caller"],
+  slot: "Hand",
+  type: "Catalyst",
+  bonus: {},
+  action: actions.Bless,
+  lore: `War Caller iconography is not to be shown to anyone who has studied medicine; the Brass Heart signifies that the will to heal one's self comes from the chest, always thrust proudly forwards to receive terrible blows. (Two weeks in bed and a poultice applied thrice daily notwithstanding.)`,
+};
+
+export const CarvingKnife: Item = {
+  name: "Carving Knife",
+  restrict: ["Flag Singer"],
+  slot: "Hand",
+  type: "Weapon",
+  bonus: {},
+  action: actions.Scar,
+  lore: `Not a martial weapon, but rather a craftsman and artist's tool. Having secretly spurned Cherraphy's foul request, this Singer carries this knife as a confirmation that what they did was right.`,
+};
+
+export const CatfacedMasquerade: Item = {
+  name: "Cat-faced Masquerade",
+  restrict: ["Flag Singer"],
+  slot: "Special",
+  type: "Special",
+  bonus: {},
+  action: actions.Inspire,
+  lore: `A mask that lends its wearer a mocking air, or one of being deeply unimpressed. Turning this disdainful expression on an enemy reassures your allies of their superiority; a simple means of encouragement in complicated times.`,
+};
+
+export const CherclaspeGauntlet: Item = {
+  name: "Cher-claspe Gauntlet",
+  restrict: ["War Caller"],
+  slot: "Special",
+  type: "Special",
+  bonus: {},
+  action: actions.Smash,
+  lore: `A pair of iron gauntlets ensorcelled with a modest enchantment; upon the command of a priest, these matching metal gloves each lock into the shape of a fist and cannot be undone by the bearer; a stricture that War Callers willingly bear, that it may sustain their resolve and dismiss their idle habits.`,
+};
+
 export const ChivalrousMantle: Item = {
   name: "Chivalrous Mantle",
   restrict: ["Cleavesman"],
@@ -10,6 +90,46 @@ export const ChivalrousMantle: Item = {
   bonus: {},
   action: actions.Honour,
   lore: `(DESCRIPTION COMING LATER)`,
+};
+
+export const Cornucopia: Item = {
+  name: "Cornucopia",
+  restrict: ["Loam Seer"],
+  slot: "Hand",
+  type: "Catalyst",
+  bonus: {},
+  action: actions.Bless,
+  lore: `The proverbial horn of plenty, or rather a replica crafted by the artists of Haringlee, then bestowed by its priests with a magickal knack for exuding a sweet restorative nectar.`,
+};
+
+export const DivasDress: Item = {
+  name: "Diva's Dress",
+  restrict: ["Flag Singer"],
+  slot: "Body",
+  type: "Armour",
+  bonus: {},
+  action: actions.Defy,
+  lore: `Few dare interfere with the performance of a Singer so dressed: these glittering magic garments dazzle any foolish enough to try! All may wear the Diva's Dress so long as it is earned by skill; gender matters not to the craft.`,
+};
+
+export const Fandagger: Item = {
+  name: "Fandagger",
+  restrict: ["Flag Singer"],
+  slot: "Hand",
+  type: "Weapon",
+  bonus: {},
+  action: actions.Conduct,
+  lore: `Fandaggers are graceful tools of the rogue, to be danced with and to be thrown between acrobats in relay. Held at one end they concertina into painted fans; the other suits the stabbing grip.`,
+};
+
+export const FolkHarp: Item = {
+  name: "Folk Harp",
+  restrict: ["Flag Singer"],
+  slot: "Special",
+  type: "Special",
+  bonus: {},
+  action: actions.Muse,
+  lore: `An ancient traditional instrument, strings of animal innards sprung over a tune-measured wooden frame to create a playable musical scale. Can be plucked melodically, or strummed to produce a glistening, harmonic, rain-like sound.`,
 };
 
 export const Gambesar: Item = {
@@ -32,6 +152,26 @@ export const GorgothilSword: Item = {
   lore: `""May this steel sing the color of heathen blood.""
 
 This phrase has been uttered ever since Gorgothil was liberated from the thralls of Mullanginan during the Lost War. Gorgothil is now an ever devoted ally, paying their debts by smithing weaponry for all cleavesmen under Cherraphy's wing.`,
+};
+
+export const GrowlingCollar: Item = {
+  name: "Growling Collar",
+  restrict: ["Flag Singer"],
+  slot: "Body",
+  type: "Armour",
+  bonus: {},
+  action: actions.VoxPop,
+  lore: `A mechanical amplifier pressed tightly to the skin of the throat, held in place by a black leather collar. When you speak, it roars.`,
+};
+
+export const HairShirt: Item = {
+  name: "Hair Shirt",
+  restrict: ["War Caller"],
+  slot: "Body",
+  type: "Armour",
+  bonus: {},
+  action: actions.Kneel,
+  lore: `A garment for penitents: the unwelcome itching generated by its wiry goat-hair lining must be surpassed through strength of will.`,
 };
 
 export const Halberdigan: Item = {
@@ -74,6 +214,46 @@ export const Haringplate: Item = {
   lore: `As common a sight as the two moons in the sky. Adorned with the crest of Cherraphy, it symbolizes full acceptance of her teachings, her people, and wearers pledge their utmost devotion to her and the citizens of Haringlee.`,
 };
 
+export const HuntingHorn: Item = {
+  name: "Hunting Horn",
+  restrict: ["Far Scout"],
+  slot: "Special",
+  type: "Artefact",
+  bonus: {},
+  action: actions.Lure,
+  lore: `A talented far scout can modulate the minutae of their vocal cords to produce fair mimicry of many different animals. The same skill channeled through the Hunting Horn turns cry into command, compelling beasts to respond and upon so doing, betray their presence.`,
+};
+
+export const IoliteCross: Item = {
+  name: "Iolite Cross",
+  restrict: ["Loam Seer"],
+  slot: "Hand",
+  type: "Catalyst",
+  bonus: {},
+  action: actions.Vanish,
+  lore: `A semi-precious crux. Light generated by uncanny phosphorous plants - or by the setting sun - hits this substance at a remarkable, almost magickal angle.`,
+};
+
+export const IronFullcase: Item = {
+  name: "Iron Fullcase",
+  restrict: ["War Caller"],
+  slot: "Body",
+  type: "Armour",
+  bonus: {},
+  action: actions.Endure,
+  lore: `A stiff layer of iron to protect the innards, sleeveless to allow flexibility in one's arms. Arena veterans favor such gear, goading their opponents with weapons brandished wildly, their chest remaining an impossible target to hit.`,
+};
+
+export const JacketAndRucksack: Item = {
+  name: "Jacket and Rucksack",
+  restrict: ["Loam Seer"],
+  slot: "Body",
+  type: "Armour",
+  bonus: {},
+  action: actions.Search,
+  lore: `Clothes and containers of simple leather. Sensible wear for foragers and druidic types; not truly intended for fighting.`,
+};
+
 export const Jaegerstock: Item = {
   name: "Jaegerstock",
   restrict: ["Cleavesman"],
@@ -114,6 +294,26 @@ export const LoromaysHand: Item = {
   lore: `In all essence, an end. Gestures and actions performed, repeated through infinite motion. All motion and form finds an ending from Loromay, the primordial deathbed of all things and where even the actions of Gods become meaningless.`,
 };
 
+export const MantleOfClay: Item = {
+  name: "Mantle of Clay",
+  restrict: ["Loam Seer"],
+  slot: "Special",
+  type: "Special",
+  bonus: {},
+  action: actions.Rumble,
+  lore: `Pots of runny clay, into which fingers and paintbrushes can be dipped. It grips the skin tight as any tattoo when applied in certain patterns, like veins; so too can the shaman who wears these marks espy the "veins" of the rocks below them and, with a tug, bid them tremble.`,
+};
+
+export const Mosscloak: Item = {
+  name: "Mosscloak",
+  restrict: ["Loam Seer"],
+  slot: "Body",
+  type: "Armour",
+  bonus: {},
+  action: actions.Study,
+  lore: `Deep into the wilderness where wood meets river, a type of silver-grey-green moss flourishes that piles on so thick that, when carefully detached from the tree trunk it hugs, can retain its integrity as a naturally-occurring fabric. This specimen reaches all the way from shoulder to foot and trails some length along the ground behind you!`,
+};
+
 export const NundarialVestments: Item = {
   name: "Nundarial Vestments",
   restrict: ["Martialist"],
@@ -122,6 +322,16 @@ export const NundarialVestments: Item = {
   bonus: {},
   action: actions.Brace,
   lore: `On the day of Nundariel's passing, it's said everyone wore these vestments at Cherraphy's order, to "honor a fool's futility". Historians wager this is in reference to Nundarial spending their lifetime weathering attacks behind closed doors, never striking back, forever without purpose, sleeping in the dulcet cradle of war.`,
+};
+
+export const OwlsSkull: Item = {
+  name: "Owl's Skull",
+  restrict: ["War Caller"],
+  slot: "Hand",
+  type: "Catalyst",
+  bonus: {},
+  action: actions.Defy,
+  lore: `All experienced knights know that menace lies mainly in the eyes, whether it be communicated via a glare through the slits of a full helmet or by a wild, haunting stare. War Callers find common ground with the owls that hunt their forests and sometimes try to tame them as familiars, as others do falcons in different realms.`,
 };
 
 export const Penduchaimmer: Item = {
@@ -134,6 +344,106 @@ export const Penduchaimmer: Item = {
   lore: `Comprised of two anchors and bound together by threaded fiber plucked from spidokans, these traditional weapons of a martialist are built to stretch and spin much like the hands of a suspended gravity clock. Penduchaimmers are a reminder to all martialists that time will always find it's way back to the living, only in death does it cease.`,
 };
 
+export const PlatesOfWhiteBrassAndGold: Item = {
+  name: "Plates of White, Brass and Gold",
+  restrict: ["War Caller"],
+  slot: "Body",
+  type: "Armour",
+  bonus: {},
+  action: actions.Gleam,
+  lore: `An impressive suit of armor, decorated in the colours that the Crusaders of Cherraphy favor. Despite the lavish attention to presentation, it is no ceremonial costume: beneath the inlaid discs of fine metal, steel awaits to contest any oncoming blade.`,
+};
+
+export const PolishedArenaShield: Item = {
+  name: "Polished Arena-Shield",
+  restrict: ["War Caller"],
+  slot: "Hand",
+  type: "Shield",
+  bonus: {},
+  action: actions.Pose,
+  lore: `As well as being a serviceable shield, this example has a percussive quality; when beaten with a club it resounds as a bell.`,
+};
+
+export const PryingPoleaxe: Item = {
+  name: "Prying Poleaxe",
+  restrict: ["Far Scout"],
+  slot: "Hand",
+  type: "Weapon",
+  bonus: {},
+  action: actions.Gouge,
+  lore: `Armor houses flesh, and a prying poleaxe's job is to expose it. Favored by wielders who prefer to keep a distance from their foes, it's said the reach symbolizes the distance between all creatures and the gods, and that those crossing the line are deserving of retribution. Depending on who you ask, it's uncertain which end of the weapon refers to creatures, and which refers to the gods.`,
+};
+
+export const RockringSleeve: Item = {
+  name: "Rockring Sleeve",
+  restrict: ["Loam Seer"],
+  slot: "Body",
+  type: "Armour",
+  bonus: {},
+  action: actions.Fortify,
+  lore: `A set of four polished hoops of granite, fit to mold closely to its wearer's forearm. Studied practioners of the power that dwells within rock can share the protection of such a carapace with their compatriots.`,
+};
+
+export const SaintsGong: Item = {
+  name: "Saint's Gong",
+  restrict: ["War Caller"],
+  slot: "Special",
+  type: "Special",
+  bonus: {},
+  action: actions.Truce,
+  lore: `A brass percussive disc mounted on a seven foot bannerpole and hung from hinge-chains, letting it swing freely enough that its shuddering surface rings clean. Most effective when tuned to the frequency of a chosen knight's bellows, allowing it to crash loudly in accompaniment with each war cry.`,
+};
+
+export const SignedCasque: Item = {
+  name: "Signed Casque",
+  restrict: ["Flag Singer"],
+  slot: "Body",
+  type: "Armour",
+  bonus: {},
+  action: actions.Cheer,
+  lore: `A vest made of traditional plaster and adorned in writing with the feelings and wishes of each villager the Singer dares to protect.`,
+};
+
+export const SkinOfTheBear: Item = {
+  name: "Skin of the Bear",
+  restrict: ["Far Scout"],
+  slot: "Body",
+  type: "Armour",
+  bonus: {},
+  action: actions.Wrestle,
+  lore: `Donning the mantle of the bear inspires an irresistible need for physical contest. Previously standoffish archers have discovered blood-boiling ferocity within themselves when so clad!`,
+};
+
+export const Storyscroll: Item = {
+  name: "Storyscroll",
+  restrict: ["Flag Singer"],
+  slot: "Hand",
+  type: "Flag",
+  bonus: {},
+  action: actions.Bravery,
+  lore: `A furled tapestry illustrated with a brief history of Haringlee myth. When the Flag Singer whirls it about them as though dancing with ribbons, their comrades are enriched by the spirit of the fantasies it depicts.`,
+};
+
+export const TheSternMask: Item = {
+  name: "The Stern Mask",
+  restrict: ["War Caller"],
+  slot: "Special",
+  type: "Special",
+  bonus: {},
+  action: actions.Ram,
+  lore: `A full helm, decorated in paint and fine metalwork to resemble the disdainful face of a saint. Each headbutt it delivers communicates severe chastisement.`,
+};
+
+export const TortoiseFamiliar: Item = {
+  name: "Tortoise Familiar",
+  restrict: ["Loam Seer"],
+  slot: "Special",
+  type: "Special",
+  bonus: {},
+  action: actions.Reforge,
+  lore: `The tortoise is one of the ground's favoured childs, fashioned in its image. This one seems to have an interest in your cause.`,
+};
+
 export const VargangliaCarcass: Item = {
   name: "Varganglia Carcass",
   restrict: ["Cleavesman"],
@@ -142,6 +452,36 @@ export const VargangliaCarcass: Item = {
   bonus: {},
   action: actions.Barb,
   lore: `Armor that's slithered forth from Telnoth's scars after the Long War ended. Varganglia carcasses have become a common attire for cleavesman, their pelts covered with thick and venemous barbs that erupt from the carcass when struck, making the wearer difficult to strike.`,
+};
+
+export const WandOfWorkedFlint: Item = {
+  name: "Wand of Worked Flint",
+  restrict: ["Loam Seer"],
+  slot: "Special",
+  type: "Special",
+  bonus: {},
+  action: actions.Crackle,
+  lore: `A spike of sparking rock, decorated with one twisting groove from haft to tip. Rubbing your thumb along the thing produces a faint sizzling sound.`,
+};
+
+export const WellstringSnood: Item = {
+  name: "Wellstring Snood",
+  restrict: [],
+  slot: "Special",
+  type: "Armour",
+  bonus: {},
+  action: actions.Stealth,
+  lore: `While no longer a common practice, many far scouts swear to celibacy. So common was this practice that at one point these hideous snoods were manufactured, donning one was a sign of commitment to it's wearer's duty and it's intended purpose shifted. Soon, many scouts began wearing them as a challenge, to see who could go the longest without being perceived.`,
+};
+
+export const WindmillRobe: Item = {
+  name: "Windmill Robe",
+  restrict: ["Flag Singer"],
+  slot: "Special",
+  type: "Special",
+  bonus: {},
+  action: actions.Unveil,
+  lore: `A pale blue robe with ultra-long sleeves, slung with diamond-shaped hanging sheets of fabric. Psychic expertise and practise allows you to manipulate these flags and perform intricate displays without so much as moving your arms; the most complicated dances can have a mesmerizing effect.`,
 };
 
 export const YamorolsMouth: Item = {
@@ -156,20 +496,54 @@ export const YamorolsMouth: Item = {
 
 export const allItems = Object.fromEntries(
   [
+    AdaloaxPelt,
+    BahrnaduSmock,
+    BeekeepersBroochOfNeedling,
+    BoltSlinger,
+    BrassHeartInsignia,
+    CarvingKnife,
+    CatfacedMasquerade,
+    CherclaspeGauntlet,
     ChivalrousMantle,
+    Cornucopia,
+    DivasDress,
+    Fandagger,
+    FolkHarp,
     Gambesar,
     GorgothilSword,
+    GrowlingCollar,
+    HairShirt,
     Halberdigan,
     HalflightCowl,
     HaringleeKasaya,
     Haringplate,
+    HuntingHorn,
+    IoliteCross,
+    IronFullcase,
+    JacketAndRucksack,
     Jaegerstock,
     KhakkaraOfGhanju,
     LastEyeOfRaong,
     LoromaysHand,
+    MantleOfClay,
+    Mosscloak,
     NundarialVestments,
+    OwlsSkull,
     Penduchaimmer,
+    PlatesOfWhiteBrassAndGold,
+    PolishedArenaShield,
+    PryingPoleaxe,
+    RockringSleeve,
+    SaintsGong,
+    SignedCasque,
+    SkinOfTheBear,
+    Storyscroll,
+    TheSternMask,
+    TortoiseFamiliar,
     VargangliaCarcass,
+    WandOfWorkedFlint,
+    WellstringSnood,
+    WindmillRobe,
     YamorolsMouth,
   ].map((item) => [item.name, item]),
 );
