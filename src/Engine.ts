@@ -38,6 +38,7 @@ import {
 import getCanvasContext from "./tools/getCanvasContext";
 import isDefined from "./tools/isDefined";
 import { wrap } from "./tools/numbers";
+import { Overlay } from "./tools/overlays";
 import { pickN, random } from "./tools/rng";
 import { WallTag } from "./tools/wallTags";
 import { tagToXy, XYTag, xyToTag } from "./tools/xyTags";
@@ -55,7 +56,7 @@ import GameInput from "./types/GameInput";
 import { GameScreen } from "./types/GameScreen";
 import Item from "./types/Item";
 import { matchAll, Predicate } from "./types/logic";
-import World, { WorldCell } from "./types/World";
+import World from "./types/World";
 import XY from "./types/XY";
 
 export interface SerializedEngine {
@@ -73,7 +74,7 @@ export interface SerializedEngine {
 
 export interface MapData {
   cells: XYTag[];
-  overlays: Record<XYTag, WorldCell>;
+  overlays: Overlay[];
   script: ScriptData;
   walls: Record<WallTag, WallTypeCondensed>;
 }

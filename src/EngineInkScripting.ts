@@ -6,13 +6,12 @@ import Engine from "./Engine";
 import { getItem } from "./items";
 import DialogChoiceScreen from "./screens/DialogChoiceScreen";
 import { isSoundName } from "./Sounds";
-import removeItem from "./tools/arrays";
 import isStat from "./tools/combatants";
 import { move, rotate } from "./tools/geometry";
+import { updateMap } from "./tools/overlays";
 import { tagToXy, XYTag, xyToTag } from "./tools/xyTags";
 import { AttackableStat } from "./types/Combatant";
 import Dir from "./types/Dir";
-import { WorldCell } from "./types/World";
 import XY from "./types/XY";
 
 interface KnotEntry {
@@ -42,7 +41,7 @@ export default class EngineInkScripting {
       if (winners === "party" && this.afterFight && g.currentCell) {
         const name = this.afterFight;
         this.afterFight = undefined;
-        void this.executePath(g.currentCell, "AFTER_FIGHT", { name });
+        void this.executePath("AFTER_FIGHT", { name });
       }
     });
   }
@@ -110,11 +109,9 @@ export default class EngineInkScripting {
       const enemy = getEnemy(name);
       this.g.pendingArenaEnemies.push(enemy);
     });
-    program.BindExternalFunction("addTag", (xy: XYTag, tag: string) => {
-      const cell = getCell(xy);
-      cell.tags.push(tag);
-      this.g.map.update(xy, cell);
-    });
+    program.BindExternalFunction("addTag", (xy: XYTag, value: string) =>
+      updateMap(this.g, { type: "addTag", xy, value }),
+    );
     program.BindExternalFunction(
       "damagePC",
       (index: number, type: string, amount: number) => {
@@ -177,20 +174,12 @@ export default class EngineInkScripting {
       const sound = getSound(name);
       void this.g.sfx.play(sound);
     });
-    program.BindExternalFunction("removeObject", (xy: XYTag) => {
-      const cell = getCell(xy);
-      cell.object = undefined;
-      this.g.map.update(xy, cell);
-    });
-    program.BindExternalFunction("removeTag", (xy: XYTag, tag: string) => {
-      const cell = getCell(xy);
-      if (!removeItem(cell.tags, tag))
-        console.warn(
-          `script tried to remove tag ${tag} at ${xy} -- not present`,
-        );
-
-      this.g.map.update(xy, cell);
-    });
+    program.BindExternalFunction("removeObject", (xy: XYTag) =>
+      updateMap(this.g, { type: "removeObject", xy }),
+    );
+    program.BindExternalFunction("removeTag", (xy: XYTag, value: string) =>
+      updateMap(this.g, { type: "removeTag", xy, value }),
+    );
     program.BindExternalFunction(
       "rotate",
       (dir: Dir, quarters: number) => rotate(dir, quarters),
@@ -198,22 +187,16 @@ export default class EngineInkScripting {
     );
     program.BindExternalFunction(
       "setDecal",
-      (xy: XYTag, dir: Dir, decal: number) => {
-        const side = getSide(xy, dir);
-        side.decal = decal;
-        this.g.map.update(xy, getCell(xy));
-      },
+      (xy: XYTag, dir: Dir, value: number) =>
+        updateMap(this.g, { type: "setDecal", xy, dir: getDir(dir), value }),
     );
     program.BindExternalFunction("setObstacle", (blocked: boolean) =>
       this.g.setObstacle(blocked),
     );
     program.BindExternalFunction(
       "setSolid",
-      (xy: XYTag, dir: Dir, solid: boolean) => {
-        const side = getSide(xy, dir);
-        side.solid = solid;
-        this.g.map.update(xy, getCell(xy));
-      },
+      (xy: XYTag, dir: Dir, value: boolean) =>
+        updateMap(this.g, { type: "setSolid", xy, dir: getDir(dir), value }),
     );
     program.BindExternalFunction("skill", () => this.skill, true);
     program.BindExternalFunction("skillCheck", (type: string, dc: number) => {
@@ -259,7 +242,7 @@ export default class EngineInkScripting {
     this.active = this.g.facing;
     for (const tag of cell.tags) {
       const entry = this.onTagEnter.get(tag);
-      if (entry) await this.executePath(cell, tag, entry);
+      if (entry) await this.executePath(tag, entry);
     }
   }
 
@@ -283,16 +266,18 @@ export default class EngineInkScripting {
     this.skill = this.g.party[pcIndex].skill;
     for (const tag of cell.tags) {
       const entry = this.onTagInteract.get(tag);
-      if (entry) await this.executePath(cell, tag, entry);
+      if (entry) await this.executePath(tag, entry);
     }
   }
 
-  private async executePath(cell: WorldCell, tag: string, entry: KnotEntry) {
+  private async executePath(value: string, entry: KnotEntry) {
     this.story.ChoosePathString(entry.name);
-    if (entry.once) {
-      removeItem(cell.tags, tag);
-      this.g.map.update(xyToTag(this.g.position), cell);
-    }
+    if (entry.once)
+      updateMap(this.g, {
+        type: "removeTag",
+        xy: xyToTag(this.g.position),
+        value,
+      });
 
     return new Promise<void>((resolve) => {
       void this.runUntilDone().then(resolve);

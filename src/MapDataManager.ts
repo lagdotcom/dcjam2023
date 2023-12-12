@@ -1,12 +1,12 @@
 import Engine, { MapData, SerializedEngine, WallType } from "./Engine";
 import { ScriptData } from "./EngineInkScripting";
+import { applyOverlay, Overlay } from "./tools/overlays";
 import { WallTag, wallToTag } from "./tools/wallTags";
-import { tagToXy, XYTag, xyToTag } from "./tools/xyTags";
+import { XYTag, xyToTag } from "./tools/xyTags";
 import Dir from "./types/Dir";
-import { WorldCell } from "./types/World";
 import XY from "./types/XY";
 
-type Overlays = Map<XYTag, WorldCell>;
+type Overlays = Set<Overlay>;
 type KnownCells = Set<XYTag>;
 type KnownWalls = Map<WallTag, WallType>;
 
@@ -32,7 +32,7 @@ export default class MapDataManager {
     this.allCells = new Map();
     this.cells = new Set();
     this.allOverlays = new Map();
-    this.overlays = new Map();
+    this.overlays = new Set();
     this.allWalls = new Map();
     this.walls = new Map();
     this.allScripts = new Map();
@@ -71,14 +71,9 @@ export default class MapDataManager {
 
     if (overlays) {
       this.overlays = overlays;
-      for (const [tag, overlay] of overlays.entries()) {
-        const { x, y } = tagToXy(tag);
-        const cell = this.g.getCell(x, y);
-        if (!cell) throw new Error(`Could not apply overlay at ${tag}`);
-        Object.assign(cell, overlay);
-      }
+      for (const overlay of overlays) applyOverlay(this.g, overlay);
     } else {
-      this.overlays = new Map();
+      this.overlays = new Set();
       this.allOverlays.set(name, this.overlays);
     }
 
@@ -124,8 +119,9 @@ export default class MapDataManager {
     return condense(data);
   }
 
-  update(xy: XYTag, cell: WorldCell) {
-    this.overlays.set(xy, cell);
+  update(overlay: Overlay) {
+    // TODO remove conflicting overlays?
+    this.overlays.add(overlay);
   }
 
   serialize(): SerializedEngine["maps"] {
@@ -134,15 +130,15 @@ export default class MapDataManager {
     const data: SerializedEngine["maps"] = {};
 
     for (const name of this.allCells.keys()) {
-      const cells = this.allCells.get(name)?.values();
-      const overlays = this.allOverlays.get(name)?.entries();
+      const cells = this.allCells.get(name);
+      const overlays = this.allOverlays.get(name);
       const script = this.allScripts.get(name) ?? {};
       const walls = this.allWalls.get(name)?.entries();
 
-      const entry: MapData = { cells: [], overlays: {}, script, walls: {} };
+      const entry: MapData = { cells: [], overlays: [], script, walls: {} };
 
       if (cells) entry.cells = Array.from(cells);
-      if (overlays) entry.overlays = Object.fromEntries(Array.from(overlays));
+      if (overlays) entry.overlays = Array.from(overlays);
       if (walls)
         entry.walls = Object.fromEntries(
           Array.from(walls).map(([key, data]) => [key, condense(data)]),
@@ -161,12 +157,7 @@ export default class MapDataManager {
       const { cells, overlays, script, walls } = data[name];
 
       this.allCells.set(name, new Set(cells));
-      this.allOverlays.set(
-        name,
-        new Map(
-          Object.entries(overlays).map(([tag, cell]) => [tag as XYTag, cell]),
-        ),
-      );
+      this.allOverlays.set(name, new Set(overlays));
       this.allScripts.set(name, script);
       this.allWalls.set(
         name,

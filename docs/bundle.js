@@ -2796,16 +2796,6 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     }
   };
 
-  // src/tools/arrays.ts
-  function removeItem(array, item) {
-    const index = array.indexOf(item);
-    if (index >= 0) {
-      array.splice(index, 1);
-      return true;
-    }
-    return false;
-  }
-
   // src/types/Combatant.ts
   var AttackableStats = [
     "hp",
@@ -2818,6 +2808,59 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
   // src/tools/combatants.ts
   function isStat(s) {
     return AttackableStats.includes(s);
+  }
+
+  // src/tools/arrays.ts
+  function removeItem(array, item) {
+    const index = array.indexOf(item);
+    if (index >= 0) {
+      array.splice(index, 1);
+      return true;
+    }
+    return false;
+  }
+
+  // src/tools/overlays.ts
+  function updatePartialRecord(record, key, patch) {
+    const entry = record[key];
+    if (entry)
+      Object.assign(entry, patch);
+    else
+      record[key] = patch;
+  }
+  function applyOverlay(g, overlay) {
+    const { x, y } = tagToXy(overlay.xy);
+    const cell = g.getCell(x, y);
+    if (!cell)
+      throw new Error(`Could not apply overlay at ${overlay.xy}`);
+    switch (overlay.type) {
+      case "addTag":
+        cell.tags.push(overlay.value);
+        return;
+      case "removeTag":
+        if (!removeItem(cell.tags, overlay.value))
+          console.warn(
+            `script tried to remove tag ${overlay.value} at ${overlay.xy} -- not present`
+          );
+        return;
+      case "removeObject":
+        cell.object = void 0;
+        return;
+      case "setDecal":
+        return updatePartialRecord(cell.sides, overlay.dir, {
+          decal: overlay.value
+        });
+      case "setSolid":
+        return updatePartialRecord(cell.sides, overlay.dir, {
+          solid: overlay.value
+        });
+      default:
+        throw new Error(`Invalid overlay: ${JSON.stringify(overlay)}`);
+    }
+  }
+  function updateMap(g, overlay) {
+    g.map.update(overlay);
+    applyOverlay(g, overlay);
   }
 
   // src/EngineInkScripting.ts
@@ -2833,7 +2876,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
         if (winners === "party" && this.afterFight && g.currentCell) {
           const name = this.afterFight;
           this.afterFight = void 0;
-          void this.executePath(g.currentCell, "AFTER_FIGHT", { name });
+          void this.executePath("AFTER_FIGHT", { name });
         }
       });
     }
@@ -2902,11 +2945,10 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
         const enemy = getEnemy(name);
         this.g.pendingArenaEnemies.push(enemy);
       });
-      program.BindExternalFunction("addTag", (xy2, tag) => {
-        const cell = getCell(xy2);
-        cell.tags.push(tag);
-        this.g.map.update(xy2, cell);
-      });
+      program.BindExternalFunction(
+        "addTag",
+        (xy2, value) => updateMap(this.g, { type: "addTag", xy: xy2, value })
+      );
       program.BindExternalFunction(
         "damagePC",
         (index, type, amount) => {
@@ -2970,19 +3012,14 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
         const sound = getSound(name);
         void this.g.sfx.play(sound);
       });
-      program.BindExternalFunction("removeObject", (xy2) => {
-        const cell = getCell(xy2);
-        cell.object = void 0;
-        this.g.map.update(xy2, cell);
-      });
-      program.BindExternalFunction("removeTag", (xy2, tag) => {
-        const cell = getCell(xy2);
-        if (!removeItem(cell.tags, tag))
-          console.warn(
-            `script tried to remove tag ${tag} at ${xy2} -- not present`
-          );
-        this.g.map.update(xy2, cell);
-      });
+      program.BindExternalFunction(
+        "removeObject",
+        (xy2) => updateMap(this.g, { type: "removeObject", xy: xy2 })
+      );
+      program.BindExternalFunction(
+        "removeTag",
+        (xy2, value) => updateMap(this.g, { type: "removeTag", xy: xy2, value })
+      );
       program.BindExternalFunction(
         "rotate",
         (dir, quarters) => rotate(dir, quarters),
@@ -2990,11 +3027,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       );
       program.BindExternalFunction(
         "setDecal",
-        (xy2, dir, decal) => {
-          const side = getSide(xy2, dir);
-          side.decal = decal;
-          this.g.map.update(xy2, getCell(xy2));
-        }
+        (xy2, dir, value) => updateMap(this.g, { type: "setDecal", xy: xy2, dir: getDir(dir), value })
       );
       program.BindExternalFunction(
         "setObstacle",
@@ -3002,11 +3035,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       );
       program.BindExternalFunction(
         "setSolid",
-        (xy2, dir, solid) => {
-          const side = getSide(xy2, dir);
-          side.solid = solid;
-          this.g.map.update(xy2, getCell(xy2));
-        }
+        (xy2, dir, value) => updateMap(this.g, { type: "setSolid", xy: xy2, dir: getDir(dir), value })
       );
       program.BindExternalFunction("skill", () => this.skill, true);
       program.BindExternalFunction("skillCheck", (type, dc) => {
@@ -3054,7 +3083,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       for (const tag of cell.tags) {
         const entry = this.onTagEnter.get(tag);
         if (entry)
-          await this.executePath(cell, tag, entry);
+          await this.executePath(tag, entry);
       }
     }
     hasInteraction() {
@@ -3077,15 +3106,17 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       for (const tag of cell.tags) {
         const entry = this.onTagInteract.get(tag);
         if (entry)
-          await this.executePath(cell, tag, entry);
+          await this.executePath(tag, entry);
       }
     }
-    async executePath(cell, tag, entry) {
+    async executePath(value, entry) {
       this.story.ChoosePathString(entry.name);
-      if (entry.once) {
-        removeItem(cell.tags, tag);
-        this.g.map.update(xyToTag(this.g.position), cell);
-      }
+      if (entry.once)
+        updateMap(this.g, {
+          type: "removeTag",
+          xy: xyToTag(this.g.position),
+          value
+        });
       return new Promise((resolve) => {
         void this.runUntilDone().then(resolve);
       });
@@ -3655,7 +3686,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       this.allCells = /* @__PURE__ */ new Map();
       this.cells = /* @__PURE__ */ new Set();
       this.allOverlays = /* @__PURE__ */ new Map();
-      this.overlays = /* @__PURE__ */ new Map();
+      this.overlays = /* @__PURE__ */ new Set();
       this.allWalls = /* @__PURE__ */ new Map();
       this.walls = /* @__PURE__ */ new Map();
       this.allScripts = /* @__PURE__ */ new Map();
@@ -3688,15 +3719,10 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       }
       if (overlays) {
         this.overlays = overlays;
-        for (const [tag, overlay] of overlays.entries()) {
-          const { x, y } = tagToXy(tag);
-          const cell = this.g.getCell(x, y);
-          if (!cell)
-            throw new Error(`Could not apply overlay at ${tag}`);
-          Object.assign(cell, overlay);
-        }
+        for (const overlay of overlays)
+          applyOverlay(this.g, overlay);
       } else {
-        this.overlays = /* @__PURE__ */ new Map();
+        this.overlays = /* @__PURE__ */ new Set();
         this.allOverlays.set(name, this.overlays);
       }
       if (walls)
@@ -3735,22 +3761,22 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       const data = this.getWall(pos, dir);
       return condense(data);
     }
-    update(xy2, cell) {
-      this.overlays.set(xy2, cell);
+    update(overlay) {
+      this.overlays.add(overlay);
     }
     serialize() {
       this.saveScriptState();
       const data = {};
       for (const name of this.allCells.keys()) {
-        const cells = this.allCells.get(name)?.values();
-        const overlays = this.allOverlays.get(name)?.entries();
+        const cells = this.allCells.get(name);
+        const overlays = this.allOverlays.get(name);
         const script = this.allScripts.get(name) ?? {};
         const walls = this.allWalls.get(name)?.entries();
-        const entry = { cells: [], overlays: {}, script, walls: {} };
+        const entry = { cells: [], overlays: [], script, walls: {} };
         if (cells)
           entry.cells = Array.from(cells);
         if (overlays)
-          entry.overlays = Object.fromEntries(Array.from(overlays));
+          entry.overlays = Array.from(overlays);
         if (walls)
           entry.walls = Object.fromEntries(
             Array.from(walls).map(([key, data2]) => [key, condense(data2)])
@@ -3764,12 +3790,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       for (const name in data) {
         const { cells, overlays, script, walls } = data[name];
         this.allCells.set(name, new Set(cells));
-        this.allOverlays.set(
-          name,
-          new Map(
-            Object.entries(overlays).map(([tag, cell]) => [tag, cell])
-          )
-        );
+        this.allOverlays.set(name, new Set(overlays));
         this.allScripts.set(name, script);
         this.allWalls.set(
           name,
@@ -4124,16 +4145,6 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     "Loam Seer"
   ];
 
-  // src/types/World.ts
-  var WallDecalTypes = [
-    "Door",
-    "Gate",
-    "OpenGate",
-    "Lever",
-    "PulledLever",
-    "Sign"
-  ];
-
   // src/schemas.ts
   var ajv = new import_ajv.default();
   var xyTagSchema = {
@@ -4149,28 +4160,57 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     pattern: "d?s?w?"
   };
   var dirSchema = { type: "number", enum: [0, 1, 2, 3] };
-  var worldCellSchema = {
+  var overlaySchema = {
     type: "object",
-    additionalProperties: false,
-    required: ["numbers", "sides", "strings", "tags"],
-    properties: {
-      ceiling: { type: "number", nullable: true },
-      floor: { type: "number", nullable: true },
-      numbers: { type: "object", additionalProperties: { type: "number" } },
-      object: { type: "number", nullable: true },
-      sides: {
+    required: ["type"],
+    anyOf: [
+      {
         type: "object",
-        additionalProperties: {
-          type: "object",
-          properties: {
-            decal: { type: "number" },
-            decalType: { type: "string", enum: WallDecalTypes }
-          }
+        required: ["type", "xy", "value"],
+        properties: {
+          type: { const: "addTag" },
+          xy: xyTagSchema,
+          value: { type: "string" }
         }
       },
-      strings: { type: "object", additionalProperties: { type: "string" } },
-      tags: { type: "array", items: { type: "string" } }
-    }
+      {
+        type: "object",
+        required: ["type", "xy", "value"],
+        properties: {
+          type: { const: "removeTag" },
+          xy: xyTagSchema,
+          value: { type: "string" }
+        }
+      },
+      {
+        type: "object",
+        required: ["type", "xy"],
+        properties: {
+          type: { const: "removeObject" },
+          xy: xyTagSchema
+        }
+      },
+      {
+        type: "object",
+        required: ["type", "xy", "dir", "value"],
+        properties: {
+          type: { const: "setDecal" },
+          xy: xyTagSchema,
+          dir: dirSchema,
+          value: { type: "number" }
+        }
+      },
+      {
+        type: "object",
+        required: ["type", "xy", "dir", "value"],
+        properties: {
+          type: { const: "setSolid" },
+          xy: xyTagSchema,
+          dir: dirSchema,
+          value: { type: "boolean" }
+        }
+      }
+    ]
   };
   var mapDataSchema = {
     type: "object",
@@ -4178,11 +4218,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     required: ["cells", "overlays", "script", "walls"],
     properties: {
       cells: { type: "array", items: xyTagSchema },
-      overlays: {
-        type: "object",
-        patternProperties: { [xyTagSchema.pattern]: worldCellSchema },
-        additionalProperties: false
-      },
+      overlays: { type: "array", items: overlaySchema },
       script: { type: "object" },
       walls: {
         type: "object",
