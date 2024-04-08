@@ -10,7 +10,7 @@ const externals = {
 const filter = new RegExp(
   Object.values(externals)
     .map((obj) => obj.pattern)
-    .join("|")
+    .join("|"),
 );
 
 /** @type {import('esbuild').Plugin} */

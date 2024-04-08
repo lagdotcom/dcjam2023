@@ -1016,13 +1016,13 @@
   // res/atlas/sneedCrawler.png
   var sneedCrawler_default2 = "./sneedCrawler-B5CE42IQ.png";
 
-  // ink:D:\Code\dcjam2023\res\map.ink
+  // ink:D:\poisoned-daggers\res\map.ink
   var map_default = "./map-YEJLQB7U.ink";
 
   // res/map.json
   var map_default2 = "./map-HXD5COAC.json";
 
-  // ink:D:\Code\dcjam2023\res\rush.ink
+  // ink:D:\poisoned-daggers\res\rush.ink
   var rush_default = "./rush-LZWVRJNU.ink";
 
   // res/rush.json

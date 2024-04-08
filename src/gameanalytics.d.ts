@@ -44,13 +44,13 @@ declare module "gameanalytics" {
     Banner = 6,
   }
 
-  type CustomFields = Record<string, any>;
+  type CustomFields = Record<string, unknown>;
 
   type GameAnalyticsInstance = {
     initTimedBlockId: number;
     getGlobalObject(): globalThis;
     init(): void;
-    gaCommand(...args: any[]): void;
+    gaCommand(...args: unknown[]): void;
     configureAvailableCustomDimensions01(customDimensions?: string[]): void;
     configureAvailableCustomDimensions02(customDimensions?: string[]): void;
     configureAvailableCustomDimensions03(customDimensions?: string[]): void;
