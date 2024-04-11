@@ -2,14 +2,15 @@ import Colours from "./Colours";
 import Engine from "./Engine";
 import { xy } from "./tools/geometry";
 import withTextStyle from "./tools/withTextStyle";
+import { Pixels } from "./types/flavours";
 
 export default class CombatRenderer {
   constructor(
     public g: Engine,
-    public position = xy(60, 0),
-    public size = xy(144, 160),
-    public padding = xy(2, 2),
-    public rowPadding = 5,
+    public position = xy<Pixels>(60, 0),
+    public size = xy<Pixels>(144, 160),
+    public padding = xy<Pixels>(2, 2),
+    public rowPadding: Pixels = 5,
   ) {}
 
   render() {

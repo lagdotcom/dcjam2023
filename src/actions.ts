@@ -2,6 +2,7 @@ import isDefined from "./tools/isDefined";
 import { oneOf } from "./tools/rng";
 import { intersection } from "./tools/sets";
 import CombatAction, { ActionTarget } from "./types/CombatAction";
+import { HitPoints, SkillPoints } from "./types/flavours";
 
 // targeting types
 export const onlyMe: ActionTarget = { type: "self" };
@@ -24,7 +25,10 @@ export const opponents = (
 });
 export const oneEnemy: ActionTarget = { type: "enemy", count: 1 };
 
-export const generateAttack = (plus = 0, sp = 2): CombatAction => ({
+export const generateAttack = (
+  plus: HitPoints = 0,
+  sp: SkillPoints = 2,
+): CombatAction => ({
   name: "Attack",
   tags: ["attack"],
   sp,

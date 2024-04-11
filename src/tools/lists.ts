@@ -1,4 +1,6 @@
-export function niceList(items: string[]) {
+import { CombatantName } from "../types/flavours";
+
+export function listOfPeople(items: CombatantName[]) {
   if (items.length === 0) return "nobody";
   if (items.length === 1) return items[0];
 

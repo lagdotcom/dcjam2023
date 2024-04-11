@@ -3,11 +3,12 @@ import Engine from "../Engine";
 import Player from "../Player";
 import textWrap from "../tools/textWrap";
 import withTextStyle from "../tools/withTextStyle";
+import { Ratio } from "../types/flavours";
 import { GameScreen } from "../types/GameScreen";
 import NewGameScreen from "./NewGameScreen";
 
 export default class DeathScreen implements GameScreen {
-  alpha: number;
+  alpha: Ratio;
   doNotClear: boolean;
   interval: ReturnType<typeof setInterval>;
   oldScreen: GameScreen;

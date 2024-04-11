@@ -2,6 +2,7 @@ import { EGAProgressionStatus, GameAnalytics } from "gameanalytics";
 
 import { xyToTag } from "./tools/xyTags";
 import { ClassName } from "./types/ClassName";
+import { AreaName, Cells, CombatantName, StorageKey } from "./types/flavours";
 import XY from "./types/XY";
 
 const GA = GameAnalytics;
@@ -11,7 +12,7 @@ const secretKey = process.env.APP_ANALYTICS_SECRET_KEY ?? "";
 const debugAnalytics = process.env.APP_ANALYTICS_DEBUG === "TRUE";
 const buildVersion = process.env.APP_BUILD_VERSION ?? "unknown";
 
-const disableKey = "disableAnalytics";
+const disableKey: StorageKey = "disableAnalytics";
 const disableValue = "TRUE";
 
 export function isAnalyticsDisabled() {
@@ -44,8 +45,8 @@ export function startGame(classes: Set<ClassName>) {
     GA.addDesignEvent(`Game:StartingParty:${sanitise(cn)}`);
 }
 
-let currentArea = "";
-export function startArea(name: string) {
+let currentArea: AreaName = "";
+export function startArea(name: AreaName) {
   currentArea = sanitise(name);
   GA.addProgressionEvent(EGAProgressionStatus.Start, name);
 }
@@ -58,7 +59,7 @@ export function partyDied() {
   GA.addProgressionEvent(EGAProgressionStatus.Fail, currentArea, "Floor");
 }
 
-export function startFight(pos: XY, enemies: string[]) {
+export function startFight(pos: XY<Cells>, enemies: CombatantName[]) {
   GA.addProgressionEvent(
     EGAProgressionStatus.Start,
     currentArea,
@@ -69,7 +70,7 @@ export function startFight(pos: XY, enemies: string[]) {
     GA.addDesignEvent(`Fight:Begin:${sanitise(enemy)}`);
 }
 
-export function winFight(pos: XY) {
+export function winFight(pos: XY<Cells>) {
   GA.addProgressionEvent(
     EGAProgressionStatus.Complete,
     currentArea,
@@ -78,7 +79,7 @@ export function winFight(pos: XY) {
   );
 }
 
-export function loadIntoArea(name: string) {
+export function loadIntoArea(name: AreaName) {
   currentArea = sanitise(name);
   GA.addDesignEvent(`Game:Load:${currentArea}`);
 }

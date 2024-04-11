@@ -4,6 +4,7 @@ import { applyOverlay, Overlay } from "./tools/overlays";
 import { WallTag, wallToTag } from "./tools/wallTags";
 import { XYTag, xyToTag } from "./tools/xyTags";
 import Dir from "./types/Dir";
+import { AreaName, Cells } from "./types/flavours";
 import XY from "./types/XY";
 
 type Overlays = Set<Overlay>;
@@ -18,14 +19,14 @@ function condense(data: WallType) {
 }
 
 export default class MapDataManager {
-  currentArea: string;
-  allCells: Map<string, KnownCells>;
+  currentArea: AreaName;
+  allCells: Map<AreaName, KnownCells>;
   cells: KnownCells;
-  allOverlays: Map<string, Overlays>;
+  allOverlays: Map<AreaName, Overlays>;
   overlays: Overlays;
-  allWalls: Map<string, KnownWalls>;
+  allWalls: Map<AreaName, KnownWalls>;
   walls: KnownWalls;
-  allScripts: Map<string, ScriptData>;
+  allScripts: Map<AreaName, ScriptData>;
 
   constructor(public g: Engine) {
     this.currentArea = "";
@@ -55,7 +56,7 @@ export default class MapDataManager {
       this.allScripts.set(this.currentArea, this.g.scripting.saveState());
   }
 
-  enter(name: string) {
+  enter(name: AreaName) {
     this.saveScriptState();
 
     const cells = this.allCells.get(name);
@@ -88,19 +89,19 @@ export default class MapDataManager {
     this.currentArea = name;
   }
 
-  isVisited(pos: XY) {
+  isVisited(pos: XY<Cells>) {
     return this.cells.has(xyToTag(pos));
   }
 
-  visit(pos: XY) {
+  visit(pos: XY<Cells>) {
     this.cells.add(xyToTag(pos));
   }
 
-  setWall(pos: XY, dir: Dir, data: WallType) {
+  setWall(pos: XY<Cells>, dir: Dir, data: WallType) {
     this.walls.set(wallToTag(pos, dir), data);
   }
 
-  getWall(pos: XY, dir: Dir) {
+  getWall(pos: XY<Cells>, dir: Dir) {
     const tag = wallToTag(pos, dir);
     const data = this.walls.get(tag);
     if (data) return data;
@@ -114,7 +115,7 @@ export default class MapDataManager {
     return newData;
   }
 
-  getWallCondensed(pos: XY, dir: Dir) {
+  getWallCondensed(pos: XY<Cells>, dir: Dir) {
     const data = this.getWall(pos, dir);
     return condense(data);
   }

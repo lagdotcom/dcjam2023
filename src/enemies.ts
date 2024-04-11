@@ -13,20 +13,30 @@ import {
   Trick,
 } from "./actions";
 import Engine from "./Engine";
-import { niceList, pluralS } from "./tools/lists";
+import { listOfPeople, pluralS } from "./tools/lists";
 import { wrap } from "./tools/numbers";
 import CombatAction from "./types/CombatAction";
 import Combatant, { BoostableStat } from "./types/Combatant";
+import {
+  AtlasLayerID,
+  HitPoints,
+  Milliseconds,
+  SkillPoints,
+} from "./types/flavours";
 
 export interface EnemyAnimation {
-  delay: number;
-  frames: number[];
+  delay: Milliseconds;
+  frames: AtlasLayerID[];
 }
 
 type EnemyTemplate = Pick<
   Combatant,
   "name" | "maxHP" | "maxSP" | "camaraderie" | "determination" | "spirit" | "dr"
-> & { actions: CombatAction[]; object: number; animation: EnemyAnimation };
+> & {
+  actions: CombatAction[];
+  object: AtlasLayerID;
+  animation: EnemyAnimation;
+};
 
 const Lash: CombatAction = {
   name: "Lash",
@@ -36,7 +46,7 @@ const Lash: CombatAction = {
   act({ g, me, targets }) {
     if (g.applyDamage(me, targets, 3, "hp", "normal") > 0) {
       g.addToLog(
-        `${niceList(targets.map((x) => x.name))} feel${pluralS(
+        `${listOfPeople(targets.map((x) => x.name))} feel${pluralS(
           targets,
         )} temporarily demoralized.`,
       );
@@ -124,16 +134,16 @@ export class Enemy implements Combatant {
   isPC: false;
   animation: EnemyAnimation;
   frame: number;
-  delay: number;
+  delay: Milliseconds;
   name: string;
-  hp: number;
-  sp: number;
-  baseMaxHP: number;
-  baseMaxSP: number;
+  hp: HitPoints;
+  sp: SkillPoints;
+  baseMaxHP: HitPoints;
+  baseMaxSP: SkillPoints;
   baseCamaraderie: number;
   baseDetermination: number;
   baseSpirit: number;
-  baseDR: number;
+  baseDR: HitPoints;
   actions: CombatAction[];
   attacksInARow: number;
   usedThisTurn: Set<string>;
@@ -190,7 +200,7 @@ export class Enemy implements Combatant {
     return this.getStat("spirit", this.baseSpirit);
   }
 
-  advanceAnimation(time: number) {
+  advanceAnimation(time: Milliseconds) {
     this.delay -= time;
     if (this.delay < 0) {
       this.frame = wrap(this.frame + 1, this.animation.frames.length);

@@ -1,5 +1,5 @@
 import { allAllies, ally, Bravery, Defy, oneOpponent, Scar } from "../actions";
-import { niceList, pluralS } from "../tools/lists";
+import { listOfPeople, pluralS } from "../tools/lists";
 import { oneOf } from "../tools/rng";
 import Item from "../types/Item";
 
@@ -25,7 +25,7 @@ export const SignedCasque: Item = {
     targets: ally(1),
     act({ g, targets }) {
       g.addToLog(
-        `${niceList(targets.map((x) => x.name))} feel${pluralS(
+        `${listOfPeople(targets.map((x) => x.name))} feel${pluralS(
           targets,
         )} more protected.`,
       );

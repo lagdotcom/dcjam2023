@@ -6,9 +6,10 @@ import { rotate, xy } from "./tools/geometry";
 import getCanvasContext from "./tools/getCanvasContext";
 import Atlas, { AtlasLayer, AtlasTile } from "./types/Atlas";
 import Dir from "./types/Dir";
+import { AtlasLayerID, Cells, Pixels } from "./types/flavours";
 
 export const tileTag = (
-  id: number,
+  id: AtlasLayerID,
   type: AtlasTile["type"],
   tile: AtlasTile["tile"],
 ) => `${type}${id}:${tile.x},${tile.z}`;
@@ -20,7 +21,7 @@ export default class DungeonRenderer {
     public g: Engine,
     public dungeon: Atlas,
     public atlasImage: HTMLImageElement,
-    public offset = xy(91, 21),
+    public offset = xy<Pixels>(91, 21),
   ) {
     this.imageData = new Map();
   }
@@ -71,12 +72,12 @@ export default class DungeonRenderer {
     return Promise.all(promises);
   }
 
-  getImage(id: number, type: AtlasTile["type"], x: number, z: number) {
+  getImage(id: AtlasLayerID, type: AtlasTile["type"], x: Cells, z: Cells) {
     const tag = tileTag(id, type, { x, z });
     return this.imageData.get(tag);
   }
 
-  flipImage(w: number, h: number, data: Uint8ClampedArray) {
+  flipImage(w: Pixels, h: Pixels, data: Uint8ClampedArray) {
     const flippedData = new Uint8Array(w * h * 4);
     for (let col = 0; col < w; col++) {
       for (let row = 0; row < h; row++) {
@@ -95,7 +96,7 @@ export default class DungeonRenderer {
     return this.dungeon.layers.filter((layer) => layer.type === type);
   }
 
-  project(x: number, z: number): [x: number, y: number] {
+  project(x: Cells, z: Cells): [x: Pixels, y: Pixels] {
     const { facing, position } = this.g;
 
     switch (facing) {
@@ -116,18 +117,23 @@ export default class DungeonRenderer {
     this.g.ctx.drawImage(result.image, dx + this.offset.x, dy + this.offset.y);
   }
 
-  drawFront(result: AtlasTile, x: number) {
+  drawFront(result: AtlasTile, x: Cells) {
     const dx = result.screen.x + x * result.coords.fullWidth;
     const dy = result.screen.y;
     this.g.ctx.drawImage(result.image, dx + this.offset.x, dy + this.offset.y);
   }
 
-  drawImage(id: number, type: AtlasTile["type"], x: number, z: number) {
+  drawImage(id: AtlasLayerID, type: AtlasTile["type"], x: Cells, z: Cells) {
     const result = this.getImage(id, type, x, z);
     if (result) this.draw(result);
   }
 
-  drawFrontImage(id: number, type: AtlasTile["type"], x: number, z: number) {
+  drawFrontImage(
+    id: AtlasLayerID,
+    type: AtlasTile["type"],
+    x: Cells,
+    z: Cells,
+  ) {
     const result = this.getImage(id, type, 0, z);
     if (result) this.drawFront(result, x);
   }

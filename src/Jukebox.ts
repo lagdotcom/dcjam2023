@@ -6,9 +6,10 @@ import selumeUrl from "../res/music/selume.ogg";
 import Engine from "./Engine";
 import { wrap } from "./tools/numbers";
 import { random } from "./tools/rng";
+import { ResourceURL, Seconds } from "./types/flavours";
 
 interface Track {
-  url: string;
+  url: ResourceURL;
   name: string;
   audio?: HTMLAudioElement;
   loop?: true;
@@ -16,7 +17,7 @@ interface Track {
 
 interface Playlist {
   tracks: Track[];
-  between?: { roll: number; bonus: number };
+  between?: { roll: Seconds; bonus: Seconds };
 }
 
 const PlaylistNames = ["title", "explore", "combat", "arena", "death"] as const;

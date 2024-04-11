@@ -1,5 +1,5 @@
 import { oneOpponent, opponents, Sand } from "../actions";
-import { niceList } from "../tools/lists";
+import { listOfPeople } from "../tools/lists";
 import Item from "../types/Item";
 
 export const BoltSlinger: Item = {
@@ -33,7 +33,9 @@ export const AdaloaxPelt: Item = {
     targets: oneOpponent,
     act({ g, targets }) {
       // TODO is/are
-      g.addToLog(`${niceList(targets.map((x) => x.name))} is bound tightly!`);
+      g.addToLog(
+        `${listOfPeople(targets.map((x) => x.name))} is bound tightly!`,
+      );
       g.addEffect(() => ({
         name: "Bind",
         duration: 2,

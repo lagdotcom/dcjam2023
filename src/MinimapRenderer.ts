@@ -2,6 +2,7 @@ import Colours from "./Colours";
 import Engine from "./Engine";
 import { xy } from "./tools/geometry";
 import withTextStyle from "./tools/withTextStyle";
+import { Pixels } from "./types/flavours";
 
 const facingChars = ["^", ">", "v", "<"];
 
@@ -20,12 +21,12 @@ type SideType = keyof typeof sideColours;
 
 function rect(
   ctx: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  ox: number,
-  oy: number,
-  w: number,
-  h: number,
+  x: Pixels,
+  y: Pixels,
+  ox: Pixels,
+  oy: Pixels,
+  w: Pixels,
+  h: Pixels,
   tag: SideType,
 ) {
   ctx.fillStyle = sideColours[tag];
@@ -35,10 +36,10 @@ function rect(
 export default class MinimapRenderer {
   constructor(
     public g: Engine,
-    public tileSize = 16,
-    public wallSize = 2,
-    public size = xy(2, 2),
-    public position = xy(375, 170),
+    public tileSize: Pixels = 16,
+    public wallSize: Pixels = 2,
+    public size = xy<Pixels>(2, 2),
+    public position = xy<Pixels>(375, 170),
   ) {}
 
   render() {

@@ -1,11 +1,12 @@
 import Combatant, { AttackableStat } from "./Combatant";
 import Dir from "./Dir";
 import { GameEventHandler } from "./events";
+import { Cells, EffectName, HitPoints, Quadrants, Turns } from "./flavours";
 
 export interface GameEffect extends Partial<GameEventHandler> {
-  name: string;
+  name: EffectName;
   affects: Combatant[];
-  duration: number;
+  duration: Turns;
   buff?: true;
   permanent?: true;
 }
@@ -18,10 +19,10 @@ export default interface Game {
   applyDamage(
     attacker: Combatant,
     targets: Combatant[],
-    amount: number,
+    amount: HitPoints,
     type: AttackableStat,
     origin: "normal" | "magic",
-  ): number;
+  ): HitPoints;
 
   endTurn(): void;
 
@@ -29,11 +30,11 @@ export default interface Game {
 
   getEffectsOn(who: Combatant): GameEffect[];
 
-  getOpponent(me: Combatant, rotate?: number): Combatant | undefined;
+  getOpponent(me: Combatant, rotate?: Quadrants): Combatant | undefined;
 
-  getPosition(who: Combatant): { dir: Dir; distance: number };
+  getPosition(who: Combatant): { dir: Dir; distance: Cells };
 
-  heal(healer: Combatant, targets: Combatant[], amount: number): void;
+  heal(healer: Combatant, targets: Combatant[], amount: HitPoints): void;
 
   moveEnemy(from: Dir, to: Dir): void;
 

@@ -80,6 +80,8 @@ export const overlaySchema: JSONSchemaType<Overlay> = {
   ],
 };
 
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-expect-error
 const mapDataSchema: JSONSchemaType<MapData> = {
   type: "object",
   additionalProperties: false,

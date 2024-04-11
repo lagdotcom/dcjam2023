@@ -1,5 +1,5 @@
-export function random(max: number) {
-  return Math.floor(Math.random() * max);
+export function random<T extends number>(max: T) {
+  return Math.floor(Math.random() * max) as T;
 }
 
 export function oneOf<T>(items: T[]) {

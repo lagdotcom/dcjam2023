@@ -5,13 +5,14 @@ import { lerpXY, xy } from "./tools/geometry";
 import Hotspot from "./tools/Hotspot";
 import withTextStyle from "./tools/withTextStyle";
 import Dir from "./types/Dir";
+import { Colour, Pixels, Ratio } from "./types/flavours";
 import HasHotspots from "./types/HasHotspots";
 import XY from "./types/XY";
 
 type SwapData = { from: Dir; to: Dir }[];
 
-const barWidth = 38;
-const coordinates: XY[] = [
+const barWidth: Pixels = 38;
+const coordinates: XY<Pixels>[] = [
   xy(214, 138),
   xy(274, 180),
   xy(214, 224),
@@ -19,7 +20,7 @@ const coordinates: XY[] = [
 ];
 
 class MarbleAnimator {
-  progress: number;
+  progress: Ratio;
   swaps: SwapData;
   timeout?: ReturnType<typeof setInterval>;
 
@@ -66,13 +67,13 @@ type Spot = Hotspot & { dir: Dir };
 export default class StatsRenderer implements HasHotspots {
   spots: Spot[];
   animator: MarbleAnimator;
-  positions: XY[];
+  positions: XY<Pixels>[];
 
   constructor(
     public g: Engine,
-    public text = xy(25, 21),
-    public hp = xy(7, 29),
-    public sp = xy(7, 35),
+    public text = xy<Pixels>(25, 21),
+    public hp = xy<Pixels>(7, 29),
+    public sp = xy<Pixels>(7, 35),
   ) {
     this.animator = new MarbleAnimator(this);
     this.spots = [];
@@ -90,7 +91,7 @@ export default class StatsRenderer implements HasHotspots {
     }
   }
 
-  renderPC({ x, y }: XY, pc: Player, bg: HTMLImageElement, dir: Dir) {
+  renderPC({ x, y }: XY<Pixels>, pc: Player, bg: HTMLImageElement, dir: Dir) {
     const { text, hp, sp } = this;
     const { ctx } = this.g;
 
@@ -122,12 +123,12 @@ export default class StatsRenderer implements HasHotspots {
     this.g.pcClicked(spot.dir);
   }
 
-  renderBar(
-    x: number,
-    y: number,
-    current: number,
-    max: number,
-    colour: string,
+  renderBar<T extends number>(
+    x: Pixels,
+    y: Pixels,
+    current: T,
+    max: T,
+    colour: Colour,
   ) {
     const width = Math.floor(
       barWidth * Math.max(0, Math.min(1, current / max)),

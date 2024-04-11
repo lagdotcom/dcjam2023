@@ -1,6 +1,6 @@
 import { Bless, Bravery, oneOpponent, onlyMe, opponents } from "../actions";
 import isDefined from "../tools/isDefined";
-import { niceList } from "../tools/lists";
+import { listOfPeople } from "../tools/lists";
 import { oneOf } from "../tools/rng";
 import Item from "../types/Item";
 
@@ -27,7 +27,7 @@ export const JacketAndRucksack: Item = {
     act({ g, targets }) {
       // TODO have/has
       g.addToLog(
-        `${niceList(targets.map((x) => x.name))} has nowhere to hide!`,
+        `${listOfPeople(targets.map((x) => x.name))} has nowhere to hide!`,
       );
 
       // TODO: [Search] enemy is more likely to drop items

@@ -1,13 +1,14 @@
 import Engine from "../Engine";
 import Dir from "../types/Dir";
+import { AtlasLayerID, Cells, CellTag } from "../types/flavours";
 import removeItem from "./arrays";
 import { tagToXy, XYTag } from "./xyTags";
 
 export type Overlay =
-  | { type: "addTag"; xy: XYTag; value: string }
-  | { type: "removeTag"; xy: XYTag; value: string }
+  | { type: "addTag"; xy: XYTag; value: CellTag }
+  | { type: "removeTag"; xy: XYTag; value: CellTag }
   | { type: "removeObject"; xy: XYTag }
-  | { type: "setDecal"; xy: XYTag; dir: Dir; value: number }
+  | { type: "setDecal"; xy: XYTag; dir: Dir; value: AtlasLayerID }
   | { type: "setSolid"; xy: XYTag; dir: Dir; value: boolean };
 
 function updatePartialRecord<K extends string | number, T>(
@@ -21,7 +22,7 @@ function updatePartialRecord<K extends string | number, T>(
 }
 
 export function applyOverlay(g: Engine, overlay: Overlay) {
-  const { x, y } = tagToXy(overlay.xy);
+  const { x, y } = tagToXy<Cells>(overlay.xy);
   const cell = g.getCell(x, y);
   if (!cell) throw new Error(`Could not apply overlay at ${overlay.xy}`);
 

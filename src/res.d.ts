@@ -1,19 +1,19 @@
 declare module "*.ink" {
-  const url: string;
+  const url: import("./types/flavours").ResourceURL;
   export default url;
 }
 
 declare module "*.json" {
-  const url: string;
+  const url: import("./types/flavours").ResourceURL;
   export default url;
 }
 
 declare module "*.ogg" {
-  const url: string;
+  const url: import("./types/flavours").ResourceURL;
   export default url;
 }
 
 declare module "*.png" {
-  const url: string;
+  const url: import("./types/flavours").ResourceURL;
   export default url;
 }

@@ -1,30 +1,28 @@
 import Dir from "../types/Dir";
+import { Quadrants, Ratio } from "../types/flavours";
 import XY from "../types/XY";
 
-export const xy = (x: number, y: number): XY => ({ x, y });
-export const xyi = (x: number, y: number): XY => ({
-  x: Math.floor(x),
-  y: Math.floor(y),
-});
+export const xy = <T extends number>(x: T, y: T): XY<T> => ({ x, y });
+export const xyi = <T extends number>(x: T, y: T): XY<T> =>
+  ({
+    x: Math.floor(x),
+    y: Math.floor(y),
+  }) as XY<T>;
 
-export function sameXY(a: XY, b: XY) {
+export function sameXY<T extends number>(a: XY<T>, b: XY<T>) {
   return a.x === b.x && a.y === b.y;
 }
 
-export function addXY(a: XY, b: XY): XY {
-  return { x: a.x + b.x, y: a.y + b.y };
+export function addXY<T extends number>(a: XY<T>, b: XY<T>): XY<T> {
+  return { x: a.x + b.x, y: a.y + b.y } as XY<T>;
 }
 
-const displacements: XY[] = [xy(0, -1), xy(1, 0), xy(0, 1), xy(-1, 0)];
-export function displacement(dir: Dir): XY {
-  return displacements[dir];
+const displacements: XY<number>[] = [xy(0, -1), xy(1, 0), xy(0, 1), xy(-1, 0)];
+export function move<T extends number>(pos: XY<T>, dir: Dir): XY<T> {
+  return addXY(pos, displacements[dir] as XY<T>);
 }
 
-export function move(pos: XY, dir: Dir): XY {
-  return addXY(pos, displacements[dir]);
-}
-
-export function rotate(dir: Dir, clockwise: number): Dir {
+export function rotate(dir: Dir, clockwise: Quadrants): Dir {
   return (dir + clockwise + 4) % 4;
 }
 
@@ -42,7 +40,10 @@ export function dirFromInitial(initial: string): Dir {
   }
 }
 
-export function getCardinalOffset(start: XY, destination: XY) {
+export function getCardinalOffset<T extends number>(
+  start: XY<T>,
+  destination: XY<T>,
+) {
   const dx = destination.x - start.x;
   const dy = destination.y - start.y;
 
@@ -64,7 +65,7 @@ export function getDirOffset(start: Dir, end: Dir) {
   return dirOffsets[start][end];
 }
 
-export function lerpXY(from: XY, to: XY, ratio: number) {
+export function lerpXY<T extends number>(from: XY<T>, to: XY<T>, ratio: Ratio) {
   if (ratio <= 0) return from;
   if (ratio >= 1) return to;
 

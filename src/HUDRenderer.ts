@@ -9,24 +9,25 @@ import SkillRenderer from "./SkillRenderer";
 import StatsRenderer from "./StatsRenderer";
 import { xyi } from "./tools/geometry";
 import withTextStyle from "./tools/withTextStyle";
+import { Colour, Milliseconds, Pixels, Ratio } from "./types/flavours";
 import XY from "./types/XY";
 
 type HUDData<T> = { base: T; buttons: T; mapBorder: T; marble: T; ring: T };
 
 const empty = document.createElement("img");
-const zero = xyi(0, 0);
+const zero = xyi<Pixels>(0, 0);
 
 class RollListener {
   value: number;
-  colour: string;
-  opacity: number;
+  colour: Colour;
+  opacity: Ratio;
   timer?: ReturnType<typeof setTimeout>;
 
   constructor(
     public g: Engine,
-    public position = xyi(g.canvas.width / 2, 212),
-    public initialDelay = 2000,
-    public fadeDelay = 500,
+    public position = xyi<Pixels>(g.canvas.width / 2, 212),
+    public initialDelay: Milliseconds = 2000,
+    public fadeDelay: Milliseconds = 500,
   ) {
     this.value = 0;
     this.colour = "white";
@@ -39,7 +40,7 @@ class RollListener {
     );
   }
 
-  rolled(value: number, colour: string) {
+  rolled(value: number, colour: Colour) {
     this.value = value;
     this.colour = colour;
     this.opacity = 1;
@@ -77,7 +78,7 @@ class RollListener {
 
 export default class HUDRenderer {
   images: HUDData<HTMLImageElement>;
-  positions: HUDData<XY>;
+  positions: HUDData<XY<Pixels>>;
   stats: StatsRenderer;
   minimap: MinimapRenderer;
   roll: RollListener;

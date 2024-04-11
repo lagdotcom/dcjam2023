@@ -3,6 +3,7 @@ import { xy } from "./tools/geometry";
 import Hotspot from "./tools/Hotspot";
 import withTextStyle from "./tools/withTextStyle";
 import Dir from "./types/Dir";
+import { Pixels } from "./types/flavours";
 import HasHotspots from "./types/HasHotspots";
 
 type Spot = Hotspot & { dir: Dir };
@@ -12,10 +13,10 @@ export default class SkillRenderer implements HasHotspots {
 
   constructor(
     public g: Engine,
-    public position = xy(0, 0),
-    public offset = xy(20, 42),
-    public buttonSize = xy(80, 16),
-    public rowHeight = 18,
+    public position = xy<Pixels>(0, 0),
+    public offset = xy<Pixels>(20, 42),
+    public buttonSize = xy<Pixels>(80, 16),
+    public rowHeight: Pixels = 18,
   ) {
     this.spots = [];
   }

@@ -12,22 +12,29 @@ import { updateMap } from "./tools/overlays";
 import { tagToXy, XYTag, xyToTag } from "./tools/xyTags";
 import { AttackableStat } from "./types/Combatant";
 import Dir from "./types/Dir";
+import {
+  Cells,
+  CellTag,
+  InkSource,
+  KnotName,
+  SkillName,
+} from "./types/flavours";
 import XY from "./types/XY";
 
 interface KnotEntry {
-  name: string;
+  name: KnotName;
   once?: boolean;
 }
 
 export type ScriptData = Record<string, unknown>;
 
 export default class EngineInkScripting {
-  onTagEnter: Map<string, KnotEntry>;
-  onTagInteract: Map<string, KnotEntry>;
+  onTagEnter: Map<CellTag, KnotEntry>;
+  onTagInteract: Map<CellTag, KnotEntry>;
   active: Dir;
-  afterFight?: string;
+  afterFight?: KnotName;
   running: boolean;
-  skill: string;
+  skill: SkillName;
   story!: Story;
 
   constructor(public g: Engine) {
@@ -46,7 +53,7 @@ export default class EngineInkScripting {
     });
   }
 
-  parseAndRun(source: string) {
+  parseAndRun(source: InkSource) {
     const program = new Story(source);
     this.run(program);
   }
@@ -86,7 +93,7 @@ export default class EngineInkScripting {
       if (!isEnemyName(name)) throw new Error(`Invalid enemy: ${name}`);
       return name;
     };
-    const getPositionByTag = (tag: string) => {
+    const getPositionByTag = (tag: CellTag) => {
       const position = this.g.findCellWithTag(tag);
       if (!position) console.warn(`Cannot find tag: ${tag}`);
       return position;
@@ -205,7 +212,7 @@ export default class EngineInkScripting {
       const roll = this.g.roll(pc) + pc[stat];
       return roll >= dc;
     });
-    program.BindExternalFunction("startArenaFight", (afterFight: string) => {
+    program.BindExternalFunction("startArenaFight", (afterFight: KnotName) => {
       const count = this.g.pendingArenaEnemies.length;
       if (!count) return false;
 
@@ -235,7 +242,7 @@ export default class EngineInkScripting {
     }
   }
 
-  async onEnter(pos: XY) {
+  async onEnter(pos: XY<Cells>) {
     const cell = this.g.getCell(pos.x, pos.y);
     if (!cell) return;
 
@@ -258,19 +265,19 @@ export default class EngineInkScripting {
     return false;
   }
 
-  async onInteract(pcIndex: number) {
+  async onInteract(dir: Dir) {
     const cell = this.g.currentCell;
     if (!cell) return;
 
-    this.active = pcIndex;
-    this.skill = this.g.party[pcIndex].skill;
+    this.active = dir;
+    this.skill = this.g.party[dir].skill;
     for (const tag of cell.tags) {
       const entry = this.onTagInteract.get(tag);
       if (entry) await this.executePath(tag, entry);
     }
   }
 
-  private async executePath(value: string, entry: KnotEntry) {
+  private async executePath(value: CellTag, entry: KnotEntry) {
     this.story.ChoosePathString(entry.name);
     if (entry.once)
       updateMap(this.g, {

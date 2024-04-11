@@ -12,8 +12,9 @@ import mapInk from "../res/map.ink";
 import mapJson from "../res/map.json";
 import rushInk from "../res/rush.ink";
 import rushJson from "../res/rush.json";
+import { ResourceID, ResourceURL } from "./types/flavours";
 
-const Resources: Record<string, string> = {
+const Resources: Record<ResourceID, ResourceURL> = {
   "map.ink": mapInk,
   "map.json": mapJson,
   "rush.ink": rushInk,
@@ -32,7 +33,7 @@ const Resources: Record<string, string> = {
   "sneedCrawler.json": sneedCrawlerJson,
 };
 
-export function getResourceURL(id: string) {
+export function getResourceURL(id: ResourceID) {
   const value = Resources[id];
   if (!value) throw new Error(`Invalid resource ID: ${id}`);
   return value;

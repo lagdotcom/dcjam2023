@@ -437,7 +437,7 @@
   };
 
   // src/tools/lists.ts
-  function niceList(items) {
+  function listOfPeople(items) {
     if (items.length === 0)
       return "nobody";
     if (items.length === 1)
@@ -467,7 +467,7 @@
     act({ g, me, targets }) {
       if (g.applyDamage(me, targets, 3, "hp", "normal") > 0) {
         g.addToLog(
-          `${niceList(targets.map((x) => x.name))} feel${pluralS(
+          `${listOfPeople(targets.map((x) => x.name))} feel${pluralS(
             targets
           )} temporarily demoralized.`
         );
@@ -886,13 +886,13 @@
     textBaseline,
     fillStyle,
     fontSize = 10,
-    fontFace = "sans-serif",
+    fontFamily = "sans-serif",
     globalAlpha = 1
   }) {
     ctx.textAlign = textAlign;
     ctx.textBaseline = textBaseline;
     ctx.fillStyle = fillStyle;
-    ctx.font = `${fontSize}px ${fontFace}`;
+    ctx.font = `${fontSize}px ${fontFamily}`;
     ctx.globalAlpha = globalAlpha;
     return {
       lineHeight: fontSize + 4,
@@ -1796,7 +1796,9 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       sp: 4,
       targets: oneOpponent,
       act({ g, targets }) {
-        g.addToLog(`${niceList(targets.map((x) => x.name))} is bound tightly!`);
+        g.addToLog(
+          `${listOfPeople(targets.map((x) => x.name))} is bound tightly!`
+        );
         g.addEffect(() => ({
           name: "Bind",
           duration: 2,
@@ -1882,7 +1884,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       targets: ally(1),
       act({ g, targets }) {
         g.addToLog(
-          `${niceList(targets.map((x) => x.name))} feel${pluralS(
+          `${listOfPeople(targets.map((x) => x.name))} feel${pluralS(
             targets
           )} more protected.`
         );
@@ -2091,7 +2093,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       targets: oneOpponent,
       act({ g, targets }) {
         g.addToLog(
-          `${niceList(targets.map((x) => x.name))} has nowhere to hide!`
+          `${listOfPeople(targets.map((x) => x.name))} has nowhere to hide!`
         );
         g.addEffect(() => ({
           name: "Observe",
@@ -3097,12 +3099,12 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       }
       return false;
     }
-    async onInteract(pcIndex) {
+    async onInteract(dir) {
       const cell = this.g.currentCell;
       if (!cell)
         return;
-      this.active = pcIndex;
-      this.skill = this.g.party[pcIndex].skill;
+      this.active = dir;
+      this.skill = this.g.party[dir].skill;
       for (const tag of cell.tags) {
         const entry = this.onTagInteract.get(tag);
         if (entry)
