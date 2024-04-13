@@ -4,6 +4,7 @@ import cry1Url from "../res/sfx/cry1.ogg";
 import death1Url from "../res/sfx/death1.ogg";
 import wooshUrl from "../res/sfx/woosh.ogg";
 import Engine from "./Engine";
+import isDefined from "./tools/isDefined";
 
 const allSounds = {
   buff1: buff1Url,
@@ -15,7 +16,7 @@ const allSounds = {
 export type SoundName = keyof typeof allSounds;
 
 export function isSoundName(name: string): name is SoundName {
-  return typeof allSounds[name as SoundName] === "string";
+  return isDefined(allSounds[name as SoundName]);
 }
 
 export default class Sounds {

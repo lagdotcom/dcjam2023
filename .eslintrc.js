@@ -15,7 +15,9 @@ module.exports = {
   ],
   rules: {
     "prettier/prettier": ["error", { endOfLine: "crlf" }],
+    "no-duplicate-imports": ["error"],
     "no-unused-vars": "off",
+    "object-shorthand": ["error", "always"],
     "@typescript-eslint/no-unused-vars": ["error"],
     "simple-import-sort/imports": "error",
     "simple-import-sort/exports": "error",

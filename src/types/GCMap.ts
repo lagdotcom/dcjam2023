@@ -1,4 +1,10 @@
-import { Cells, ColourHex, DateYYYYMMDD, TimeHHMMSS } from "./flavours";
+import {
+  Cells,
+  ColourHex,
+  DateYYYYMMDD,
+  MapFloor,
+  TimeHHMMSS,
+} from "./flavours";
 
 export const enum Edge {
   None = 0,
@@ -259,7 +265,7 @@ export interface Export {
 
 export interface Floor {
   /** The number of the floor. Negative values are basements, zero is the ground floor and positive values are the floors above. */
-  index: number;
+  index: MapFloor;
 
   tiles: {
     bounds: Bounds;

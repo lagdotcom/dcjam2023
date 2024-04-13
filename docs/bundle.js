@@ -543,9 +543,9 @@
       actions: [generateAttack(0, 1), Bravery, Bless, Lash]
     }
   };
-  var EnemyNames = Object.keys(enemies);
+  var EnemyNames = new Set(Object.keys(enemies));
   function isEnemyName(name) {
-    return EnemyNames.includes(name);
+    return EnemyNames.has(name);
   }
   var Enemy = class {
     constructor(g, template) {
@@ -1173,13 +1173,13 @@
     }
     getTexture(index = 0) {
       const texture = this.textures.get(index);
-      if (typeof texture === "undefined")
+      if (!isDefined(texture))
         throw new Error(`Unknown texture for palette index ${index}`);
       return texture;
     }
     eval(s) {
       const def = this.definitions.get(s);
-      if (typeof def !== "undefined")
+      if (isDefined(def))
         return def;
       const num = Number(s);
       if (!isNaN(num))
@@ -2780,7 +2780,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     woosh: woosh_default
   };
   function isSoundName(name) {
-    return typeof allSounds[name] === "string";
+    return isDefined(allSounds[name]);
   }
   var Sounds = class {
     constructor(g) {

@@ -1,6 +1,7 @@
 import Grid from "./Grid";
 import { getResourceURL } from "./resources";
 import { dirFromInitial, xy } from "./tools/geometry";
+import isDefined from "./tools/isDefined";
 import { openGate } from "./tools/sides";
 import { XYTag, xyToTag } from "./tools/xyTags";
 import Dir from "./types/Dir";
@@ -99,7 +100,7 @@ class GCMapConverter {
   }
 
   tile(x: Cells, y: Cells) {
-    return this.grid.getOrDefault({ x: x, y: y });
+    return this.grid.getOrDefault({ x, y });
   }
 
   convert(j: GCMap, region: MapRegion = 0, floor: MapFloor = 0) {
@@ -171,7 +172,7 @@ class GCMapConverter {
 
   getTexture(index: TextureIndex = 0) {
     const texture = this.textures.get(index);
-    if (typeof texture === "undefined")
+    if (!isDefined(texture))
       throw new Error(`Unknown texture for palette index ${index}`);
 
     return texture;
@@ -179,7 +180,7 @@ class GCMapConverter {
 
   eval(s: string) {
     const def = this.definitions.get(s);
-    if (typeof def !== "undefined") return def;
+    if (isDefined(def)) return def;
 
     const num = Number(s);
     if (!isNaN(num)) return num;
