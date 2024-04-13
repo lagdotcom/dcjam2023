@@ -5,7 +5,7 @@ import { lerpXY, xy } from "./tools/geometry";
 import Hotspot from "./tools/Hotspot";
 import withTextStyle from "./tools/withTextStyle";
 import Dir from "./types/Dir";
-import { Colour, Pixels, Ratio } from "./types/flavours";
+import { Colour, Milliseconds, Pixels, Ratio } from "./types/flavours";
 import HasHotspots from "./types/HasHotspots";
 import XY from "./types/XY";
 
@@ -26,8 +26,8 @@ class MarbleAnimator {
 
   constructor(
     public parent: StatsRenderer,
-    public interval = 50,
-    public progressTick = 0.2,
+    public interval: Milliseconds = 50,
+    public progressTick: Ratio = 0.2,
   ) {
     this.progress = 0;
     this.swaps = [];
