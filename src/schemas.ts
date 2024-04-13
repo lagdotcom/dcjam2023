@@ -2,11 +2,11 @@ import Ajv, { JSONSchemaType } from "ajv";
 
 import { MapData, SerializedEngine, WallTypeCondensed } from "./Engine";
 import { SerializedPlayer } from "./Player";
+import { Overlay } from "./tools/overlays";
 import { WallTag } from "./tools/wallTags";
 import { XYTag } from "./tools/xyTags";
 import { ClassNames } from "./types/ClassName";
 import Dir from "./types/Dir";
-import { WallDecalTypes, WorldCell } from "./types/World";
 
 const ajv = new Ajv();
 
@@ -27,41 +27,68 @@ const condensedWallTypeSchema: JSONSchemaType<WallTypeCondensed> = {
 
 const dirSchema: JSONSchemaType<Dir> = { type: "number", enum: [0, 1, 2, 3] };
 
-const worldCellSchema: JSONSchemaType<WorldCell> = {
+export const overlaySchema: JSONSchemaType<Overlay> = {
   type: "object",
-  additionalProperties: false,
-  required: ["numbers", "sides", "strings", "tags"],
-  properties: {
-    ceiling: { type: "number", nullable: true },
-    floor: { type: "number", nullable: true },
-    numbers: { type: "object", additionalProperties: { type: "number" } },
-    object: { type: "number", nullable: true },
-    sides: {
+  required: ["type"],
+  anyOf: [
+    {
       type: "object",
-      additionalProperties: {
-        type: "object",
-        properties: {
-          decal: { type: "number" },
-          decalType: { type: "string", enum: WallDecalTypes },
-        },
+      required: ["type", "xy", "value"],
+      properties: {
+        type: { const: "addTag" },
+        xy: xyTagSchema,
+        value: { type: "string" },
       },
     },
-    strings: { type: "object", additionalProperties: { type: "string" } },
-    tags: { type: "array", items: { type: "string" } },
-  },
+    {
+      type: "object",
+      required: ["type", "xy", "value"],
+      properties: {
+        type: { const: "removeTag" },
+        xy: xyTagSchema,
+        value: { type: "string" },
+      },
+    },
+    {
+      type: "object",
+      required: ["type", "xy"],
+      properties: {
+        type: { const: "removeObject" },
+        xy: xyTagSchema,
+      },
+    },
+    {
+      type: "object",
+      required: ["type", "xy", "dir", "value"],
+      properties: {
+        type: { const: "setDecal" },
+        xy: xyTagSchema,
+        dir: dirSchema,
+        value: { type: "number" },
+      },
+    },
+    {
+      type: "object",
+      required: ["type", "xy", "dir", "value"],
+      properties: {
+        type: { const: "setSolid" },
+        xy: xyTagSchema,
+        dir: dirSchema,
+        value: { type: "boolean" },
+      },
+    },
+  ],
 };
 
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-expect-error
 const mapDataSchema: JSONSchemaType<MapData> = {
   type: "object",
   additionalProperties: false,
   required: ["cells", "overlays", "script", "walls"],
   properties: {
     cells: { type: "array", items: xyTagSchema },
-    overlays: {
-      type: "object",
-      patternProperties: { [xyTagSchema.pattern]: worldCellSchema },
-      additionalProperties: false,
-    },
+    overlays: { type: "array", items: overlaySchema },
     script: { type: "object" },
     walls: {
       type: "object",

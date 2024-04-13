@@ -4,6 +4,7 @@ import { getSavedGames } from "../saves";
 import { xyi } from "../tools/geometry";
 import { wrap } from "../tools/numbers";
 import withTextStyle from "../tools/withTextStyle";
+import { Pixels } from "../types/flavours";
 import { GameScreen } from "../types/GameScreen";
 import TitleScreen from "./TitleScreen";
 
@@ -16,7 +17,7 @@ export default class LoadGameScreen implements GameScreen {
     public g: Engine,
     public games = getSavedGames(),
     public index = 0,
-    public position = xyi(60, 60),
+    public position = xyi<Pixels>(60, 60),
   ) {
     void g.jukebox.play("title");
   }

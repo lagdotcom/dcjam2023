@@ -8,6 +8,14 @@ import isDefined from "./tools/isDefined";
 import { ClassName } from "./types/ClassName";
 import CombatAction from "./types/CombatAction";
 import Combatant, { AttackableStat, BoostableStat } from "./types/Combatant";
+import {
+  ActionName,
+  CombatantName,
+  HitPoints,
+  ItemName,
+  SkillName,
+  SkillPoints,
+} from "./types/flavours";
 import Item from "./types/Item";
 
 function getBaseStat(
@@ -22,14 +30,14 @@ function getBaseStat(
 export type PlayerEquipmentSlot = "LeftHand" | "RightHand" | "Body" | "Special";
 
 export interface SerializedPlayer {
-  name: string;
+  name: CombatantName;
   className: ClassName;
-  hp: number;
-  sp: number;
-  LeftHand?: string;
-  RightHand?: string;
-  Body?: string;
-  Special?: string;
+  hp: HitPoints;
+  sp: SkillPoints;
+  LeftHand?: ItemName;
+  RightHand?: ItemName;
+  Body?: ItemName;
+  Special?: ItemName;
 }
 
 export const endTurnAction: CombatAction = {
@@ -41,18 +49,18 @@ export const endTurnAction: CombatAction = {
 };
 
 export default class Player implements Combatant {
-  name: string;
+  name: CombatantName;
   isPC: true;
-  hp: number;
-  sp: number;
+  hp: HitPoints;
+  sp: SkillPoints;
   attacksInARow: number;
-  usedThisTurn: Set<string>;
-  baseMaxHP: number;
-  baseMaxSP: number;
+  usedThisTurn: Set<ActionName>;
+  baseMaxHP: HitPoints;
+  baseMaxSP: SkillPoints;
   baseCamaraderie: number;
   baseDetermination: number;
   baseSpirit: number;
-  skill: string;
+  skill: SkillName;
 
   LeftHand?: Item;
   RightHand?: Item;
@@ -150,14 +158,14 @@ export default class Player implements Combatant {
     }
   }
 
-  get maxHP() {
+  get maxHP(): HitPoints {
     return this.getStat("maxHP", this.baseMaxHP);
   }
-  get maxSP() {
+  get maxSP(): SkillPoints {
     return this.getStat("maxSP", this.baseMaxSP);
   }
 
-  get dr() {
+  get dr(): HitPoints {
     return this.getStat("dr", 0);
   }
 

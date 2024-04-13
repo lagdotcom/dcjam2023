@@ -49,7 +49,7 @@ const InkModule = (options = {}) => ({
               readFileSync(path.join(dir, filename), { encoding: "utf-8" }),
           },
           errorHandler: (message, type) => {
-            // console.log(compiler);
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
             if (type === 2)
               errors.push({
                 text: message,
@@ -59,6 +59,7 @@ const InkModule = (options = {}) => ({
                   column: compiler.parser.characterInLineIndex,
                 },
               });
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
             else if (type === 1)
               warnings.push({
                 text: message,

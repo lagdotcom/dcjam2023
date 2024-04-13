@@ -1,32 +1,42 @@
+import {
+  AreaName,
+  AtlasLayerID,
+  AtlasLayerIndex,
+  Cells,
+  DateYYYYMMDD,
+  Pixels,
+  Ratio,
+  VersionXYZ,
+} from "./flavours";
 import XY from "./XY";
 
 export interface AtlasTile {
   type: "front" | "side" | "floor" | "ceiling" | "object";
   flipped: boolean;
-  tile: { x: number; z: number };
-  screen: XY;
-  coords: { x: number; y: number; w: number; h: number; fullWidth: number };
+  tile: { x: Cells; z: Cells };
+  screen: XY<Pixels>;
+  coords: { x: Pixels; y: Pixels; w: Pixels; h: Pixels; fullWidth: Pixels };
 
   image: CanvasImageSource; // this is added by DungeonRenderer
 }
 
 export interface AtlasLayer {
   on: boolean;
-  index: number;
-  name: string;
+  index: AtlasLayerIndex;
+  name: AreaName;
   type: "Walls" | "Decal" | "Floor" | "Ceiling" | "Object";
-  id: number;
-  scale: XY;
-  offset: XY;
+  id: AtlasLayerID;
+  scale: XY<Ratio>;
+  offset: XY<Pixels>;
   tiles: AtlasTile[];
 }
 
 interface Atlas {
-  version: string;
-  generated: string;
-  resolution: { width: number; height: number };
-  depth: number;
-  width: number;
+  version: VersionXYZ;
+  generated: DateYYYYMMDD;
+  resolution: { width: Pixels; height: Pixels };
+  depth: Cells;
+  width: Cells;
   layers: AtlasLayer[];
 }
 export default Atlas;

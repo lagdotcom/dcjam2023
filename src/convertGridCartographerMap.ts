@@ -4,6 +4,14 @@ import { dirFromInitial, xy } from "./tools/geometry";
 import { openGate } from "./tools/sides";
 import { XYTag, xyToTag } from "./tools/xyTags";
 import Dir from "./types/Dir";
+import {
+  AtlasLayerID,
+  Cells,
+  MapFloor,
+  MapRegion,
+  ResourceURL,
+  TextureIndex,
+} from "./types/flavours";
 import { Edge, GCMap, Note } from "./types/GCMap";
 import {
   AtlasReference,
@@ -59,21 +67,21 @@ function compareNotes(a: Note, b: Note) {
 
 class GCMapConverter {
   atlases: AtlasReference[];
-  decals: Map<string, number>;
+  decals: Map<string, AtlasLayerID>;
   definitions: Map<string, number>;
   facing: Dir;
-  grid: Grid<WorldCell>;
-  scripts: string[];
-  start: XY;
+  grid: Grid<WorldCell, Cells>;
+  scripts: ResourceURL[];
+  start: XY<Cells>;
   startsOpen: Set<XYTag>;
-  textures: Map<number, number>;
+  textures: Map<TextureIndex, number>;
 
   constructor(env: Record<string, number> = {}) {
     this.atlases = [];
     this.decals = new Map();
     this.definitions = new Map(Object.entries(env));
     this.facing = Dir.N;
-    this.grid = new Grid<WorldCell>(() => ({
+    this.grid = new Grid(() => ({
       sides: {},
       tags: [],
       strings: {},
@@ -90,11 +98,11 @@ class GCMapConverter {
     this.definitions.set("WEST", Dir.W);
   }
 
-  tile(x: number, y: number) {
+  tile(x: Cells, y: Cells) {
     return this.grid.getOrDefault({ x: x, y: y });
   }
 
-  convert(j: GCMap, region = 0, floor = 0) {
+  convert(j: GCMap, region: MapRegion = 0, floor: MapFloor = 0) {
     if (!(region in j.regions)) throw new Error(`No such region: ${region}`);
     const r = j.regions[region];
 
@@ -161,7 +169,7 @@ class GCMapConverter {
     return { name, atlases, cells, definitions, scripts, start, facing };
   }
 
-  getTexture(index = 0) {
+  getTexture(index: TextureIndex = 0) {
     const texture = this.textures.get(index);
     if (typeof texture === "undefined")
       throw new Error(`Unknown texture for palette index ${index}`);
@@ -179,7 +187,7 @@ class GCMapConverter {
     throw new Error(`Could not evaluate: ${s}`);
   }
 
-  applyCommand(cmd: string, arg: string, x: number, y: number) {
+  applyCommand(cmd: string, arg: string, x: Cells, y: Cells) {
     switch (cmd) {
       case "#ATLAS":
         this.atlases.push(
@@ -252,7 +260,7 @@ class GCMapConverter {
 
   setEdge(
     edge: Edge,
-    index: number | undefined,
+    index: TextureIndex | undefined,
     lt: WorldCell,
     ld: Dir,
     rt: WorldCell,
@@ -287,8 +295,8 @@ class GCMapConverter {
 
 export default function convertGridCartographerMap(
   j: GCMap,
-  region = 0,
-  floor = 0,
+  region: MapRegion = 0,
+  floor: MapFloor = 0,
   env: Record<string, number> = {},
 ) {
   const converter = new GCMapConverter(env);

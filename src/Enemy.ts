@@ -8,25 +8,32 @@ import Engine from "./Engine";
 import { wrap } from "./tools/numbers";
 import CombatAction from "./types/CombatAction";
 import Combatant, { BoostableStat } from "./types/Combatant";
+import {
+  ActionName,
+  CombatantName,
+  HitPoints,
+  Milliseconds,
+  SkillPoints,
+} from "./types/flavours";
 
 export default class Enemy implements Combatant {
   isPC: false;
   animation: EnemyAnimation;
   frame: number;
-  delay: number;
-  name: string;
-  hp: number;
-  sp: number;
-  baseMaxHP: number;
-  baseMaxSP: number;
+  delay: Milliseconds;
+  name: CombatantName;
+  hp: HitPoints;
+  sp: SkillPoints;
+  baseMaxHP: HitPoints;
+  baseMaxSP: SkillPoints;
   baseCamaraderie: number;
   baseDetermination: number;
   baseSpirit: number;
-  baseDR: number;
+  baseDR: HitPoints;
   actions: CombatAction[];
   attacksInARow: number;
-  usedThisTurn: Set<string>;
-  lastAction?: string;
+  usedThisTurn: Set<ActionName>;
+  lastAction?: ActionName;
 
   constructor(
     public g: Engine,

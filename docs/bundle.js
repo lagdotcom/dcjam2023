@@ -245,7 +245,7 @@
   }
 
   // src/tools/lists.ts
-  function niceList(items) {
+  function listOfPeople(items) {
     if (items.length === 0)
       return "nobody";
     if (items.length === 1)
@@ -325,6 +325,18 @@
     }));
   };
   var Bash = makeAttack({ base: 4 });
+  var Bind = ({ g, targets }) => {
+    g.addToLog(`${listOfPeople(targets.map((x) => x.name))} is bound tightly!`);
+    g.addEffect(() => ({
+      name: "Bind",
+      duration: 2,
+      affects: targets,
+      onCanAct(e) {
+        if (this.affects.includes(e.who))
+          e.cancel = true;
+      }
+    }));
+  };
   var Bless = ({ g, me, targets }) => {
     for (const target of targets) {
       const amount = Math.max(0, target.camaraderie) + 2;
@@ -345,6 +357,18 @@
       }
     }));
   };
+  var Bravery = ({ g, targets }) => {
+    g.addEffect(() => ({
+      name: "Bravery",
+      duration: 2,
+      affects: targets,
+      buff: true,
+      onCalculateDR(e) {
+        if (this.affects.includes(e.who))
+          e.value += 2;
+      }
+    }));
+  };
   var Chakra = ({ g, me }) => {
     g.addEffect(() => ({
       name: "Chakra",
@@ -356,6 +380,55 @@
           e.value = e.size;
       }
     }));
+  };
+  var Cheer = ({ g, targets }) => {
+    g.addToLog(
+      `${listOfPeople(targets.map((x) => x.name))} feel${pluralS(
+        targets
+      )} more protected.`
+    );
+    g.addEffect(() => ({
+      name: "Cheer",
+      duration: 2,
+      affects: targets,
+      buff: true,
+      onCalculateDR(e) {
+        if (this.affects.includes(e.who))
+          e.value += 3;
+      }
+    }));
+  };
+  var Conduct = ({ g, me, targets }) => {
+    const dealt = g.applyDamage(me, targets, 6, "hp", "normal");
+    if (dealt > 0) {
+      const ally = oneOf(g.getAllies(me, false));
+      if (ally) {
+        g.addToLog(`${me.name} conducts ${ally.name}'s next attack.`);
+        g.addEffect((destroy) => ({
+          name: "Conduct",
+          duration: 1,
+          affects: [ally],
+          buff: true,
+          onCalculateDamage(e) {
+            if (this.affects.includes(e.attacker)) {
+              const bonus = g.roll(me);
+              e.amount += bonus;
+              destroy();
+            }
+          }
+        }));
+      }
+    }
+  };
+  var Crackle = ({ g, me, targets, x }) => {
+    for (let i = 0; i < x; i++) {
+      const alive = targets.filter((t) => t.alive);
+      if (!alive.length)
+        return;
+      const target = oneOf(alive);
+      const amount = g.roll(me) + 2;
+      g.applyDamage(me, [target], amount, "hp", "magic");
+    }
   };
   var Deflect = ({ g, me }) => {
     g.addEffect((destroy) => ({
@@ -397,8 +470,64 @@
     g.applyDamage(me, targets, 6, "hp", "normal");
   };
   var EndTurn = ({ g }) => g.endTurn();
+  var Endure = ({ g, me }) => {
+    g.addEffect(() => ({
+      name: "Endure",
+      duration: 2,
+      affects: [me],
+      buff: true,
+      onCalculateDR(e) {
+        if (this.affects.includes(e.who))
+          e.value += 2;
+      }
+    }));
+    const opposite = g.getOpponent(me);
+    if (opposite) {
+      g.addToLog(
+        `${opposite.name} withers in the face of ${me.name}'s endurance!`
+      );
+      g.addEffect(() => ({
+        name: "Endured",
+        duration: 2,
+        affects: [opposite],
+        onCalculateDetermination(e) {
+          if (this.affects.includes(e.who))
+            e.value -= 2;
+        }
+      }));
+    }
+  };
   var Flight = makeAttack({ base: 10 });
   var Fortify = () => {
+  };
+  var Gleam = ({ g, me }) => {
+    g.addEffect((destroy) => ({
+      name: "Gleam",
+      duration: 2,
+      affects: [me],
+      onBeforeAction(e) {
+        if (intersection(this.affects, e.targets).length && e.action.tags.includes("spell")) {
+          e.cancel = true;
+          g.addToLog(`The gleam disrupts the spell.`);
+          destroy();
+          return;
+        }
+      }
+    }));
+  };
+  var Gouge = ({ g, me, targets }) => {
+    const amount = g.roll(me) + 6;
+    if (g.applyDamage(me, targets, amount, "hp", "normal") > 0) {
+      g.addEffect(() => ({
+        name: "Gouge",
+        duration: 2,
+        affects: targets,
+        onCalculateDR(e) {
+          if (this.affects.includes(e.who))
+            e.multiplier = 0;
+        }
+      }));
+    }
   };
   var Honour = ({ g, targets }) => {
     g.addEffect(() => ({
@@ -412,10 +541,36 @@
       }
     }));
   };
+  var Inspire = ({ g, me, targets }) => {
+    g.addEffect(() => ({
+      name: "Inspire",
+      duration: 2,
+      affects: targets,
+      onCalculateDamage(e) {
+        if (this.affects.includes(e.target)) {
+          e.multiplier = 0;
+          g.addToLog(`${e.attacker.name} faces backlash!`);
+          g.applyDamage(me, [e.attacker], g.roll(me), "hp", "magic");
+        }
+      }
+    }));
+  };
+  var Kneel = ({ g, me }) => {
+    g.addToLog(`${me.name} is ready to accept judgement.`);
+    g.addEffect(() => ({
+      name: "Kneel",
+      duration: 2,
+      affects: [me],
+      onCalculateDR(e) {
+        if (this.affects.includes(e.who))
+          e.value = 0;
+      }
+    }));
+  };
   var Lash = ({ g, me, targets }) => {
     if (g.applyDamage(me, targets, 3, "hp", "normal") > 0) {
       g.addToLog(
-        `${niceList(targets.map((x) => x.name))} feel${pluralS(
+        `${listOfPeople(targets.map((x) => x.name))} feel${pluralS(
           targets
         )} temporarily demoralized.`
       );
@@ -429,6 +584,8 @@
         }
       }));
     }
+  };
+  var Lure = () => {
   };
   var Mantra = ({ g, me, targets }) => {
     me.determination--;
@@ -445,6 +602,17 @@
       onCalculateDamage(e) {
         if (intersection(this.affects, [e.attacker, e.target]).length)
           e.multiplier *= 2;
+      }
+    }));
+  };
+  var Muse = ({ g, targets }) => {
+    g.addEffect(() => ({
+      name: "Muse",
+      duration: 2,
+      affects: targets,
+      onCalculateDamage(e) {
+        if (this.affects.includes(e.attacker))
+          e.amount += e.attacker.camaraderie;
       }
     }));
   };
@@ -465,6 +633,55 @@
       }
     }));
   };
+  var Pose = ({ g, me }) => {
+    const front = g.getPosition(me).dir;
+    const right = rotate(front, 1);
+    const back = rotate(front, 2);
+    const left = rotate(front, 3);
+    const frontIsEmpty = () => !g.getOpponent(me);
+    const rightIsEmpty = () => !g.getOpponent(me, 1);
+    const backIsEmpty = () => !g.getOpponent(me, 2);
+    const leftIsEmpty = () => !g.getOpponent(me, 3);
+    if (frontIsEmpty()) {
+      if (!leftIsEmpty()) {
+        g.moveEnemy(left, front);
+      } else if (!rightIsEmpty()) {
+        g.moveEnemy(right, front);
+      }
+    }
+    if (!backIsEmpty) {
+      if (leftIsEmpty()) {
+        g.moveEnemy(back, left);
+      } else if (rightIsEmpty()) {
+        g.moveEnemy(back, right);
+      }
+    }
+  };
+  var Ram = ({ g, me, targets }) => {
+    g.applyDamage(me, targets, 6, "hp", "normal");
+    g.applyDamage(me, targets, 1, "camaraderie", "normal");
+    g.applyDamage(me, targets, 6, "hp", "normal");
+    g.applyDamage(me, targets, 1, "camaraderie", "normal");
+    for (const target of targets) {
+      if (target.camaraderie <= 0)
+        g.applyDamage(me, [target], g.roll(me), "hp", "normal");
+    }
+  };
+  var Reforge = ({ g, me }) => {
+    g.heal(me, [me], Infinity);
+  };
+  var Rumble = ({ g, me }) => {
+    const amount = g.roll(me) + 10;
+    const opponent = g.getOpponent(me);
+    const others = [
+      g.getOpponent(me, 1),
+      g.getOpponent(me, 2),
+      g.getOpponent(me, 3)
+    ].filter(isDefined);
+    const targets = [opponent, oneOf(others)].filter(isDefined);
+    g.applyDamage(me, targets, amount, "hp", "magic");
+    g.applyDamage(me, targets, 1, "spirit", "magic");
+  };
   var Sand = ({ g, me, targets }) => {
     g.applyDamage(me, targets, 1, "determination", "normal");
   };
@@ -474,13 +691,77 @@
     g.applyDamage(me, targets, amount, "hp", "normal");
     g.applyDamage(me, targets, amount, "hp", "normal");
   };
+  var Search = () => {
+  };
+  var Smash = ({ g, me, targets, x }) => {
+    const magnitude = x + Math.floor(me.hp / me.maxHP * 8);
+    g.applyDamage(me, targets, magnitude * 4, "hp", "normal");
+  };
+  var Stealth = () => {
+  };
+  var Study = ({ g, me }) => {
+    g.addEffect(() => ({
+      name: "Study",
+      duration: 2,
+      affects: [me],
+      onAfterDamage({ target, type }) {
+        if (this.affects.includes(target) && type === "hp")
+          target.sp = Math.min(target.sp + 2, target.maxSP);
+      }
+    }));
+  };
   var Swarm = makeAttack({ base: 3, roll: false, origin: "magic" });
   var Sweep = makeAttack({ base: 4, roll: false });
   var Tackle = makeAttack({ base: 0 });
   var Thrust = makeAttack({ base: 3 });
   var Trick = makeAttack({ base: 1, roll: false, type: "camaraderie" });
+  var Truce = ({ g, targets }) => {
+    g.addEffect(() => ({
+      name: "Truce",
+      duration: 2,
+      affects: targets,
+      onCanAct(e) {
+        if (this.affects.includes(e.who) && e.action.tags.includes("attack"))
+          e.cancel = true;
+      }
+    }));
+  };
+  var Unveil = () => {
+  };
+  var Vanish = () => {
+  };
+  var VoxPop = ({ g, me, targets }) => {
+    g.addEffect(() => ({
+      name: "Vox Pop",
+      duration: 2,
+      affects: targets,
+      buff: true,
+      onCalculateDR(e) {
+        if (this.affects.includes(e.who))
+          e.value += 2;
+      }
+    }));
+    const opponent = g.getOpponent(me);
+    if (opponent) {
+      const effects = g.getEffectsOn(opponent).filter((e) => e.buff);
+      if (effects.length) {
+        g.addToLog(`${opponent.name} loses their protections.`);
+        g.removeEffectsFrom(effects, opponent);
+        g.applyDamage(me, [opponent], g.roll(me), "hp", "normal");
+      }
+    }
+  };
+  var Wrestle = () => {
+  };
 
   // src/actions.ts
+  var Arrow2 = {
+    name: "Arrow",
+    tags: [],
+    sp: 3,
+    targets: { type: "enemy", count: 1, distance: 1, offsets: [1, 2, 3] },
+    act: Arrow
+  };
   var Attack2 = {
     name: "Attack",
     tags: [],
@@ -502,6 +783,13 @@
     targets: { type: "enemy", count: 1, distance: 1, offsets: [0] },
     act: Bash
   };
+  var Bind2 = {
+    name: "Bind",
+    tags: [],
+    sp: 4,
+    targets: { type: "enemy", count: 1, distance: 1, offsets: [0, 1, 2, 3] },
+    act: Bind
+  };
   var Bless2 = {
     name: "Bless",
     tags: [],
@@ -516,12 +804,40 @@
     targets: { type: "self" },
     act: Brace
   };
+  var Bravery2 = {
+    name: "Bravery",
+    tags: [],
+    sp: 3,
+    targets: { type: "ally" },
+    act: Bravery
+  };
   var Chakra2 = {
     name: "Chakra",
     tags: [],
     sp: 3,
     targets: { type: "self" },
     act: Chakra
+  };
+  var Cheer2 = {
+    name: "Cheer",
+    tags: [],
+    sp: 2,
+    targets: { type: "self/ally", count: 1, distance: 1, offsets: [0, 1, 2, 3] },
+    act: Cheer
+  };
+  var Conduct2 = {
+    name: "Conduct",
+    tags: [],
+    sp: 3,
+    targets: { type: "enemy", count: 1, distance: 1, offsets: [0] },
+    act: Conduct
+  };
+  var Crackle2 = {
+    name: "Crackle",
+    tags: [],
+    sp: 2,
+    targets: { type: "self/enemy" },
+    act: Crackle
   };
   var Deflect2 = {
     name: "Deflect",
@@ -544,6 +860,13 @@
     targets: { type: "enemy/multiple", count: 2, distance: 1, offsets: [0, 2] },
     act: DuoStab
   };
+  var Endure2 = {
+    name: "Endure",
+    tags: [],
+    sp: 2,
+    targets: { type: "self/enemy" },
+    act: Endure
+  };
   var Flight2 = {
     name: "Flight",
     tags: [],
@@ -558,6 +881,20 @@
     targets: { type: "self/ally" },
     act: Fortify
   };
+  var Gleam2 = {
+    name: "Gleam",
+    tags: [],
+    sp: 3,
+    targets: { type: "self" },
+    act: Gleam
+  };
+  var Gouge2 = {
+    name: "Gouge",
+    tags: [],
+    sp: 5,
+    targets: { type: "enemy", count: 1, distance: 1, offsets: [0] },
+    act: Gouge
+  };
   var Honour2 = {
     name: "Honour",
     tags: [],
@@ -565,12 +902,33 @@
     targets: { type: "self/ally" },
     act: Honour
   };
+  var Inspire2 = {
+    name: "Inspire",
+    tags: [],
+    sp: 4,
+    targets: { type: "self/ally/enemy" },
+    act: Inspire
+  };
+  var Kneel2 = {
+    name: "Kneel",
+    tags: [],
+    sp: 0,
+    targets: { type: "self" },
+    act: Kneel
+  };
   var Lash2 = {
     name: "Lash",
     tags: [],
     sp: 3,
     targets: { type: "enemy", count: 1, offsets: [0, 1, 2, 3] },
     act: Lash
+  };
+  var Lure2 = {
+    name: "Lure",
+    tags: [],
+    sp: 1,
+    targets: { type: "self/ally/enemy" },
+    act: Lure
   };
   var Mantra2 = {
     name: "Mantra",
@@ -586,12 +944,47 @@
     targets: { type: "self" },
     act: Mudra
   };
+  var Muse2 = {
+    name: "Muse",
+    tags: [],
+    sp: 2,
+    targets: { type: "self/ally/multiple" },
+    act: Muse
+  };
   var Parry2 = {
     name: "Parry",
     tags: [],
     sp: 3,
     targets: { type: "self/enemy" },
     act: Parry
+  };
+  var Pose2 = {
+    name: "Pose",
+    tags: [],
+    sp: 2,
+    targets: { type: "self/ally/enemy" },
+    act: Pose
+  };
+  var Ram2 = {
+    name: "Ram",
+    tags: [],
+    sp: 4,
+    targets: { type: "self/ally/enemy", count: 1, distance: 1, offsets: [0] },
+    act: Ram
+  };
+  var Reforge2 = {
+    name: "Reforge",
+    tags: [],
+    sp: 5,
+    targets: { type: "self" },
+    act: Reforge
+  };
+  var Rumble2 = {
+    name: "Rumble",
+    tags: [],
+    sp: 4,
+    targets: { type: "enemy", count: 2, offsets: [0, 1, 2, 3] },
+    act: Rumble
   };
   var Sand2 = {
     name: "Sand",
@@ -606,6 +999,41 @@
     sp: 3,
     targets: { type: "enemy", count: 1, distance: 1, offsets: [0] },
     act: Scar
+  };
+  var Search2 = {
+    name: "Search",
+    tags: [],
+    sp: 4,
+    targets: { type: "self/ally" },
+    act: Search
+  };
+  var Smash2 = {
+    name: "Smash",
+    tags: [],
+    sp: 3,
+    targets: { type: "enemy", count: 1, distance: 1, offsets: [0] },
+    act: Smash
+  };
+  var Stealth2 = {
+    name: "Stealth",
+    tags: [],
+    sp: 5,
+    targets: { type: "self/ally/enemy" },
+    act: Stealth
+  };
+  var Study2 = {
+    name: "Study",
+    tags: [],
+    sp: 1,
+    targets: { type: "self" },
+    act: Study
+  };
+  var Swarm2 = {
+    name: "Swarm",
+    tags: [],
+    sp: 2,
+    targets: { type: "self/ally/enemy", count: 3, distance: 3, offsets: [0] },
+    act: Swarm
   };
   var Sweep2 = {
     name: "Sweep",
@@ -634,6 +1062,41 @@
     sp: 1,
     targets: { type: "enemy", count: 1, distance: 1, offsets: [0, 1, 2, 3] },
     act: Trick
+  };
+  var Truce2 = {
+    name: "Truce",
+    tags: [],
+    sp: 6,
+    targets: { type: "enemy/multiple", offsets: [0, 1, 2, 3] },
+    act: Truce
+  };
+  var Unveil2 = {
+    name: "Unveil",
+    tags: [],
+    sp: 1,
+    targets: { type: "enemy", count: 1, distance: 1, offsets: [0, 1, 2, 3] },
+    act: Unveil
+  };
+  var Vanish2 = {
+    name: "Vanish",
+    tags: [],
+    sp: 2,
+    targets: { type: "self" },
+    act: Vanish
+  };
+  var VoxPop2 = {
+    name: "Vox Pop",
+    tags: [],
+    sp: 4,
+    targets: { type: "enemy/ally/self/multiple" },
+    act: VoxPop
+  };
+  var Wrestle2 = {
+    name: "Wrestle",
+    tags: [],
+    sp: 2,
+    targets: { type: "self/ally/enemy", count: 1, distance: 1, offsets: [1, 3] },
+    act: Wrestle
   };
 
   // src/enemyData.ts
@@ -989,13 +1452,13 @@
     textBaseline,
     fillStyle,
     fontSize = 10,
-    fontFace = "sans-serif",
+    fontFamily = "sans-serif",
     globalAlpha = 1
   }) {
     ctx.textAlign = textAlign;
     ctx.textBaseline = textBaseline;
     ctx.fillStyle = fillStyle;
-    ctx.font = `${fontSize}px ${fontFace}`;
+    ctx.font = `${fontSize}px ${fontFamily}`;
     ctx.globalAlpha = globalAlpha;
     return {
       lineHeight: fontSize + 4,
@@ -1119,13 +1582,13 @@
   // res/atlas/sneedCrawler.png
   var sneedCrawler_default2 = "./sneedCrawler-B5CE42IQ.png";
 
-  // ink:D:\Code\dcjam2023\res\map.ink
+  // ink:D:\poisoned-daggers\res\map.ink
   var map_default = "./map-WCLB3GM3.ink";
 
   // res/map.json
   var map_default2 = "./map-HXD5COAC.json";
 
-  // ink:D:\Code\dcjam2023\res\rush.ink
+  // ink:D:\poisoned-daggers\res\rush.ink
   var rush_default = "./rush-LZWVRJNU.ink";
 
   // res/rush.json
@@ -1656,6 +2119,78 @@
   var import_Story = __toESM(require_inkjs());
 
   // src/items.ts
+  var AdaloaxPelt = {
+    name: "Adaloax Pelt",
+    restrict: ["Far Scout"],
+    slot: "Body",
+    type: "Armour",
+    bonus: {},
+    action: Bind2,
+    lore: `Traditional hunter-gatherer and scouting attire, adaloax pelts are often sold and coupled with a set of bolas for trapping prey. The rest of the adaloax is divided up into portions of meat and sold at market value, often a single adaloax can produce upwards of three pelts and enough meat to keep multiple people fed.`
+  };
+  var BahrnaduSmock = {
+    name: "Bahrnadu Smock",
+    restrict: ["Far Scout"],
+    slot: "Body",
+    type: "Armour",
+    bonus: {},
+    action: Trick2,
+    lore: `So strong was Bahrnadu's magic that it could alter perception of those around it to whatever it's wielders wanted. During the Morrow of Absolution, a group of skilled assassins donned smocks with Bahrnadu's enchantments, disguising themselves as insurrectionists and secretly poisoning their foes. The dynasty of Rahl'nan fell that day, and the smocks were passed only to ancestors of those involved with the incident.`
+  };
+  var BeekeepersBroochOfNeedling = {
+    name: "Beekeeper's Brooch of Needling",
+    restrict: ["Loam Seer"],
+    slot: "Hand",
+    type: "Catalyst",
+    bonus: {},
+    action: Swarm2,
+    lore: `The badge of office for any who ally with insectkind. Bids fierce clouds of bees to deliver a salvo of stings to the assailants of one truly in harmony with the earth, if they are humble and bereft of secret ambition.`
+  };
+  var BoltSlinger = {
+    name: "Bolt Slinger",
+    restrict: ["Far Scout"],
+    slot: "Hand",
+    type: "Weapon",
+    bonus: {},
+    action: Arrow2,
+    lore: `A string and stick combo coming in many shapes and sizes. All with the express purpose of expelling sharp objects at blinding speeds. Any far scout worth their salt still opts for a retro-styled bolt slinger, clunky mechanisms and needless gadgets serve only to hinder one's own skills.`
+  };
+  var BrassHeartInsignia = {
+    name: "Brass Heart Insignia",
+    restrict: ["War Caller"],
+    slot: "Hand",
+    type: "Catalyst",
+    bonus: {},
+    action: Bless2,
+    lore: `War Caller iconography is not to be shown to anyone who has studied medicine; the Brass Heart signifies that the will to heal one's self comes from the chest, always thrust proudly forwards to receive terrible blows. (Two weeks in bed and a poultice applied thrice daily notwithstanding.)`
+  };
+  var CarvingKnife = {
+    name: "Carving Knife",
+    restrict: ["Flag Singer"],
+    slot: "Hand",
+    type: "Weapon",
+    bonus: {},
+    action: Scar2,
+    lore: `Not a martial weapon, but rather a craftsman and artist's tool. Having secretly spurned Cherraphy's foul request, this Singer carries this knife as a confirmation that what they did was right.`
+  };
+  var CatfacedMasquerade = {
+    name: "Cat-faced Masquerade",
+    restrict: ["Flag Singer"],
+    slot: "Special",
+    type: "Special",
+    bonus: {},
+    action: Inspire2,
+    lore: `A mask that lends its wearer a mocking air, or one of being deeply unimpressed. Turning this disdainful expression on an enemy reassures your allies of their superiority; a simple means of encouragement in complicated times.`
+  };
+  var CherclaspeGauntlet = {
+    name: "Cher-claspe Gauntlet",
+    restrict: ["War Caller"],
+    slot: "Special",
+    type: "Special",
+    bonus: {},
+    action: Smash2,
+    lore: `A pair of iron gauntlets ensorcelled with a modest enchantment; upon the command of a priest, these matching metal gloves each lock into the shape of a fist and cannot be undone by the bearer; a stricture that War Callers willingly bear, that it may sustain their resolve and dismiss their idle habits.`
+  };
   var ChivalrousMantle = {
     name: "Chivalrous Mantle",
     restrict: ["Cleavesman"],
@@ -1664,6 +2199,42 @@
     bonus: {},
     action: Honour2,
     lore: `(DESCRIPTION COMING LATER)`
+  };
+  var Cornucopia = {
+    name: "Cornucopia",
+    restrict: ["Loam Seer"],
+    slot: "Hand",
+    type: "Catalyst",
+    bonus: {},
+    action: Bless2,
+    lore: `The proverbial horn of plenty, or rather a replica crafted by the artists of Haringlee, then bestowed by its priests with a magickal knack for exuding a sweet restorative nectar.`
+  };
+  var DivasDress = {
+    name: "Diva's Dress",
+    restrict: ["Flag Singer"],
+    slot: "Body",
+    type: "Armour",
+    bonus: {},
+    action: Defy2,
+    lore: `Few dare interfere with the performance of a Singer so dressed: these glittering magic garments dazzle any foolish enough to try! All may wear the Diva's Dress so long as it is earned by skill; gender matters not to the craft.`
+  };
+  var Fandagger = {
+    name: "Fandagger",
+    restrict: ["Flag Singer"],
+    slot: "Hand",
+    type: "Weapon",
+    bonus: {},
+    action: Conduct2,
+    lore: `Fandaggers are graceful tools of the rogue, to be danced with and to be thrown between acrobats in relay. Held at one end they concertina into painted fans; the other suits the stabbing grip.`
+  };
+  var FolkHarp = {
+    name: "Folk Harp",
+    restrict: ["Flag Singer"],
+    slot: "Special",
+    type: "Special",
+    bonus: {},
+    action: Muse2,
+    lore: `An ancient traditional instrument, strings of animal innards sprung over a tune-measured wooden frame to create a playable musical scale. Can be plucked melodically, or strummed to produce a glistening, harmonic, rain-like sound.`
   };
   var Gambesar = {
     name: "Gambesar",
@@ -1684,6 +2255,24 @@
     lore: `""May this steel sing the color of heathen blood.""
 
 This phrase has been uttered ever since Gorgothil was liberated from the thralls of Mullanginan during the Lost War. Gorgothil is now an ever devoted ally, paying their debts by smithing weaponry for all cleavesmen under Cherraphy's wing.`
+  };
+  var GrowlingCollar = {
+    name: "Growling Collar",
+    restrict: ["Flag Singer"],
+    slot: "Body",
+    type: "Armour",
+    bonus: {},
+    action: VoxPop2,
+    lore: `A mechanical amplifier pressed tightly to the skin of the throat, held in place by a black leather collar. When you speak, it roars.`
+  };
+  var HairShirt = {
+    name: "Hair Shirt",
+    restrict: ["War Caller"],
+    slot: "Body",
+    type: "Armour",
+    bonus: {},
+    action: Kneel2,
+    lore: `A garment for penitents: the unwelcome itching generated by its wiry goat-hair lining must be surpassed through strength of will.`
   };
   var Halberdigan = {
     name: "Halberdigan",
@@ -1721,6 +2310,42 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     action: Brace2,
     lore: `As common a sight as the two moons in the sky. Adorned with the crest of Cherraphy, it symbolizes full acceptance of her teachings, her people, and wearers pledge their utmost devotion to her and the citizens of Haringlee.`
   };
+  var HuntingHorn = {
+    name: "Hunting Horn",
+    restrict: ["Far Scout"],
+    slot: "Special",
+    type: "Artefact",
+    bonus: {},
+    action: Lure2,
+    lore: `A talented far scout can modulate the minutae of their vocal cords to produce fair mimicry of many different animals. The same skill channeled through the Hunting Horn turns cry into command, compelling beasts to respond and upon so doing, betray their presence.`
+  };
+  var IoliteCross = {
+    name: "Iolite Cross",
+    restrict: ["Loam Seer"],
+    slot: "Hand",
+    type: "Catalyst",
+    bonus: {},
+    action: Vanish2,
+    lore: `A semi-precious crux. Light generated by uncanny phosphorous plants - or by the setting sun - hits this substance at a remarkable, almost magickal angle.`
+  };
+  var IronFullcase = {
+    name: "Iron Fullcase",
+    restrict: ["War Caller"],
+    slot: "Body",
+    type: "Armour",
+    bonus: {},
+    action: Endure2,
+    lore: `A stiff layer of iron to protect the innards, sleeveless to allow flexibility in one's arms. Arena veterans favor such gear, goading their opponents with weapons brandished wildly, their chest remaining an impossible target to hit.`
+  };
+  var JacketAndRucksack = {
+    name: "Jacket and Rucksack",
+    restrict: ["Loam Seer"],
+    slot: "Body",
+    type: "Armour",
+    bonus: {},
+    action: Search2,
+    lore: `Clothes and containers of simple leather. Sensible wear for foragers and druidic types; not truly intended for fighting.`
+  };
   var Jaegerstock = {
     name: "Jaegerstock",
     restrict: ["Cleavesman"],
@@ -1757,6 +2382,24 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     action: Mudra2,
     lore: `In all essence, an end. Gestures and actions performed, repeated through infinite motion. All motion and form finds an ending from Loromay, the primordial deathbed of all things and where even the actions of Gods become meaningless.`
   };
+  var MantleOfClay = {
+    name: "Mantle of Clay",
+    restrict: ["Loam Seer"],
+    slot: "Special",
+    type: "Special",
+    bonus: {},
+    action: Rumble2,
+    lore: `Pots of runny clay, into which fingers and paintbrushes can be dipped. It grips the skin tight as any tattoo when applied in certain patterns, like veins; so too can the shaman who wears these marks espy the "veins" of the rocks below them and, with a tug, bid them tremble.`
+  };
+  var Mosscloak = {
+    name: "Mosscloak",
+    restrict: ["Loam Seer"],
+    slot: "Body",
+    type: "Armour",
+    bonus: {},
+    action: Study2,
+    lore: `Deep into the wilderness where wood meets river, a type of silver-grey-green moss flourishes that piles on so thick that, when carefully detached from the tree trunk it hugs, can retain its integrity as a naturally-occurring fabric. This specimen reaches all the way from shoulder to foot and trails some length along the ground behind you!`
+  };
   var NundarialVestments = {
     name: "Nundarial Vestments",
     restrict: ["Martialist"],
@@ -1765,6 +2408,15 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     bonus: {},
     action: Brace2,
     lore: `On the day of Nundariel's passing, it's said everyone wore these vestments at Cherraphy's order, to "honor a fool's futility". Historians wager this is in reference to Nundarial spending their lifetime weathering attacks behind closed doors, never striking back, forever without purpose, sleeping in the dulcet cradle of war.`
+  };
+  var OwlsSkull = {
+    name: "Owl's Skull",
+    restrict: ["War Caller"],
+    slot: "Hand",
+    type: "Catalyst",
+    bonus: {},
+    action: Defy2,
+    lore: `All experienced knights know that menace lies mainly in the eyes, whether it be communicated via a glare through the slits of a full helmet or by a wild, haunting stare. War Callers find common ground with the owls that hunt their forests and sometimes try to tame them as familiars, as others do falcons in different realms.`
   };
   var Penduchaimmer = {
     name: "Penduchaimmer",
@@ -1775,6 +2427,96 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     action: DuoStab2,
     lore: `Comprised of two anchors and bound together by threaded fiber plucked from spidokans, these traditional weapons of a martialist are built to stretch and spin much like the hands of a suspended gravity clock. Penduchaimmers are a reminder to all martialists that time will always find it's way back to the living, only in death does it cease.`
   };
+  var PlatesOfWhiteBrassAndGold = {
+    name: "Plates of White, Brass and Gold",
+    restrict: ["War Caller"],
+    slot: "Body",
+    type: "Armour",
+    bonus: {},
+    action: Gleam2,
+    lore: `An impressive suit of armor, decorated in the colours that the Crusaders of Cherraphy favor. Despite the lavish attention to presentation, it is no ceremonial costume: beneath the inlaid discs of fine metal, steel awaits to contest any oncoming blade.`
+  };
+  var PolishedArenaShield = {
+    name: "Polished Arena-Shield",
+    restrict: ["War Caller"],
+    slot: "Hand",
+    type: "Shield",
+    bonus: {},
+    action: Pose2,
+    lore: `As well as being a serviceable shield, this example has a percussive quality; when beaten with a club it resounds as a bell.`
+  };
+  var PryingPoleaxe = {
+    name: "Prying Poleaxe",
+    restrict: ["Far Scout"],
+    slot: "Hand",
+    type: "Weapon",
+    bonus: {},
+    action: Gouge2,
+    lore: `Armor houses flesh, and a prying poleaxe's job is to expose it. Favored by wielders who prefer to keep a distance from their foes, it's said the reach symbolizes the distance between all creatures and the gods, and that those crossing the line are deserving of retribution. Depending on who you ask, it's uncertain which end of the weapon refers to creatures, and which refers to the gods.`
+  };
+  var RockringSleeve = {
+    name: "Rockring Sleeve",
+    restrict: ["Loam Seer"],
+    slot: "Body",
+    type: "Armour",
+    bonus: {},
+    action: Fortify2,
+    lore: `A set of four polished hoops of granite, fit to mold closely to its wearer's forearm. Studied practioners of the power that dwells within rock can share the protection of such a carapace with their compatriots.`
+  };
+  var SaintsGong = {
+    name: "Saint's Gong",
+    restrict: ["War Caller"],
+    slot: "Special",
+    type: "Special",
+    bonus: {},
+    action: Truce2,
+    lore: `A brass percussive disc mounted on a seven foot bannerpole and hung from hinge-chains, letting it swing freely enough that its shuddering surface rings clean. Most effective when tuned to the frequency of a chosen knight's bellows, allowing it to crash loudly in accompaniment with each war cry.`
+  };
+  var SignedCasque = {
+    name: "Signed Casque",
+    restrict: ["Flag Singer"],
+    slot: "Body",
+    type: "Armour",
+    bonus: {},
+    action: Cheer2,
+    lore: `A vest made of traditional plaster and adorned in writing with the feelings and wishes of each villager the Singer dares to protect.`
+  };
+  var SkinOfTheBear = {
+    name: "Skin of the Bear",
+    restrict: ["Far Scout"],
+    slot: "Body",
+    type: "Armour",
+    bonus: {},
+    action: Wrestle2,
+    lore: `Donning the mantle of the bear inspires an irresistible need for physical contest. Previously standoffish archers have discovered blood-boiling ferocity within themselves when so clad!`
+  };
+  var Storyscroll = {
+    name: "Storyscroll",
+    restrict: ["Flag Singer"],
+    slot: "Hand",
+    type: "Flag",
+    bonus: {},
+    action: Bravery2,
+    lore: `A furled tapestry illustrated with a brief history of Haringlee myth. When the Flag Singer whirls it about them as though dancing with ribbons, their comrades are enriched by the spirit of the fantasies it depicts.`
+  };
+  var TheSternMask = {
+    name: "The Stern Mask",
+    restrict: ["War Caller"],
+    slot: "Special",
+    type: "Special",
+    bonus: {},
+    action: Ram2,
+    lore: `A full helm, decorated in paint and fine metalwork to resemble the disdainful face of a saint. Each headbutt it delivers communicates severe chastisement.`
+  };
+  var TortoiseFamiliar = {
+    name: "Tortoise Familiar",
+    restrict: ["Loam Seer"],
+    slot: "Special",
+    type: "Special",
+    bonus: {},
+    action: Reforge2,
+    lore: `The tortoise is one of the ground's favoured childs, fashioned in its image. This one seems to have an interest in your cause.`
+  };
   var VargangliaCarcass = {
     name: "Varganglia Carcass",
     restrict: ["Cleavesman"],
@@ -1783,6 +2525,33 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     bonus: {},
     action: Barb2,
     lore: `Armor that's slithered forth from Telnoth's scars after the Long War ended. Varganglia carcasses have become a common attire for cleavesman, their pelts covered with thick and venemous barbs that erupt from the carcass when struck, making the wearer difficult to strike.`
+  };
+  var WandOfWorkedFlint = {
+    name: "Wand of Worked Flint",
+    restrict: ["Loam Seer"],
+    slot: "Special",
+    type: "Special",
+    bonus: {},
+    action: Crackle2,
+    lore: `A spike of sparking rock, decorated with one twisting groove from haft to tip. Rubbing your thumb along the thing produces a faint sizzling sound.`
+  };
+  var WellstringSnood = {
+    name: "Wellstring Snood",
+    restrict: [],
+    slot: "Special",
+    type: "Armour",
+    bonus: {},
+    action: Stealth2,
+    lore: `While no longer a common practice, many far scouts swear to celibacy. So common was this practice that at one point these hideous snoods were manufactured, donning one was a sign of commitment to it's wearer's duty and it's intended purpose shifted. Soon, many scouts began wearing them as a challenge, to see who could go the longest without being perceived.`
+  };
+  var WindmillRobe = {
+    name: "Windmill Robe",
+    restrict: ["Flag Singer"],
+    slot: "Special",
+    type: "Special",
+    bonus: {},
+    action: Unveil2,
+    lore: `A pale blue robe with ultra-long sleeves, slung with diamond-shaped hanging sheets of fabric. Psychic expertise and practise allows you to manipulate these flags and perform intricate displays without so much as moving your arms; the most complicated dances can have a mesmerizing effect.`
   };
   var YamorolsMouth = {
     name: "Yamorol's Mouth",
@@ -1795,20 +2564,54 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
   };
   var allItems = Object.fromEntries(
     [
+      AdaloaxPelt,
+      BahrnaduSmock,
+      BeekeepersBroochOfNeedling,
+      BoltSlinger,
+      BrassHeartInsignia,
+      CarvingKnife,
+      CatfacedMasquerade,
+      CherclaspeGauntlet,
       ChivalrousMantle,
+      Cornucopia,
+      DivasDress,
+      Fandagger,
+      FolkHarp,
       Gambesar,
       GorgothilSword,
+      GrowlingCollar,
+      HairShirt,
       Halberdigan,
       HalflightCowl,
       HaringleeKasaya,
       Haringplate,
+      HuntingHorn,
+      IoliteCross,
+      IronFullcase,
+      JacketAndRucksack,
       Jaegerstock,
       KhakkaraOfGhanju,
       LastEyeOfRaong,
       LoromaysHand,
+      MantleOfClay,
+      Mosscloak,
       NundarialVestments,
+      OwlsSkull,
       Penduchaimmer,
+      PlatesOfWhiteBrassAndGold,
+      PolishedArenaShield,
+      PryingPoleaxe,
+      RockringSleeve,
+      SaintsGong,
+      SignedCasque,
+      SkinOfTheBear,
+      Storyscroll,
+      TheSternMask,
+      TortoiseFamiliar,
       VargangliaCarcass,
+      WandOfWorkedFlint,
+      WellstringSnood,
+      WindmillRobe,
       YamorolsMouth
     ].map((item) => [item.name, item])
   );
@@ -1970,16 +2773,6 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     }
   };
 
-  // src/tools/arrays.ts
-  function removeItem(array, item) {
-    const index = array.indexOf(item);
-    if (index >= 0) {
-      array.splice(index, 1);
-      return true;
-    }
-    return false;
-  }
-
   // src/types/Combatant.ts
   var AttackableStats = [
     "hp",
@@ -1992,6 +2785,59 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
   // src/tools/combatants.ts
   function isStat(s) {
     return AttackableStats.includes(s);
+  }
+
+  // src/tools/arrays.ts
+  function removeItem(array, item) {
+    const index = array.indexOf(item);
+    if (index >= 0) {
+      array.splice(index, 1);
+      return true;
+    }
+    return false;
+  }
+
+  // src/tools/overlays.ts
+  function updatePartialRecord(record, key, patch) {
+    const entry = record[key];
+    if (entry)
+      Object.assign(entry, patch);
+    else
+      record[key] = patch;
+  }
+  function applyOverlay(g, overlay) {
+    const { x, y } = tagToXy(overlay.xy);
+    const cell = g.getCell(x, y);
+    if (!cell)
+      throw new Error(`Could not apply overlay at ${overlay.xy}`);
+    switch (overlay.type) {
+      case "addTag":
+        cell.tags.push(overlay.value);
+        return;
+      case "removeTag":
+        if (!removeItem(cell.tags, overlay.value))
+          console.warn(
+            `script tried to remove tag ${overlay.value} at ${overlay.xy} -- not present`
+          );
+        return;
+      case "removeObject":
+        cell.object = void 0;
+        return;
+      case "setDecal":
+        return updatePartialRecord(cell.sides, overlay.dir, {
+          decal: overlay.value
+        });
+      case "setSolid":
+        return updatePartialRecord(cell.sides, overlay.dir, {
+          solid: overlay.value
+        });
+      default:
+        throw new Error(`Invalid overlay: ${JSON.stringify(overlay)}`);
+    }
+  }
+  function updateMap(g, overlay) {
+    g.map.update(overlay);
+    applyOverlay(g, overlay);
   }
 
   // src/EngineInkScripting.ts
@@ -2007,7 +2853,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
         if (winners === "party" && this.afterFight && g.currentCell) {
           const name = this.afterFight;
           this.afterFight = void 0;
-          void this.executePath(g.currentCell, "AFTER_FIGHT", { name });
+          void this.executePath("AFTER_FIGHT", { name });
         }
       });
     }
@@ -2076,11 +2922,10 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
         const enemy = getEnemy(name);
         this.g.pendingArenaEnemies.push(enemy);
       });
-      program.BindExternalFunction("addTag", (xy2, tag) => {
-        const cell = getCell(xy2);
-        cell.tags.push(tag);
-        this.g.map.update(xy2, cell);
-      });
+      program.BindExternalFunction(
+        "addTag",
+        (xy2, value) => updateMap(this.g, { type: "addTag", xy: xy2, value })
+      );
       program.BindExternalFunction(
         "damagePC",
         (index, type, amount) => {
@@ -2146,19 +2991,14 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
         const sound = getSound(name);
         void this.g.sfx.play(sound);
       });
-      program.BindExternalFunction("removeObject", (xy2) => {
-        const cell = getCell(xy2);
-        cell.object = void 0;
-        this.g.map.update(xy2, cell);
-      });
-      program.BindExternalFunction("removeTag", (xy2, tag) => {
-        const cell = getCell(xy2);
-        if (!removeItem(cell.tags, tag))
-          console.warn(
-            `script tried to remove tag ${tag} at ${xy2} -- not present`
-          );
-        this.g.map.update(xy2, cell);
-      });
+      program.BindExternalFunction(
+        "removeObject",
+        (xy2) => updateMap(this.g, { type: "removeObject", xy: xy2 })
+      );
+      program.BindExternalFunction(
+        "removeTag",
+        (xy2, value) => updateMap(this.g, { type: "removeTag", xy: xy2, value })
+      );
       program.BindExternalFunction(
         "rotate",
         (dir, quarters) => rotate(dir, quarters),
@@ -2166,11 +3006,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       );
       program.BindExternalFunction(
         "setDecal",
-        (xy2, dir, decal) => {
-          const side = getSide(xy2, dir);
-          side.decal = decal;
-          this.g.map.update(xy2, getCell(xy2));
-        }
+        (xy2, dir, value) => updateMap(this.g, { type: "setDecal", xy: xy2, dir: getDir(dir), value })
       );
       program.BindExternalFunction(
         "setObstacle",
@@ -2178,11 +3014,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       );
       program.BindExternalFunction(
         "setSolid",
-        (xy2, dir, solid) => {
-          const side = getSide(xy2, dir);
-          side.solid = solid;
-          this.g.map.update(xy2, getCell(xy2));
-        }
+        (xy2, dir, value) => updateMap(this.g, { type: "setSolid", xy: xy2, dir: getDir(dir), value })
       );
       program.BindExternalFunction("skill", () => this.skill, true);
       program.BindExternalFunction("skillCheck", (type, dc) => {
@@ -2230,7 +3062,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       for (const tag of cell.tags) {
         const entry = this.onTagEnter.get(tag);
         if (entry)
-          await this.executePath(cell, tag, entry);
+          await this.executePath(tag, entry);
       }
     }
     hasInteraction() {
@@ -2244,24 +3076,26 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       }
       return false;
     }
-    async onInteract(pcIndex) {
+    async onInteract(dir) {
       const cell = this.g.currentCell;
       if (!cell)
         return;
-      this.active = pcIndex;
-      this.skill = this.g.party[pcIndex].skill;
+      this.active = dir;
+      this.skill = this.g.party[dir].skill;
       for (const tag of cell.tags) {
         const entry = this.onTagInteract.get(tag);
         if (entry)
-          await this.executePath(cell, tag, entry);
+          await this.executePath(tag, entry);
       }
     }
-    async executePath(cell, tag, entry) {
+    async executePath(value, entry) {
       this.story.ChoosePathString(entry.name);
-      if (entry.once) {
-        removeItem(cell.tags, tag);
-        this.g.map.update(xyToTag(this.g.position), cell);
-      }
+      if (entry.once)
+        updateMap(this.g, {
+          type: "removeTag",
+          xy: xyToTag(this.g.position),
+          value
+        });
       return new Promise((resolve) => {
         void this.runUntilDone().then(resolve);
       });
@@ -2831,7 +3665,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       this.allCells = /* @__PURE__ */ new Map();
       this.cells = /* @__PURE__ */ new Set();
       this.allOverlays = /* @__PURE__ */ new Map();
-      this.overlays = /* @__PURE__ */ new Map();
+      this.overlays = /* @__PURE__ */ new Set();
       this.allWalls = /* @__PURE__ */ new Map();
       this.walls = /* @__PURE__ */ new Map();
       this.allScripts = /* @__PURE__ */ new Map();
@@ -2864,15 +3698,10 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       }
       if (overlays) {
         this.overlays = overlays;
-        for (const [tag, overlay] of overlays.entries()) {
-          const { x, y } = tagToXy(tag);
-          const cell = this.g.getCell(x, y);
-          if (!cell)
-            throw new Error(`Could not apply overlay at ${tag}`);
-          Object.assign(cell, overlay);
-        }
+        for (const overlay of overlays)
+          applyOverlay(this.g, overlay);
       } else {
-        this.overlays = /* @__PURE__ */ new Map();
+        this.overlays = /* @__PURE__ */ new Set();
         this.allOverlays.set(name, this.overlays);
       }
       if (walls)
@@ -2911,22 +3740,22 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       const data = this.getWall(pos, dir);
       return condense(data);
     }
-    update(xy2, cell) {
-      this.overlays.set(xy2, cell);
+    update(overlay) {
+      this.overlays.add(overlay);
     }
     serialize() {
       this.saveScriptState();
       const data = {};
       for (const name of this.allCells.keys()) {
-        const cells = this.allCells.get(name)?.values();
-        const overlays = this.allOverlays.get(name)?.entries();
+        const cells = this.allCells.get(name);
+        const overlays = this.allOverlays.get(name);
         const script = this.allScripts.get(name) ?? {};
         const walls = this.allWalls.get(name)?.entries();
-        const entry = { cells: [], overlays: {}, script, walls: {} };
+        const entry = { cells: [], overlays: [], script, walls: {} };
         if (cells)
           entry.cells = Array.from(cells);
         if (overlays)
-          entry.overlays = Object.fromEntries(Array.from(overlays));
+          entry.overlays = Array.from(overlays);
         if (walls)
           entry.walls = Object.fromEntries(
             Array.from(walls).map(([key, data2]) => [key, condense(data2)])
@@ -2940,12 +3769,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       for (const name in data) {
         const { cells, overlays, script, walls } = data[name];
         this.allCells.set(name, new Set(cells));
-        this.allOverlays.set(
-          name,
-          new Map(
-            Object.entries(overlays).map(([tag, cell]) => [tag, cell])
-          )
-        );
+        this.allOverlays.set(name, new Set(overlays));
         this.allScripts.set(name, script);
         this.allWalls.set(
           name,
@@ -3307,16 +4131,6 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     "Loam Seer"
   ];
 
-  // src/types/World.ts
-  var WallDecalTypes = [
-    "Door",
-    "Gate",
-    "OpenGate",
-    "Lever",
-    "PulledLever",
-    "Sign"
-  ];
-
   // src/schemas.ts
   var ajv = new import_ajv.default();
   var xyTagSchema = {
@@ -3332,28 +4146,57 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     pattern: "d?s?w?"
   };
   var dirSchema = { type: "number", enum: [0, 1, 2, 3] };
-  var worldCellSchema = {
+  var overlaySchema = {
     type: "object",
-    additionalProperties: false,
-    required: ["numbers", "sides", "strings", "tags"],
-    properties: {
-      ceiling: { type: "number", nullable: true },
-      floor: { type: "number", nullable: true },
-      numbers: { type: "object", additionalProperties: { type: "number" } },
-      object: { type: "number", nullable: true },
-      sides: {
+    required: ["type"],
+    anyOf: [
+      {
         type: "object",
-        additionalProperties: {
-          type: "object",
-          properties: {
-            decal: { type: "number" },
-            decalType: { type: "string", enum: WallDecalTypes }
-          }
+        required: ["type", "xy", "value"],
+        properties: {
+          type: { const: "addTag" },
+          xy: xyTagSchema,
+          value: { type: "string" }
         }
       },
-      strings: { type: "object", additionalProperties: { type: "string" } },
-      tags: { type: "array", items: { type: "string" } }
-    }
+      {
+        type: "object",
+        required: ["type", "xy", "value"],
+        properties: {
+          type: { const: "removeTag" },
+          xy: xyTagSchema,
+          value: { type: "string" }
+        }
+      },
+      {
+        type: "object",
+        required: ["type", "xy"],
+        properties: {
+          type: { const: "removeObject" },
+          xy: xyTagSchema
+        }
+      },
+      {
+        type: "object",
+        required: ["type", "xy", "dir", "value"],
+        properties: {
+          type: { const: "setDecal" },
+          xy: xyTagSchema,
+          dir: dirSchema,
+          value: { type: "number" }
+        }
+      },
+      {
+        type: "object",
+        required: ["type", "xy", "dir", "value"],
+        properties: {
+          type: { const: "setSolid" },
+          xy: xyTagSchema,
+          dir: dirSchema,
+          value: { type: "boolean" }
+        }
+      }
+    ]
   };
   var mapDataSchema = {
     type: "object",
@@ -3361,11 +4204,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     required: ["cells", "overlays", "script", "walls"],
     properties: {
       cells: { type: "array", items: xyTagSchema },
-      overlays: {
-        type: "object",
-        patternProperties: { [xyTagSchema.pattern]: worldCellSchema },
-        additionalProperties: false
-      },
+      overlays: { type: "array", items: overlaySchema },
       script: { type: "object" },
       walls: {
         type: "object",

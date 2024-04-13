@@ -37,6 +37,7 @@ import {
 import getCanvasContext from "./tools/getCanvasContext";
 import isDefined from "./tools/isDefined";
 import { wrap } from "./tools/numbers";
+import { Overlay } from "./tools/overlays";
 import { pickN, random } from "./tools/rng";
 import { WallTag } from "./tools/wallTags";
 import { tagToXy, XYTag, xyToTag } from "./tools/xyTags";
@@ -49,19 +50,32 @@ import {
   GameEventNames,
   GameEvents,
 } from "./types/events";
+import {
+  AreaName,
+  Cells,
+  CellTag,
+  ItemName,
+  MapFloor,
+  MapRegion,
+  Pixels,
+  Quadrants,
+  Ratio,
+  ResourceID,
+  SaveName,
+} from "./types/flavours";
 import Game, { GameEffect } from "./types/Game";
 import GameInput from "./types/GameInput";
 import { GameScreen } from "./types/GameScreen";
 import Item from "./types/Item";
 import { matchAll, Predicate } from "./types/logic";
-import World, { WorldCell } from "./types/World";
+import World from "./types/World";
 import XY from "./types/XY";
 
 export interface SerializedEngine {
-  name: string;
+  name: SaveName;
   facing: Dir;
-  inventory: string[];
-  maps: Record<string, MapData>;
+  inventory: ItemName[];
+  maps: Record<AreaName, MapData>;
   obstacle?: XYTag;
   party: SerializedPlayer[];
   pendingArenaEnemies: EnemyName[];
@@ -72,7 +86,7 @@ export interface SerializedEngine {
 
 export interface MapData {
   cells: XYTag[];
-  overlays: Record<XYTag, WorldCell>;
+  overlays: Overlay[];
   script: ScriptData;
   walls: Record<WallTag, WallTypeCondensed>;
 }
@@ -84,9 +98,9 @@ interface TargetPicking {
 }
 
 interface WorldLocation {
-  resourceID: string;
-  region: number;
-  floor: number;
+  resourceID: ResourceID;
+  region: MapRegion;
+  floor: MapFloor;
 }
 
 export interface WallType {
@@ -119,11 +133,11 @@ export default class Engine implements Game {
   jukebox: Jukebox;
   log: string[];
   map: MapDataManager;
-  obstacle?: XY;
+  obstacle?: XY<Cells>;
   party: Player[];
   pendingArenaEnemies: EnemyName[];
   pendingNormalEnemies: EnemyName[];
-  position: XY;
+  position: XY<Cells>;
   pickingTargets?: TargetPicking;
   res: ResourceManager;
   screen!: GameScreen;
@@ -132,8 +146,8 @@ export default class Engine implements Game {
   showLog: boolean;
   world?: World;
   worldLocation?: WorldLocation;
-  worldSize: XY;
-  zoomRatio: number;
+  worldSize: XY<Cells>;
+  zoomRatio: Ratio;
 
   constructor(public canvas: HTMLCanvasElement) {
     this.ctx = getCanvasContext(canvas, "2d");
@@ -165,7 +179,7 @@ export default class Engine implements Game {
 
     canvas.addEventListener("keydown", (e) => this.screen.onKey(e));
 
-    const transform = (e: MouseEvent): XY =>
+    const transform = (e: MouseEvent): XY<Pixels> =>
       xyi(e.offsetX / this.zoomRatio, e.offsetY / this.zoomRatio);
 
     canvas.addEventListener("mousemove", (e) => this.onMouseMove(transform(e)));
@@ -177,19 +191,19 @@ export default class Engine implements Game {
     this.draw();
   }
 
-  getSpot(pos: XY) {
+  getSpot(pos: XY<Pixels>) {
     for (const element of this.screen.spotElements) {
       const spot = element.spots.find((s) => contains(s, pos));
       if (spot) return { element, spot };
     }
   }
 
-  onMouseMove(pos: XY) {
+  onMouseMove(pos: XY<Pixels>) {
     const result = this.getSpot(pos);
     this.canvas.style.cursor = result?.spot.cursor ?? "";
   }
 
-  onClick(pos: XY) {
+  onClick(pos: XY<Pixels>) {
     const result = this.getSpot(pos);
     if (result) result.element.spotClicked(result.spot);
   }
@@ -238,7 +252,7 @@ export default class Engine implements Game {
   async loadWorld(
     worldLocation: WorldLocation,
     w: World,
-    position?: XY,
+    position?: XY<Cells>,
     dir?: Dir,
   ) {
     const world = clone(w);
@@ -279,10 +293,10 @@ export default class Engine implements Game {
   }
 
   async loadGCMap(
-    resourceID: string,
-    region: number,
-    floor: number,
-    loadPosition?: XY,
+    resourceID: ResourceID,
+    region: MapRegion,
+    floor: MapFloor,
+    loadPosition?: XY<Cells>,
     loadFacing?: Dir,
   ) {
     this.useScreen(new LoadingScreen(this));
@@ -307,11 +321,11 @@ export default class Engine implements Game {
     );
   }
 
-  isVisited(x: number, y: number) {
+  isVisited(x: Cells, y: Cells) {
     return this.map.isVisited({ x, y });
   }
 
-  getCell(x: number, y: number) {
+  getCell(x: Cells, y: Cells) {
     if (x < 0 || x >= this.worldSize.x || y < 0 || y >= this.worldSize.y)
       return;
 
@@ -337,20 +351,21 @@ export default class Engine implements Game {
     return this.getCell(this.position.x, this.position.y);
   }
 
-  findCellWithTag(tag: string) {
+  findCellWithTag(tag: CellTag) {
     if (!this.world) return;
 
     for (let y = 0; y < this.worldSize.y; y++) {
       for (let x = 0; x < this.worldSize.x; x++) {
-        if (this.world.cells[y][x].tags.includes(tag)) return { x, y };
+        if (this.world.cells[y][x].tags.includes(tag))
+          return { x, y } as XY<Cells>;
       }
     }
   }
 
-  findCellsWithTag(tag: string) {
+  findCellsWithTag(tag: CellTag) {
     if (!this.world) return [];
 
-    const matches: XY[] = [];
+    const matches: XY<Cells>[] = [];
     for (let y = 0; y < this.worldSize.y; y++) {
       for (let x = 0; x < this.worldSize.x; x++) {
         if (this.world.cells[y][x].tags.includes(tag)) matches.push({ x, y });
@@ -416,7 +431,7 @@ export default class Engine implements Game {
     return false;
   }
 
-  teleport(destination: XY, dir: Dir) {
+  teleport(destination: XY<Cells>, dir: Dir) {
     const cell = this.getCell(destination.x, destination.y);
     if (!cell)
       throw new Error(
@@ -473,12 +488,12 @@ export default class Engine implements Game {
     }
   }
 
-  markNavigable(pos: XY, dir: Dir) {
+  markNavigable(pos: XY<Cells>, dir: Dir) {
     const data = this.map.getWall(pos, dir);
     if (data.isSolid) data.isSolid = false;
   }
 
-  markUnnavigable(pos: XY, dir: Dir) {
+  markUnnavigable(pos: XY<Cells>, dir: Dir) {
     const data = this.map.getWall(pos, dir);
 
     if (!data.isSolid) {
@@ -487,7 +502,7 @@ export default class Engine implements Game {
     }
   }
 
-  getMinimapData(x: number, y: number) {
+  getMinimapData(x: Cells, y: Cells) {
     if (!this.isVisited(x, y)) return {};
 
     const cell = this.getCell(x, y);
@@ -498,11 +513,11 @@ export default class Engine implements Game {
     return { cell, north, east, south, west };
   }
 
-  getWallData(x: number, y: number, dir: Dir) {
+  getWallData(x: Cells, y: Cells, dir: Dir) {
     return this.map.getWallCondensed({ x, y }, dir);
   }
 
-  turn(clockwise: number) {
+  turn(clockwise: Quadrants) {
     // TODO move cursor with keys
     if (this.pickingTargets) return false;
 
@@ -578,7 +593,7 @@ export default class Engine implements Game {
     return this.combat.getPosition(who);
   }
 
-  getOpponent(me: Combatant, turn = 0) {
+  getOpponent(me: Combatant, turn: Quadrants = 0) {
     const { dir: myDir, distance } = this.getPosition(me);
     const dir = rotate(myDir, turn);
 
@@ -889,7 +904,7 @@ export default class Engine implements Game {
     return true;
   }
 
-  partySwap(side: number) {
+  partySwap(side: Quadrants) {
     if (this.pickingTargets) return false;
 
     const dir = rotate(this.facing, side);
@@ -953,7 +968,7 @@ export default class Engine implements Game {
     return false;
   }
 
-  addToInventory(name: string) {
+  addToInventory(name: ItemName) {
     const item = getItem(name);
     if (item) {
       this.inventory.push(item);
@@ -962,7 +977,7 @@ export default class Engine implements Game {
     return false;
   }
 
-  partyIsDead(lastToDie: number) {
+  partyIsDead(lastToDie: Dir) {
     this.useScreen(new DeathScreen(this, this.party[lastToDie]));
     partyDied();
   }
@@ -973,7 +988,7 @@ export default class Engine implements Game {
       : undefined;
   }
 
-  save(name: string): SerializedEngine {
+  save(name: SaveName): SerializedEngine {
     const {
       facing,
       inventory,

@@ -2,14 +2,15 @@
 import * as items from "./items";
 import { ClassName } from "./types/ClassName";
 import Combatant, { AttackableStat } from "./types/Combatant";
+import { CombatantName, Description, SkillName } from "./types/flavours";
 import Item from "./types/Item";
 
 type ClassData = Pick<Combatant, AttackableStat> & {
-  name: string;
-  lore: string;
-  deathQuote: string;
+  name: CombatantName;
+  lore: Description;
+  deathQuote: Description;
   items: Item[];
-  skill: string;
+  skill: SkillName;
 };
 
 const classes: Record<ClassName, ClassData> = {

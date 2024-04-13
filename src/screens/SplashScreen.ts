@@ -2,6 +2,7 @@ import sadFolksPng from "../../res/sad-folks.png";
 import Engine from "../Engine";
 import { anySavedGamesExist } from "../saves";
 import { xyi } from "../tools/geometry";
+import { Pixels } from "../types/flavours";
 import { GameScreen } from "../types/GameScreen";
 import XY from "../types/XY";
 import NewGameScreen from "./NewGameScreen";
@@ -9,7 +10,7 @@ import TitleScreen from "./TitleScreen";
 
 export default class SplashScreen implements GameScreen {
   image?: HTMLImageElement;
-  position: XY;
+  position: XY<Pixels>;
   spotElements = [];
   timeout: ReturnType<typeof setTimeout>;
 

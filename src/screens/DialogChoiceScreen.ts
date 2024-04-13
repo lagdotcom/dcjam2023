@@ -6,6 +6,7 @@ import { xy } from "../tools/geometry";
 import { wrap } from "../tools/numbers";
 import textWrap from "../tools/textWrap";
 import withTextStyle from "../tools/withTextStyle";
+import { Pixels } from "../types/flavours";
 import { GameScreen } from "../types/GameScreen";
 
 export default class DialogChoiceScreen implements GameScreen {
@@ -18,9 +19,9 @@ export default class DialogChoiceScreen implements GameScreen {
     public g: Engine,
     public prompt: string,
     public choices: Choice[],
-    public position = xy(91, 21),
-    public size = xy(296, 118),
-    public padding = xy(20, 20),
+    public position = xy<Pixels>(91, 21),
+    public size = xy<Pixels>(296, 118),
+    public padding = xy<Pixels>(20, 20),
   ) {
     this.index = 0;
     this.background = g.screen;

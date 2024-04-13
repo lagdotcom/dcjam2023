@@ -2,27 +2,28 @@ import Engine from "./Engine";
 import { move, rotate } from "./tools/geometry";
 import { XYTag, xyToTag } from "./tools/xyTags";
 import Dir from "./types/Dir";
+import { Cells } from "./types/flavours";
 import XY from "./types/XY";
 
 interface FovEntry {
-  x: number;
-  y: number;
-  dx: number;
-  dz: number;
-  width: number;
-  depth: number;
+  x: Cells;
+  y: Cells;
+  dx: Cells;
+  dz: Cells;
+  width: Cells;
+  depth: Cells;
   leftVisible: boolean;
   rightVisible: boolean;
 }
 
-const facingDisplacements: Record<Dir, [number, number, number, number]> = {
+const facingDisplacements: Record<Dir, [Cells, Cells, Cells, Cells]> = {
   [Dir.E]: [0, 1, -1, 0],
   [Dir.N]: [1, 0, 0, 1],
   [Dir.S]: [-1, 0, 0, -1],
   [Dir.W]: [0, -1, 1, 0],
 };
 
-function getDisplacement(from: XY, to: XY, facing: Dir) {
+function getDisplacement(from: XY<Cells>, to: XY<Cells>, facing: Dir) {
   const dx = to.x - from.x;
   const dy = to.y - from.y;
 
@@ -39,7 +40,7 @@ class FovCalculator {
     this.entries = new Map();
   }
 
-  calculate(width: number, depth: number) {
+  calculate(width: Cells, depth: Cells) {
     const position = this.g.position;
     this.propagate(position, width, depth);
 
@@ -52,11 +53,11 @@ class FovCalculator {
     });
   }
 
-  private displacement(position: XY) {
+  private displacement(position: XY<Cells>) {
     return getDisplacement(this.g.position, position, this.g.facing);
   }
 
-  private propagate(position: XY, width: number, depth: number) {
+  private propagate(position: XY<Cells>, width: Cells, depth: Cells) {
     if (width <= 0 || depth <= 0) return;
 
     const { g } = this;
@@ -106,11 +107,7 @@ class FovCalculator {
   }
 }
 
-export default function getFieldOfView(
-  g: Engine,
-  width: number,
-  depth: number,
-) {
+export default function getFieldOfView(g: Engine, width: Cells, depth: Cells) {
   const calc = new FovCalculator(g);
   return calc.calculate(width, depth);
 }

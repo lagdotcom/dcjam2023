@@ -1,16 +1,21 @@
 import * as enemyData from "./enemyData";
 import CombatAction from "./types/CombatAction";
 import Combatant from "./types/Combatant";
+import { AtlasLayerID, Milliseconds } from "./types/flavours";
 
 export interface EnemyAnimation {
-  delay: number;
-  frames: number[];
+  delay: Milliseconds;
+  frames: AtlasLayerID[];
 }
 
 export type EnemyTemplate = Pick<
   Combatant,
   "name" | "maxHP" | "maxSP" | "camaraderie" | "determination" | "spirit" | "dr"
-> & { actions: CombatAction[]; object: number; animation: EnemyAnimation };
+> & {
+  actions: CombatAction[];
+  object: AtlasLayerID;
+  animation: EnemyAnimation;
+};
 
 export const EnemyObjects = {
   eNettleSage: 100,

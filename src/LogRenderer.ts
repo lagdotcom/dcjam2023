@@ -3,13 +3,14 @@ import Engine from "./Engine";
 import { xy } from "./tools/geometry";
 import textWrap from "./tools/textWrap";
 import withTextStyle from "./tools/withTextStyle";
+import { Pixels } from "./types/flavours";
 
 export default class LogRenderer {
   constructor(
     public g: Engine,
-    public position = xy(276, 0),
-    public size = xy(204, 270),
-    public padding = xy(2, 2),
+    public position = xy<Pixels>(276, 0),
+    public size = xy<Pixels>(204, 270),
+    public padding = xy<Pixels>(2, 2),
   ) {}
 
   render() {

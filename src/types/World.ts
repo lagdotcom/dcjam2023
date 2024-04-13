@@ -1,4 +1,12 @@
 import Dir from "./Dir";
+import {
+  AreaName,
+  AtlasLayerID,
+  CellDataKey,
+  Cells,
+  CellTag,
+  ResourceURL,
+} from "./flavours";
 import XY from "./XY";
 
 export const WallDecalTypes = [
@@ -13,31 +21,31 @@ export type WallDecalType = (typeof WallDecalTypes)[number];
 
 export interface WorldSide {
   solid?: boolean;
-  wall?: number;
-  decal?: number;
+  wall?: AtlasLayerID;
+  decal?: AtlasLayerID;
   decalType?: WallDecalType;
 }
 
 export interface WorldCell {
-  object?: number;
-  ceiling?: number;
-  floor?: number;
+  object?: AtlasLayerID;
+  ceiling?: AtlasLayerID;
+  floor?: AtlasLayerID;
   sides: Partial<Record<Dir, WorldSide>>;
-  tags: string[];
-  strings: Record<string, string>;
-  numbers: Record<string, number>;
+  tags: CellTag[];
+  strings: Record<CellDataKey, string>;
+  numbers: Record<CellDataKey, number>;
 }
 
 export interface AtlasReference {
-  image: string;
-  json: string;
+  image: ResourceURL;
+  json: ResourceURL;
 }
 
 interface World {
-  name: string;
+  name: AreaName;
   atlases: AtlasReference[];
   cells: WorldCell[][];
-  start: XY;
+  start: XY<Cells>;
   facing: Dir;
 }
 export default World;

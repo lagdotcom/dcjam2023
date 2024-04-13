@@ -1,6 +1,6 @@
 import { rotate } from "./tools/geometry";
 import isDefined from "./tools/isDefined";
-import { niceList, pluralS } from "./tools/lists";
+import { listOfPeople, pluralS } from "./tools/lists";
 import { oneOf } from "./tools/rng";
 import { intersection } from "./tools/sets";
 import { ActionImpl } from "./types/CombatAction";
@@ -61,7 +61,7 @@ export const Bash = makeAttack({ base: 4 });
 
 export const Bind: ActionImpl = ({ g, targets }) => {
   // TODO is/are
-  g.addToLog(`${niceList(targets.map((x) => x.name))} is bound tightly!`);
+  g.addToLog(`${listOfPeople(targets.map((x) => x.name))} is bound tightly!`);
   g.addEffect(() => ({
     name: "Bind",
     duration: 2,
@@ -120,7 +120,7 @@ export const Chakra: ActionImpl = ({ g, me }) => {
 
 export const Cheer: ActionImpl = ({ g, targets }) => {
   g.addToLog(
-    `${niceList(targets.map((x) => x.name))} feel${pluralS(
+    `${listOfPeople(targets.map((x) => x.name))} feel${pluralS(
       targets,
     )} more protected.`,
   );
@@ -322,7 +322,7 @@ export const Kneel: ActionImpl = ({ g, me }) => {
 export const Lash: ActionImpl = ({ g, me, targets }) => {
   if (g.applyDamage(me, targets, 3, "hp", "normal") > 0) {
     g.addToLog(
-      `${niceList(targets.map((x) => x.name))} feel${pluralS(
+      `${listOfPeople(targets.map((x) => x.name))} feel${pluralS(
         targets,
       )} temporarily demoralized.`,
     );
@@ -375,7 +375,9 @@ export const Muse: ActionImpl = ({ g, targets }) => {
 
 export const Observe: ActionImpl = ({ g, targets }) => {
   // TODO have/has
-  g.addToLog(`${niceList(targets.map((x) => x.name))} has nowhere to hide!`);
+  g.addToLog(
+    `${listOfPeople(targets.map((x) => x.name))} has nowhere to hide!`,
+  );
 
   // TODO: [Observe] enemy is more likely to drop items
 

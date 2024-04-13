@@ -1,5 +1,5 @@
-interface XY {
-  x: number;
-  y: number;
+interface XY<T extends number> {
+  x: T;
+  y: T;
 }
 export default XY;

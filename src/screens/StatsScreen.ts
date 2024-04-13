@@ -7,6 +7,7 @@ import { wrap } from "../tools/numbers";
 import withTextStyle from "../tools/withTextStyle";
 import { BoostableStat } from "../types/Combatant";
 import Dir from "../types/Dir";
+import { Pixels, Quadrants } from "../types/flavours";
 import { GameScreen } from "../types/GameScreen";
 import HasHotspots from "../types/HasHotspots";
 import Item from "../types/Item";
@@ -39,9 +40,9 @@ type SpotTag =
   | { type: "inventory"; item: Item };
 type Spot = Hotspot & SpotTag;
 
-const StatOffset = 30;
-const EquipmentOffset = 80;
-const InventoryOffset = 160;
+const StatOffset: Pixels = 30;
+const EquipmentOffset: Pixels = 80;
+const InventoryOffset: Pixels = 160;
 const ItemsPerPage = 8;
 
 export default class StatsScreen implements GameScreen, HasHotspots {
@@ -54,9 +55,9 @@ export default class StatsScreen implements GameScreen, HasHotspots {
 
   constructor(
     public g: Engine,
-    public position = xy(91, 21),
-    public size = xy(296, 118),
-    public padding = xy(2, 2),
+    public position = xy<Pixels>(91, 21),
+    public size = xy<Pixels>(296, 118),
+    public padding = xy<Pixels>(2, 2),
   ) {
     this.background = g.screen;
     this.cursorColumn = "inventory";
@@ -116,12 +117,12 @@ export default class StatsScreen implements GameScreen, HasHotspots {
     }
   }
 
-  turn(mod: number) {
+  turn(mod: Quadrants) {
     this.g.turn(mod);
     this.dir = this.g.facing;
   }
 
-  move(mod: number) {
+  move(mod: Quadrants) {
     const max =
       this.cursorColumn === "equipment"
         ? displaySlots.length
@@ -228,7 +229,7 @@ export default class StatsScreen implements GameScreen, HasHotspots {
     return { offset, index };
   }
 
-  renderStat(pc: Player, name: BoostableStat, x: number, y: number) {
+  renderStat(pc: Player, name: BoostableStat, x: Pixels, y: Pixels) {
     const stat = pc[name];
     const base = pc.getBaseStat(name);
 
@@ -245,7 +246,7 @@ export default class StatsScreen implements GameScreen, HasHotspots {
     draw(`${stat}`, x + StatOffset, y);
   }
 
-  renderStatWithMax(pc: Player, name: "hp" | "sp", x: number, y: number) {
+  renderStatWithMax(pc: Player, name: "hp" | "sp", x: Pixels, y: Pixels) {
     const current = pc[name];
     const maxName = name === "hp" ? "maxHP" : "maxSP";
     const max = pc[maxName];
@@ -268,7 +269,7 @@ export default class StatsScreen implements GameScreen, HasHotspots {
     draw(`${max}`, x + StatOffset + currentSize.width, y);
   }
 
-  renderEquipment(pc: Player, slot: PlayerEquipmentSlot, x: number, y: number) {
+  renderEquipment(pc: Player, slot: PlayerEquipmentSlot, x: Pixels, y: Pixels) {
     const active =
       this.cursorColumn === "equipment" &&
       this.index === displaySlots.indexOf(slot);
@@ -302,8 +303,8 @@ export default class StatsScreen implements GameScreen, HasHotspots {
   renderInventory(
     pc: Player,
     item: Item,
-    x: number,
-    y: number,
+    x: Pixels,
+    y: Pixels,
     selected: boolean,
   ) {
     const canEquip = pc.canEquip(item);

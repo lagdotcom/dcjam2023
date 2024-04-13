@@ -1,4 +1,5 @@
 import CombatAction from "./CombatAction";
+import { ActionName, CombatantName, HitPoints, SkillPoints } from "./flavours";
 
 export const AttackableStats = [
   "hp",
@@ -21,19 +22,19 @@ export type BoostableStat = (typeof BoostableStats)[number];
 
 export default interface Combatant {
   isPC: boolean;
-  name: string;
-  hp: number;
-  sp: number;
-  maxHP: number;
-  maxSP: number;
+  name: CombatantName;
+  hp: HitPoints;
+  sp: SkillPoints;
+  maxHP: HitPoints;
+  maxSP: SkillPoints;
   camaraderie: number;
   determination: number;
   spirit: number;
 
   alive: boolean;
-  dr: number;
+  dr: HitPoints;
   actions: CombatAction[];
   attacksInARow: number;
-  usedThisTurn: Set<string>;
-  lastAction?: string;
+  usedThisTurn: Set<ActionName>;
+  lastAction?: ActionName;
 }

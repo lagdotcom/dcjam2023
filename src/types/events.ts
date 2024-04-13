@@ -1,6 +1,7 @@
 import CombatAction from "./CombatAction";
 import Combatant, { AttackableStat } from "./Combatant";
 import Dir from "./Dir";
+import { Cells, HitPoints } from "./flavours";
 import { GameEffect } from "./Game";
 import XY from "./XY";
 
@@ -30,7 +31,7 @@ export type GameEvents = {
   onAfterDamage: {
     attacker: Combatant;
     target: Combatant;
-    amount: number;
+    amount: HitPoints;
     type: AttackableStat;
     origin: "normal" | "magic";
   };
@@ -52,7 +53,7 @@ export type GameEvents = {
   onCalculateDamage: {
     attacker: Combatant;
     target: Combatant;
-    amount: number;
+    amount: HitPoints;
     multiplier: number;
     type: AttackableStat;
     origin: "normal" | "magic";
@@ -76,7 +77,7 @@ export type GameEvents = {
 
   onKilled: { who: Combatant; attacker: Combatant };
 
-  onPartyMove: { from: XY; to: XY };
+  onPartyMove: { from: XY<Cells>; to: XY<Cells> };
   onPartySwap: { swaps: { from: Dir; to: Dir }[] };
   onPartyTurn: { from: Dir; to: Dir };
 

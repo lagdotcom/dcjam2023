@@ -1,14 +1,15 @@
 import Atlas from "./types/Atlas";
+import { InkSource, ResourceURL } from "./types/flavours";
 import { GCMap } from "./types/GCMap";
 
 export default class ResourceManager {
-  promises: Map<string, Promise<unknown>>;
+  promises: Map<ResourceURL, Promise<unknown>>;
   loaders: Promise<unknown>[];
-  atlases: Record<string, Atlas>;
-  audio: Record<string, HTMLAudioElement>;
-  maps: Record<string, GCMap>;
-  images: Record<string, HTMLImageElement>;
-  scripts: Record<string, string>;
+  atlases: Record<ResourceURL, Atlas>;
+  audio: Record<ResourceURL, HTMLAudioElement>;
+  maps: Record<ResourceURL, GCMap>;
+  images: Record<ResourceURL, HTMLImageElement>;
+  scripts: Record<ResourceURL, InkSource>;
   loaded: number;
   loading: number;
 
@@ -24,7 +25,7 @@ export default class ResourceManager {
     this.loading = 0;
   }
 
-  private start<T>(src: string, promise: Promise<T>) {
+  private start<T>(src: ResourceURL, promise: Promise<T>) {
     this.loading++;
 
     this.promises.set(src, promise);
@@ -37,7 +38,7 @@ export default class ResourceManager {
     return promise;
   }
 
-  loadImage(src: string): Promise<HTMLImageElement> {
+  loadImage(src: ResourceURL): Promise<HTMLImageElement> {
     const res = this.promises.get(src);
     if (res) return res as Promise<HTMLImageElement>;
 
@@ -55,7 +56,7 @@ export default class ResourceManager {
     );
   }
 
-  loadAtlas(src: string): Promise<Atlas> {
+  loadAtlas(src: ResourceURL): Promise<Atlas> {
     const res = this.promises.get(src);
     if (res) return res as Promise<Atlas>;
 
@@ -70,7 +71,7 @@ export default class ResourceManager {
     );
   }
 
-  loadGCMap(src: string): Promise<GCMap> {
+  loadGCMap(src: ResourceURL): Promise<GCMap> {
     const res = this.promises.get(src);
     if (res) return res as Promise<GCMap>;
 
@@ -85,7 +86,7 @@ export default class ResourceManager {
     );
   }
 
-  loadScript(src: string): Promise<string> {
+  loadScript(src: ResourceURL): Promise<string> {
     const res = this.promises.get(src);
     if (res) return res as Promise<string>;
 
@@ -100,7 +101,7 @@ export default class ResourceManager {
     );
   }
 
-  loadAudio(src: string): Promise<HTMLAudioElement> {
+  loadAudio(src: ResourceURL): Promise<HTMLAudioElement> {
     const res = this.promises.get(src);
     if (res) return res as Promise<HTMLAudioElement>;
 

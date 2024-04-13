@@ -9,6 +9,7 @@ import { oneOf, pickN } from "./tools/rng";
 import shuffle from "./tools/shuffle";
 import Combatant from "./types/Combatant";
 import Dir from "./types/Dir";
+import { Milliseconds } from "./types/flavours";
 import { GameEffect } from "./types/Game";
 
 export default class CombatManager {
@@ -23,9 +24,9 @@ export default class CombatManager {
 
   constructor(
     public g: Engine,
-    public enemyInitialDelay = 3000,
-    public enemyTurnDelay = 1000,
-    public enemyFrameTime = 100,
+    public enemyInitialDelay: Milliseconds = 3000,
+    public enemyTurnDelay: Milliseconds = 1000,
+    public enemyFrameTime: Milliseconds = 100,
   ) {
     this.effects = [];
     this.resetEnemies();

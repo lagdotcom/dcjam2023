@@ -1,4 +1,5 @@
 import Combatant from "./Combatant";
+import { ActionName, Quadrants, SkillPoints } from "./flavours";
 import Game from "./Game";
 import { Predicate } from "./logic";
 
@@ -16,7 +17,7 @@ export type ActionTarget =
   | {
       type: "ally" | "enemy";
       count?: number;
-      distance?: number;
+      distance?: Quadrants;
       offsets?: (0 | 1 | 2 | 3)[];
     };
 
@@ -24,12 +25,12 @@ export type ActionImpl = (e: {
   g: Game;
   targets: Combatant[];
   me: Combatant;
-  x: number;
+  x: SkillPoints;
 }) => void;
 
 export default interface CombatAction {
-  name: string;
-  sp: number;
+  name: ActionName;
+  sp: SkillPoints;
   x?: boolean;
   useMessage?: string;
   tags: ActionTag[];
