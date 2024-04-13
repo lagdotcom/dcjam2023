@@ -56,6 +56,8 @@ import {
   Cells,
   CellTag,
   ItemName,
+  KeyCode,
+  LogMessage,
   MapFloor,
   MapRegion,
   Pixels,
@@ -125,14 +127,14 @@ const swap = (from: Dir, to: Dir) => ({ from, to });
 
 export default class Engine implements Game {
   combat: CombatManager;
-  controls: Map<string, GameInput[]>;
+  controls: Map<KeyCode, GameInput[]>;
   ctx: CanvasRenderingContext2D;
   drawSoon: Soon;
   eventHandlers: GameEventListeners;
   facing: Dir;
   inventory: Item[];
   jukebox: Jukebox;
-  log: string[];
+  log: LogMessage[];
   map: MapDataManager;
   obstacle?: XY<Cells>;
   party: Player[];
@@ -648,7 +650,7 @@ export default class Engine implements Game {
     };
   }
 
-  addToLog(message: string) {
+  addToLog(message: LogMessage) {
     this.log.push(message);
     this.showLog = true;
     this.draw();

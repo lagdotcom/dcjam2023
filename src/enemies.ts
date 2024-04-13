@@ -18,7 +18,9 @@ import { wrap } from "./tools/numbers";
 import CombatAction from "./types/CombatAction";
 import Combatant, { BoostableStat } from "./types/Combatant";
 import {
+  ActionName,
   AtlasLayerID,
+  CombatantName,
   HitPoints,
   Milliseconds,
   SkillPoints,
@@ -135,7 +137,7 @@ export class Enemy implements Combatant {
   animation: EnemyAnimation;
   frame: number;
   delay: Milliseconds;
-  name: string;
+  name: CombatantName;
   hp: HitPoints;
   sp: SkillPoints;
   baseMaxHP: HitPoints;
@@ -146,8 +148,8 @@ export class Enemy implements Combatant {
   baseDR: HitPoints;
   actions: CombatAction[];
   attacksInARow: number;
-  usedThisTurn: Set<string>;
-  lastAction?: string;
+  usedThisTurn: Set<ActionName>;
+  lastAction?: ActionName;
 
   constructor(
     public g: Engine,

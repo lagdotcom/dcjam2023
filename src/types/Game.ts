@@ -1,7 +1,14 @@
 import Combatant, { AttackableStat } from "./Combatant";
 import Dir from "./Dir";
 import { GameEventHandler } from "./events";
-import { Cells, EffectName, HitPoints, Quadrants, Turns } from "./flavours";
+import {
+  Cells,
+  EffectName,
+  HitPoints,
+  LogMessage,
+  Quadrants,
+  Turns,
+} from "./flavours";
 
 export interface GameEffect extends Partial<GameEventHandler> {
   name: EffectName;
@@ -14,7 +21,7 @@ export interface GameEffect extends Partial<GameEventHandler> {
 export default interface Game {
   addEffect(makeEffect: (destroy: () => void) => GameEffect): void;
 
-  addToLog(message: string): void;
+  addToLog(message: LogMessage): void;
 
   applyDamage(
     attacker: Combatant,

@@ -1,5 +1,5 @@
 import Dir from "../types/Dir";
-import { Quadrants, Ratio } from "../types/flavours";
+import { DirInitial, Quadrants, Ratio } from "../types/flavours";
 import XY from "../types/XY";
 
 export const xy = <T extends number>(x: T, y: T): XY<T> => ({ x, y });
@@ -26,7 +26,7 @@ export function rotate(dir: Dir, clockwise: Quadrants): Dir {
   return (dir + clockwise + 4) % 4;
 }
 
-export function dirFromInitial(initial: string): Dir {
+export function dirFromInitial(initial: DirInitial): Dir {
   switch (initial) {
     case "E":
       return Dir.E;

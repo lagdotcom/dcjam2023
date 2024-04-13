@@ -1,3 +1,5 @@
+import { Cells, ColourHex, DateYYYYMMDD, TimeHHMMSS } from "./flavours";
+
 export const enum Edge {
   None = 0,
   Wall = 1,
@@ -210,16 +212,16 @@ export const enum Terrain {
 
 export interface Bounds {
   /** The x co-ordinate of the left-most occupied tile. */
-  x0: number;
+  x0: Cells;
 
   /** The y co-ordinate of the top or bottom most occupied tile as defined by the co-ordinate space specified by the origin attribute of the setup object/element. */
-  y0: number;
+  y0: Cells;
 
   /** The number of tiles in each row. */
-  width: number;
+  width: Cells;
 
   /** The number of rows from y0 to the last occupied row on this floor. */
-  height: number;
+  height: Cells;
 }
 
 export interface Cell {
@@ -238,7 +240,7 @@ export interface Entry {
   i: number;
 
   /** The color value of the entry expressed in HTML notation #RRGGBB. */
-  rgb: string;
+  rgb: ColourHex;
 
   /** If set to 1 this indicates a color that has been edited. */
   edit?: "1";
@@ -249,10 +251,10 @@ export interface Export {
   from: string;
 
   /** The date of export in YYYY-MM-DD format. */
-  date: string;
+  date: DateYYYYMMDD;
 
   /** The (local) time of export in HH:MM:SS format. */
-  time: string;
+  time: TimeHHMMSS;
 }
 
 export interface Floor {
@@ -275,10 +277,10 @@ export interface GCMap {
 
 export interface Note {
   /** The X co-ordinate of the note. */
-  x: number;
+  x: Cells;
 
   /** The Y co-ordinate of the note given in the co-ordinate space specified by the origin attribute of the setup element. */
-  y: number;
+  y: Cells;
 
   monospaced: boolean;
 
@@ -308,10 +310,10 @@ export interface Region {
 
 export interface Row {
   /** The offset to the first non-empty tile on this row. Calculate the absolute x position using bounds.x0 + start. */
-  start: number;
+  start: Cells;
 
   /** The y co-ordinate of the row in the co-ordinate space specified by the origin attribute of the setup element. */
-  y: number;
+  y: Cells;
 
   tdata: Tile[];
 }

@@ -6,11 +6,11 @@ import selumeUrl from "../res/music/selume.ogg";
 import Engine from "./Engine";
 import { wrap } from "./tools/numbers";
 import { random } from "./tools/rng";
-import { ResourceURL, Seconds } from "./types/flavours";
+import { ResourceURL, Seconds, TrackName } from "./types/flavours";
 
 interface Track {
   url: ResourceURL;
-  name: string;
+  name: TrackName;
   audio?: HTMLAudioElement;
   loop?: true;
 }

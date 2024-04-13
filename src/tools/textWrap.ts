@@ -1,3 +1,5 @@
+import { Pixels } from "../types/flavours";
+
 function splitWords(s: string) {
   const words: string[] = [];
   let current = "";
@@ -19,7 +21,7 @@ function splitWords(s: string) {
 
 export default function textWrap(
   source: string,
-  width: number,
+  width: Pixels,
   measure: (str: string) => TextMetrics,
 ) {
   const measurement = measure(source);

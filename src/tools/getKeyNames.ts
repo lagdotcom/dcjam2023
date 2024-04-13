@@ -1,5 +1,7 @@
+import { KeyCode } from "../types/flavours";
+
 export default function getKeyNames(
-  key: string,
+  key: KeyCode,
   shift: boolean,
   alt: boolean,
   ctrl: boolean,

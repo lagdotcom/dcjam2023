@@ -1,5 +1,5 @@
 import Combatant from "./Combatant";
-import { ActionName, Quadrants, SkillPoints } from "./flavours";
+import { ActionName, LogMessage, Quadrants, SkillPoints } from "./flavours";
 import Game from "./Game";
 import { Predicate } from "./logic";
 
@@ -25,7 +25,7 @@ export default interface CombatAction {
   name: ActionName;
   sp: SkillPoints;
   x?: boolean;
-  useMessage?: string;
+  useMessage?: LogMessage;
   tags: ActionTag[];
   targets: ActionTarget;
   targetFilter?: Predicate<Combatant>;

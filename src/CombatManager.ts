@@ -8,7 +8,7 @@ import { oneOf, pickN } from "./tools/rng";
 import shuffle from "./tools/shuffle";
 import Combatant from "./types/Combatant";
 import Dir from "./types/Dir";
-import { Milliseconds } from "./types/flavours";
+import { Cells, Milliseconds } from "./types/flavours";
 import { GameEffect } from "./types/Game";
 
 export default class CombatManager {
@@ -103,7 +103,7 @@ export default class CombatManager {
     this.enemyAnimationInterval = undefined;
   };
 
-  getFromOffset(dir: Dir, offset: number): Enemy | undefined {
+  getFromOffset(dir: Dir, offset: Cells): Enemy | undefined {
     return this.enemies[dir][offset - 1];
   }
 
