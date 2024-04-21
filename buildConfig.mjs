@@ -4,13 +4,9 @@ import { config as loadDotEnvConfig } from "dotenv";
 
 import CDNModule from "./CDNModule.mjs";
 import InkModule from "./InkModule.mjs";
-import { resolve } from "path";
 
 function getDefines() {
-  const envConfig = loadDotEnvConfig();
-  const envConfigLocal = loadDotEnvConfig({
-    path: resolve(process.cwd(), ".env.local"),
-  });
+  const envConfig = loadDotEnvConfig({ path: [".env.local", ".env"] });
 
   const define = {
     [`process.env.APP_BUILD_VERSION`]: JSON.stringify(
@@ -26,14 +22,6 @@ function getDefines() {
     console.warn(
       `[env] failed to load, ${envConfig.error?.message ?? "unknown error"}`
     );
-
-  if (envConfigLocal.parsed) {
-    for (const [k, v] of Object.entries(envConfigLocal.parsed))
-      define[`process.env.${k}`] = JSON.stringify(v);
-    console.log(
-      `[env] loaded ${Object.keys(envConfigLocal.parsed).length} values (.local)`
-    );
-  }
 
   return define;
 }
