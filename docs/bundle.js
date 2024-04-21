@@ -836,7 +836,7 @@
     return (dir + clockwise + 4) % 4;
   }
   function dirFromInitial(initial) {
-    switch (initial) {
+    switch (initial.toUpperCase()) {
       case "E":
         return Dir_default.E;
       case "S":
@@ -1016,13 +1016,13 @@
   // res/atlas/sneedCrawler.png
   var sneedCrawler_default2 = "./sneedCrawler-B5CE42IQ.png";
 
-  // ink:D:\poisoned-daggers\res\map.ink
+  // ink:C:\Code\dcjam2023\res\map.ink
   var map_default = "./map-YEJLQB7U.ink";
 
   // res/map.json
-  var map_default2 = "./map-HXD5COAC.json";
+  var map_default2 = "./map-PRITCSTB.json";
 
-  // ink:D:\poisoned-daggers\res\rush.ink
+  // ink:C:\Code\dcjam2023\res\rush.ink
   var rush_default = "./rush-LZWVRJNU.ink";
 
   // res/rush.json
@@ -1104,7 +1104,8 @@
         sides: {},
         tags: [],
         strings: {},
-        numbers: {}
+        numbers: {},
+        verbs: {}
       }));
       this.scripts = [];
       this.start = xy(0, 0);
@@ -1187,7 +1188,7 @@
       throw new Error(`Could not evaluate: ${s}`);
     }
     applyCommand(cmd, arg, x, y) {
-      switch (cmd) {
+      switch (cmd.toUpperCase()) {
         case "#ATLAS":
           this.atlases.push(
             ...arg.split(",").map((name) => ({
@@ -1243,6 +1244,11 @@
         case "#OPEN":
           this.startsOpen.add(xyToTag({ x, y }));
           break;
+        case "#VERB": {
+          const [dir, value] = arg.split(",");
+          this.tile(x, y).verbs[dirFromInitial(dir)] = value;
+          break;
+        }
         default:
           throw new Error(`Unknown command: ${cmd} ${arg} at (${x},${y})`);
       }
@@ -3252,6 +3258,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
     render() {
       if (this.g.combat.inCombat)
         return;
+      const skillOverride = this.g.currentCell?.verbs[this.g.facing];
       const { buttonSize, offset, position, rowHeight } = this;
       const { draw } = withTextStyle(this.g.ctx, {
         textAlign: "left",
@@ -3263,7 +3270,7 @@ This phrase has been uttered ever since Gorgothil was liberated from the thralls
       for (let dir = 0; dir < 4; dir++) {
         const pc = this.g.party[dir];
         if (pc.alive) {
-          draw(pc.skill, textX, textY);
+          draw(skillOverride ?? pc.skill, textX, textY);
           const x = textX - 10;
           const y = textY - 8;
           this.spots.push({

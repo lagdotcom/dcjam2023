@@ -34,6 +34,7 @@ export interface WorldCell {
   tags: CellTag[];
   strings: Record<CellDataKey, string>;
   numbers: Record<CellDataKey, number>;
+  verbs: Partial<Record<Dir, string>>;
 }
 
 export interface AtlasReference {

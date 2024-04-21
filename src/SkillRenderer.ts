@@ -24,6 +24,7 @@ export default class SkillRenderer implements HasHotspots {
   render() {
     if (this.g.combat.inCombat) return;
 
+    const skillOverride = this.g.currentCell?.verbs[this.g.facing];
     const { buttonSize, offset, position, rowHeight } = this;
     const { draw } = withTextStyle(this.g.ctx, {
       textAlign: "left",
@@ -38,7 +39,7 @@ export default class SkillRenderer implements HasHotspots {
       const pc = this.g.party[dir];
 
       if (pc.alive) {
-        draw(pc.skill, textX, textY);
+        draw(skillOverride ?? pc.skill, textX, textY);
 
         const x = textX - 10;
         const y = textY - 8;

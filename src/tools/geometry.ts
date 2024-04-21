@@ -27,7 +27,7 @@ export function rotate(dir: Dir, clockwise: Quadrants): Dir {
 }
 
 export function dirFromInitial(initial: DirInitial): Dir {
-  switch (initial) {
+  switch (initial.toUpperCase()) {
     case "E":
       return Dir.E;
     case "S":

@@ -87,6 +87,7 @@ class GCMapConverter {
       tags: [],
       strings: {},
       numbers: {},
+      verbs: {},
     }));
     this.scripts = [];
     this.start = xy(0, 0);
@@ -189,7 +190,7 @@ class GCMapConverter {
   }
 
   applyCommand(cmd: string, arg: string, x: Cells, y: Cells) {
-    switch (cmd) {
+    switch (cmd.toUpperCase()) {
       case "#ATLAS":
         this.atlases.push(
           ...arg.split(",").map((name) => ({
@@ -253,6 +254,12 @@ class GCMapConverter {
       case "#OPEN":
         this.startsOpen.add(xyToTag({ x, y }));
         break;
+
+      case "#VERB": {
+        const [dir, value] = arg.split(",");
+        this.tile(x, y).verbs[dirFromInitial(dir)] = value;
+        break;
+      }
 
       default:
         throw new Error(`Unknown command: ${cmd} ${arg} at (${x},${y})`);

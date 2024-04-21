@@ -37,6 +37,7 @@ The engine supports maps exported from Grid Cartographer to a JSON format. Make 
 | `#STYLE index,textureId`         | Associates the given colour index with a texture id            |
 | `#DECAL decal,textureId,decalId` | Associates a decal type+texture id combo with a decal id       |
 | `#SCRIPT file,file,...`          | Loads script files                                             |
+| `#VERB dir,value`                | Set 'use' verb for a given direction                           |
 
 These Notes affect the cell they are placed in. Markers are ignored.
 

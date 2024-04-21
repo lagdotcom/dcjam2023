@@ -1,8 +1,8 @@
 {
   "export": {
     "from": "2022.5.1",
-    "date": "2023-04-10",
-    "time": "10:52:40"
+    "date": "2024-04-21",
+    "time": "14:27:34"
   },
   "regions": [
     {
@@ -19781,7 +19781,7 @@
               "x": 9,
               "y": 21,
               "monospaced": false,
-              "__data": "#TAG Sign\n#NUMBER messageDir,NORTH\n#STRING message,\"The Nightjar Construction Commitee welcomes you, we apologize if some things aren't working as intended! If this is your first time playing, try these tips:\\n- Write down all that you learn, you never know what lies between the lines.\\n- Events utilize certain stats, be mindful of your team.\\n- The bottom part of the HUD is interactable, try shifting your character marbles around on the overworld and in battle!\\n- Foes will only challenge you in their arenas, catch them off guard before they outmatch you!"
+              "__data": "#TAG Sign\n#NUMBER messageDir,NORTH\n#STRING message,\"The Nightjar Construction Commitee welcomes you, we apologize if some things aren't working as intended! If this is your first time playing, try these tips:\\n- Write down all that you learn, you never know what lies between the lines.\\n- Events utilize certain stats, be mindful of your team.\\n- The bottom part of the HUD is interactable, try shifting your character marbles around on the overworld and in battle!\\n- Foes will only challenge you in their arenas, catch them off guard before they outmatch you!\n#VERB n,Read"
             },
             {
               "x": 12,
@@ -19937,13 +19937,13 @@
               "x": 10,
               "y": 21,
               "monospaced": false,
-              "__data": "#TAG Sign\n#NUMBER messageDir,NORTH\n#STRING message,\"The Nightjar Construction Committee guide to stats:\\nHP: Health Points\\nSP: Skillpoints\\nDTM: Determination, affects the ease and effectiveness of some actions.\\nCAM: Camaraderie, affects the ability to perform commanded actions.\\nSPT: Spirit, affects how high your SP is at the start of each turn.\""
+              "__data": "#TAG Sign\n#NUMBER messageDir,NORTH\n#STRING message,\"The Nightjar Construction Committee guide to stats:\\nHP: Health Points\\nSP: Skillpoints\\nDTM: Determination, affects the ease and effectiveness of some actions.\\nCAM: Camaraderie, affects the ability to perform commanded actions.\\nSPT: Spirit, affects how high your SP is at the start of each turn.\"\n#VERB n,RRead"
             },
             {
               "x": 8,
               "y": 21,
               "monospaced": false,
-              "__data": "#TAG Sign\n#NUMBER messageDir,NORTH\n#STRING message,\"The Nightjar Construction Committee guide to controls:\\nLeft Click: Confirm/interact with the various interfaces\\nEnter: Interact using lead party member\\nArrow Keys/WASDQE: Move\\nSpacebar: Toggle action log\""
+              "__data": "#TAG Sign\n#NUMBER messageDir,NORTH\n#STRING message,\"The Nightjar Construction Committee guide to controls:\\nLeft Click: Confirm/interact with the various interfaces\\nEnter: Interact using lead party member\\nArrow Keys/WASDQE: Move\\nSpacebar: Toggle action log\"\n#VERB n,Read"
             },
             {
               "x": 29,
@@ -20201,7 +20201,7 @@
               "x": 4,
               "y": 29,
               "monospaced": false,
-              "__data": "#TAG Sign\n#NUMBER messageDir,NORTH\n#STRING message,\"In the hall of a dozen prongs, a wisened soul seeks the southern oddity and sees through its facade.\""
+              "__data": "#TAG Sign\n#NUMBER messageDir,NORTH\n#STRING message,\"In the hall of a dozen prongs, a wisened soul seeks the southern oddity and sees through its facade.\"\n#VERB n,Read"
             },
             {
               "x": 31,
