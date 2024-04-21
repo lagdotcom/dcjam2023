@@ -1017,7 +1017,7 @@
   var sneedCrawler_default2 = "./sneedCrawler-B5CE42IQ.png";
 
   // ink:C:\Code\dcjam2023\res\map.ink
-  var map_default = "./map-YEJLQB7U.ink";
+  var map_default = "./map-GVL5KQ5O.ink";
 
   // res/map.json
   var map_default2 = "./map-PRITCSTB.json";
